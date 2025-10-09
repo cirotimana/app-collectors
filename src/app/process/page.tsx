@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { MonthPicker } from "@/components/ui/monthpicker";
-import { ConfirmationDialog } from "@/components/provider/confirmation-dialog"; // Ajusta la ruta según tu estructura
+import { ConfirmationDialog } from "@/components/provider/confirmation-dialog"; // Ajusta la ruta segun tu estructura
 
 export default function ProcessPage() {
   const [tipo, setTipo] = useState("conciliacion");
@@ -51,7 +51,7 @@ export default function ProcessPage() {
     return format(date, "MMyyyy");
   };
 
-  // Función que se llama al hacer clic en "Ejecutar Proceso"
+  // Funcion que se llama al hacer clic en "Ejecutar Proceso"
   const handleOpenConfirmation = () => {
     if (!date) {
       toast.error("Por favor selecciona una fecha");
@@ -60,14 +60,14 @@ export default function ProcessPage() {
 
     const endpoint = endpoints[tipo]?.[recaudador.toLowerCase()];
     if (!endpoint) {
-      toast.error("Este recaudador aún no tiene endpoint configurado");
+      toast.error("Este recaudador aun no tiene endpoint configurado");
       return;
     }
 
     setShowConfirmation(true);
   };
 
-  // Función que se ejecuta cuando se confirma en el diálogo
+  // Funcion que se ejecuta cuando se confirma en el dialogo
   const handleConfirmProcesar = async () => {
     setShowConfirmation(false);
     
@@ -96,14 +96,14 @@ export default function ProcessPage() {
       });
 
       if (res.ok) {
-        toast.success("El proceso se ejecutó correctamente", {
+        toast.success("El proceso se ejecuto correctamente", {
           id: toastId
         });
       } else {
         throw new Error(`Error ${res.status}`);
       }
     } catch (error: any) {
-      toast.error("Error de conexión", {
+      toast.error("Error de conexion", {
         id: toastId,
         description: error.message
       });
@@ -112,16 +112,16 @@ export default function ProcessPage() {
     }
   };
 
-  // Generar el mensaje de confirmación para procesos
+  // Generar el mensaje de confirmacion para procesos
   const getConfirmationMessage = () => {
-  const tipoTexto = tipo === "conciliacion" ? "conciliación" : "liquidación";
+  const tipoTexto = tipo === "conciliacion" ? "conciliacion" : "liquidacion";
   const fechaTexto = date ? (
     periodo === "DIA" 
       ? format(date, "dd/MM/yyyy", { locale: es })
       : format(date, "MMMM yyyy", { locale: es })
   ) : "fecha no seleccionada";
   
-  return `Se está enviando la ${tipoTexto} del recaudador ${recaudador.charAt(0).toUpperCase() + recaudador.slice(1)}, de la fecha ${fechaTexto}.`;
+  return `Se esta enviando la ${tipoTexto} del recaudador ${recaudador.charAt(0).toUpperCase() + recaudador.slice(1)}, de la fecha ${fechaTexto}.`;
 };
 
   return (
@@ -130,7 +130,7 @@ export default function ProcessPage() {
         <h1 className="text-4xl font-bold text-gray-900">
           Modulo de  <span className="text-red-600">Conciliaciones</span>
         </h1>
-        <p className="text-gray-600">Ejecuta procesos de conciliación y liquidación para lo recaudadores</p>
+        <p className="text-gray-600">Ejecuta procesos de conciliacion y liquidacion para lo recaudadores</p>
       </div>
 
       <Card className="border-red-100 shadow-lg">
@@ -142,7 +142,7 @@ export default function ProcessPage() {
             <div>
               <CardTitle>Gestion de procesos de conciliacion</CardTitle>
               <CardDescription>
-                Ejecuta procesos de conciliación y liquidación segun el recaudador
+                Ejecuta procesos de conciliacion y liquidacion segun el recaudador
               </CardDescription>
             </div>
           </div>
@@ -159,8 +159,8 @@ export default function ProcessPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="conciliacion">Conciliación</SelectItem>
-                <SelectItem value="liquidacion">Liquidación</SelectItem>
+                <SelectItem value="conciliacion">Conciliacion</SelectItem>
+                <SelectItem value="liquidacion">Liquidacion</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -194,7 +194,7 @@ export default function ProcessPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="DIA">Día</SelectItem>
+                <SelectItem value="DIA">Dia</SelectItem>
                 <SelectItem value="MES">Mes</SelectItem>
               </SelectContent>
             </Select>
@@ -262,7 +262,7 @@ export default function ProcessPage() {
             )}
           </div>
 
-          {/* Botón */}
+          {/* Boton */}
           <Button
             onClick={handleOpenConfirmation}
             disabled={isLoading || !date}
@@ -283,7 +283,7 @@ export default function ProcessPage() {
         </CardContent>
       </Card>
 
-      {/* Diálogo de confirmación para procesos */}
+      {/* Dialogo de confirmacion para procesos */}
       <ConfirmationDialog
         open={showConfirmation}
         onOpenChange={setShowConfirmation}

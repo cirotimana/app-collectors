@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Download, FileText, Loader2, CloudDownload, ArrowUpRight } from "lucide-react";
-import { ConfirmationDialog } from "@/components/provider/confirmation-dialog"; // Ajusta la ruta según tu estructura
+import { ConfirmationDialog } from "@/components/provider/confirmation-dialog"; // Ajusta la ruta segun tu estructura
 
 export default function DownloadPage() {
   const [archivo, setArchivo] = useState("");
@@ -20,7 +20,7 @@ export default function DownloadPage() {
   const apiKey = process.env.NEXT_PUBLIC_API_KEY;
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  // Función que se llama al hacer clic en "Descargar Archivo"
+  // Funcion que se llama al hacer clic en "Descargar Archivo"
   const handleOpenConfirmation = () => {
     if (!archivo) {
       toast.error("Por favor ingresa un nombre de archivo");
@@ -30,7 +30,7 @@ export default function DownloadPage() {
     setShowConfirmation(true);
   };
 
-  // Función que se ejecuta cuando se confirma en el diálogo
+  // Funcion que se ejecuta cuando se confirma en el dialogo
   const handleConfirmDownload = async () => {
     setShowConfirmation(false);
     
@@ -61,7 +61,7 @@ export default function DownloadPage() {
           window.open(presignedUrl, "_blank");
           toast.success("Descarga iniciada", {
             id: toastId,
-            description: "El archivo se está descargando"
+            description: "El archivo se esta descargando"
           });
         }
       } else if (response.ok) {
@@ -70,7 +70,7 @@ export default function DownloadPage() {
           window.open(data.url, "_blank");
           toast.success("Descarga iniciada", {
             id: toastId,
-            description: "El archivo se está descargando"
+            description: "El archivo se esta descargando"
           });
         }
       } else {
@@ -86,9 +86,9 @@ export default function DownloadPage() {
     }
   };
 
-  // Generar el mensaje de confirmación para descarga
+  // Generar el mensaje de confirmacion para descarga
   const getConfirmationMessage = () => {
-    const tipoTexto = tipo === "conciliacion" ? "conciliación" : "liquidación";
+    const tipoTexto = tipo === "conciliacion" ? "conciliacion" : "liquidacion";
     const recaudadorTexto = tipo === "liquidacion" 
       ? ` del recaudador ${recaudador.charAt(0).toUpperCase() + recaudador.slice(1)}` 
       : "";
@@ -131,8 +131,8 @@ export default function DownloadPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="conciliacion">Conciliación</SelectItem>
-                <SelectItem value="liquidacion">Liquidación</SelectItem>
+                <SelectItem value="conciliacion">Conciliacion</SelectItem>
+                <SelectItem value="liquidacion">Liquidacion</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -180,11 +180,11 @@ export default function DownloadPage() {
               />
             </div>
             <p className="text-xs text-gray-500">
-              Incluye la extensión del archivo (ej: .xlsx, .csv, .pdf)
+              Incluye la extension del archivo (ej: .xlsx, .csv, .pdf)
             </p>
           </div>
 
-          {/* Botón */}
+          {/* Boton */}
           <Button
             onClick={handleOpenConfirmation}
             disabled={isLoading || !archivo}
@@ -205,7 +205,7 @@ export default function DownloadPage() {
         </CardContent>
       </Card>
 
-      {/* Diálogo de confirmación para descarga */}
+      {/* Dialogo de confirmacion para descarga */}
       <ConfirmationDialog
         open={showConfirmation}
         onOpenChange={setShowConfirmation}
