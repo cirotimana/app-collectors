@@ -16,13 +16,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Logo from "../../assets/img/logo.jpg"
-import { Server, CloudDownload, } from "lucide-react";
+import { Server, CloudDownload, Gpu  } from "lucide-react";
 import { ModeToggle } from "@/components/provider/theme-toggle";
 
 const menuItems = [
   // { icon: "📊", label: "Dashboard", href: "/" },
   { icon: <CloudDownload/>, label: "Descargas", href: "/download" },
   { icon: <Server/>, label: "Procesos", href: "/process" },
+  { icon: <Gpu />, label: "Digital", href: "/digital" },
   // { icon: "📄", label: "Reportes", href: "/reports" },
   // { icon: "⚙️", label: "Configuración", href: "/settings" },
 ];

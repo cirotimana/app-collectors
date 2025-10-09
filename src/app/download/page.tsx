@@ -79,7 +79,9 @@ export default function DownloadPage() {
     } catch (error: any) {
       toast.error("Error en la descarga", {
         id: toastId,
-        description: error.message
+        description:  error.message === "Error 404" 
+          ? "Archivo no encontrado" 
+          : error.message
       });
     } finally {
       setIsLoading(false);
