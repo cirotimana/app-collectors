@@ -71,9 +71,18 @@ export default function ProcessPage() {
   const handleConfirmProcesar = async () => {
     setShowConfirmation(false);
     
+    let periodoFinal = periodo;
+    if (tipo === 'liquidacion' && recaudador === 'kashio') {
+      periodoFinal = "DIA2";
+    }
+
     const endpoint = endpoints[tipo]?.[recaudador.toLowerCase()];
-    const dateParam = periodo === "DIA" ? formatearFecha(date!) : formatearMes(date!);
-    const url = `${baseUrl}/digital/${endpoint}?period=${periodo}&date_param=${dateParam}`;
+    // const dateParam = periodo === "DIA" ? formatearFecha(date!) : formatearMes(date!);
+    const dateParam = periodoFinal === "DIA" || periodoFinal === "DIA2" 
+    ? formatearFecha(date!) 
+    : formatearMes(date!);
+    const url = `${baseUrl}/digital/${endpoint}?period=${periodoFinal}&date_param=${dateParam}`;
+    // const url = `${baseUrl}/digital/${endpoint}?period=${periodo}&date_param=${dateParam}`;
 
     console.log("enviando url", url);
 
