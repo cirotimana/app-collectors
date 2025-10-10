@@ -13,7 +13,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-secondary/50 p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">Bienvenido de Vuelta</CardTitle>
+          <CardTitle className="font-headline text-2xl">Bienvenido</CardTitle>
           <CardDescription>
             Ingresa tus credenciales para acceder.
           </CardDescription>
