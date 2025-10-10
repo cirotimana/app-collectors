@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Settings, Calendar as CalendarIcon, Loader2, Server, ArrowUpRight, AlertCircle } from "lucide-react";
+import { Settings, Calendar as CalendarIcon, Loader2, Gpu, ArrowUpRight, AlertCircle } from "lucide-react";
 import { format, isAfter, isSameMonth, startOfMonth, isToday, isFuture } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -101,7 +101,7 @@ export default function ProcessPage() {
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-red-600/20 rounded-xl flex items-center justify-center border-2 border-red-600/40">
-              <Server className="w-6 h-6 text-red-600" />
+              <Gpu className="w-6 h-6 text-red-600" />
             </div>
             <div>
               <CardTitle>Gestion de procesos</CardTitle>

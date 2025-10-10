@@ -23,7 +23,7 @@ export default function ReportsPage() {
         </CardHeader>
         <CardContent>
           <p className="text-gray-600">
-            Aquí podras generar y visualizar reportes detallados de todas las operaciones del sistema.
+            Aqui podras generar y visualizar reportes detallados de todas las operaciones del sistema.
           </p>
         </CardContent>
       </Card>
