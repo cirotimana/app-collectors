@@ -331,7 +331,10 @@ export default function ProcessPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="DIA">Dia</SelectItem>
-                <SelectItem value="MES">Mes</SelectItem>
+                {/* <SelectItem value="MES">Mes</SelectItem> */}
+                {tipo !== "liquidacion" && (
+                  <SelectItem value="MES">Mes</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
