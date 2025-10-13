@@ -32,27 +32,79 @@ export default function ProcessPage() {
     if (!date) return true;
     
     const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // Normalizar la hora
     
     if (periodo === "DIA") {
-      // Para dias: no puede ser hoy ni fecha futura
-      return !isToday(date) && !isFuture(date);
+      const fechaSeleccionada = new Date(date);
+      fechaSeleccionada.setHours(0, 0, 0, 0);
+      
+      // Calcular limites segun tipo y recaudador
+      let diasAtras = 1; // Por defecto para conciliacion (D-1)
+      
+      if (tipo === "liquidacion") {
+        if (recaudador === "kashio") {
+          diasAtras = 2; // Kashio hasta D-2
+        } else if (recaudador === "tupay") {
+          diasAtras = 7; // Tupay hasta D-7
+        }
+      }
+      
+      // Calcular la fecha limite
+      const fechaLimite = new Date(hoy);
+      fechaLimite.setDate(fechaLimite.getDate() - diasAtras);
+      
+      // La fecha debe ser menor o igual a la fecha limite y no debe ser futura
+      return fechaSeleccionada <= fechaLimite && !isFuture(fechaSeleccionada);
+      
     } else {
       // Para meses: no puede ser el mes actual ni meses futuros
       const mesSeleccionado = startOfMonth(date);
       const mesActual = startOfMonth(hoy);
       return !isSameMonth(mesSeleccionado, mesActual) && !isAfter(mesSeleccionado, mesActual);
     }
-  }, [date, periodo]);
+  }, [date, periodo, tipo, recaudador]);
 
   // Funcion para obtener el mensaje de error
   const getMensajeErrorFecha = () => {
     if (!date) return "";
     
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
     if (periodo === "DIA") {
-      if (isToday(date)) return "No puedes seleccionar el dia de hoy";
-      if (isFuture(date)) return "No puedes seleccionar una fecha futura";
+      const fechaSeleccionada = new Date(date);
+      fechaSeleccionada.setHours(0, 0, 0, 0);
+      
+      if (isFuture(fechaSeleccionada)) {
+        return "No puedes seleccionar una fecha futura";
+      }
+      
+      // Calcular el limite segun el tipo y recaudador
+      let diasAtras = 1;
+      let mensajeLimite = "el dia de ayer";
+      
+      if (tipo === "liquidacion") {
+        if (recaudador === "kashio") {
+          diasAtras = 2;
+          mensajeLimite = "hasta hace 2 dias";
+        } else if (recaudador === "tupay") {
+          diasAtras = 7;
+          mensajeLimite = "hasta hace 7 dias";
+        }
+      }
+      
+      const fechaLimite = new Date(hoy);
+      fechaLimite.setDate(fechaLimite.getDate() - diasAtras);
+      
+      if (fechaSeleccionada > fechaLimite) {
+        if (tipo === "liquidacion") {
+          return `Para liquidacion de ${recaudador.charAt(0).toUpperCase() + recaudador.slice(1)}, solo puedes seleccionar fechas ${mensajeLimite} o anteriores`;
+        } else {
+          return "No puedes seleccionar el dia de hoy";
+        }
+      }
+      
     } else {
-      const hoy = new Date();
       const mesSeleccionado = startOfMonth(date);
       const mesActual = startOfMonth(hoy);
       
@@ -77,6 +129,7 @@ export default function ProcessPage() {
     },
     liquidacion: {
       kashio: "execute-liqkashio",
+      tupay: "execute-liqtupay",
     },
   };
 
@@ -91,10 +144,32 @@ export default function ProcessPage() {
   // Funcion para deshabilitar fechas en el calendario
   const deshabilitarFechas = (date: Date) => {
     const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    const fechaCheck = new Date(date);
+    fechaCheck.setHours(0, 0, 0, 0);
     
     if (periodo === "DIA") {
-      // Deshabilitar hoy y fechas futuras
-      return isToday(date) || isFuture(date);
+      // Deshabilitar fechas futuras
+      if (isFuture(fechaCheck)) return true;
+      
+      // Calcular el limite segun tipo y recaudador
+      let diasAtras = 1;
+      
+      if (tipo === "liquidacion") {
+        if (recaudador === "kashio") {
+          diasAtras = 2;
+        } else if (recaudador === "tupay") {
+          diasAtras = 7;
+        }
+      }
+      
+      const fechaLimite = new Date(hoy);
+      fechaLimite.setDate(fechaLimite.getDate() - diasAtras);
+      
+      // Deshabilitar si la fecha es mayor que el limite permitido
+      return fechaCheck > fechaLimite;
+      
     } else {
       // Para el month picker, deshabilitar meses
       const mesSeleccionado = startOfMonth(date);
@@ -132,6 +207,10 @@ export default function ProcessPage() {
     
     let periodoFinal = periodo;
     if (tipo === 'liquidacion' && recaudador === 'kashio') {
+      periodoFinal = "DIA2";
+    }
+
+    if (tipo === 'liquidacion' && recaudador === 'tupay') {
       periodoFinal = "DIA2";
     }
 
