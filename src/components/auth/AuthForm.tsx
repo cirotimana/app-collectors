@@ -112,7 +112,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         toast.success("¡Bienvenido!");
       }
       
-      router.push("/download");
+      router.push("/dashboard");
     } catch (error: any) {
       console.error("Error:", error);
       

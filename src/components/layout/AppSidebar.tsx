@@ -16,7 +16,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Logo from "../../assets/img/logo.jpg";
-import { Server, CloudDownload, Gpu } from "lucide-react";
+import { Server, CloudDownload, Gpu, LayoutDashboard  } from "lucide-react";
 import { ModeToggle } from "@/components/provider/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogOut } from "lucide-react";
@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/avatar";
 
 const menuItems = [
+  { icon: <LayoutDashboard  />, label: "Dashboard", href: "/dashboard" },
   { icon: <CloudDownload />, label: "Descargas", href: "/download" },
   { icon: <Server />, label: "Procesos", href: "/process" },
   { icon: <Gpu />, label: "Digital", href: "/digital" },
@@ -68,7 +69,7 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navegacion</SidebarGroupLabel>
+          <SidebarGroupLabel>Modulos</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
