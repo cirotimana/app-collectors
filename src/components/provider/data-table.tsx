@@ -117,6 +117,45 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
+// Función de fallback para copiar al portapapeles
+function fallbackCopyToClipboard(text: string): boolean {
+  try {
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+    textArea.style.position = 'fixed'
+    textArea.style.left = '-999999px'
+    textArea.style.top = '-999999px'
+    document.body.appendChild(textArea)
+    textArea.focus()
+    textArea.select()
+    
+    const successful = document.execCommand('copy')
+    document.body.removeChild(textArea)
+    
+    return successful
+  } catch (error) {
+    console.error('Fallback copy failed:', error)
+    return false
+  }
+}
+
+// Función segura para copiar al portapapeles
+const safeCopyToClipboard = async (text: string): Promise<boolean> => {
+  try {
+    // Verificar si estamos en un contexto seguro y el API está disponible
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text)
+      return true
+    } else {
+      // Usar fallback para entornos no seguros
+      return fallbackCopyToClipboard(text)
+    }
+  } catch (error) {
+    console.error('Error in safeCopyToClipboard:', error)
+    return fallbackCopyToClipboard(text)
+  }
+}
+
 // Funcion para limpiar la ruta S3
 function cleanS3Path(path: string): string {
   if (!path) return ''
@@ -257,19 +296,28 @@ function DragHandle({ id }: { id: number }) {
 }
 
 // Actions Menu Component
-// Actions Menu Component - Modifica esta parte:
 function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidation' | 'conciliation'; onDelete?: (id: number) => void; }) {
   const router = useRouter()
   const isMobile = useIsMobile()
   const [openAlert, setOpenAlert] = React.useState(false)
-  const [openDetails, setOpenDetails] = React.useState(false) // ← Agregar este estado
+  const [openDetails, setOpenDetails] = React.useState(false)
 
-  const handleCopyAndRedirect = () => {
+  const handleCopyAndRedirect = async () => {
     if (item.files && item.files.length > 0) {
       const cleanedPath = cleanS3Path(item.files[0].filePath)
-      navigator.clipboard.writeText(cleanedPath)
-      toast.success('Ruta copiada al portapapeles')
-      router.push('/download')
+      
+      try {
+        const success = await safeCopyToClipboard(cleanedPath)
+        if (success) {
+          toast.success('Ruta copiada al portapapeles')
+          router.push('/download')
+        } else {
+          toast.error('No se pudo copiar la ruta')
+        }
+      } catch (error) {
+        console.error('Error al copiar:', error)
+        toast.error('Error al copiar la ruta')
+      }
     } else {
       toast.error('No hay archivos disponibles')
     }
@@ -304,7 +352,6 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          {/* Cambiar esta parte: */}
           <DropdownMenuItem onClick={() => setOpenDetails(true)}>
             <IconFileText className="mr-2 h-4 w-4" />
             Ver Detalles
@@ -369,16 +416,34 @@ function FileDetailsDialog({
 }) {
   const router = useRouter()
 
-  const handleCopyPath = (path: string) => {
-    navigator.clipboard.writeText(path)
-    toast.success('Ruta copiada al portapapeles')
+  const handleCopyPath = async (path: string) => {
+    try {
+      const success = await safeCopyToClipboard(path)
+      if (success) {
+        toast.success('Ruta copiada al portapapeles')
+      } else {
+        toast.error('No se pudo copiar la ruta')
+      }
+    } catch (error) {
+      console.error('Error al copiar:', error)
+      toast.error('Error al copiar la ruta')
+    }
   }
 
-  const handleDownload = (path: string) => {
-    navigator.clipboard.writeText(path)
-    toast.success('Ruta copiada, redirigiendo...')
-    router.push('/download')
-    onOpenChange(false)
+  const handleDownload = async (path: string) => {
+    try {
+      const success = await safeCopyToClipboard(path)
+      if (success) {
+        toast.success('Ruta copiada, redirigiendo...')
+        router.push('/download')
+        onOpenChange(false)
+      } else {
+        toast.error('No se pudo copiar la ruta')
+      }
+    } catch (error) {
+      console.error('Error al copiar para descarga:', error)
+      toast.error('Error al copiar la ruta')
+    }
   }
 
   return (
@@ -510,6 +575,7 @@ function FileDetailsDialog({
     </Drawer>
   )
 }
+
 // DraggableRow Component
 function DraggableRow({ row, type }: { row: Row<DataType>, type: string }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
@@ -936,10 +1002,6 @@ export function DataTable() {
 
         {/* Paginacion */}
         <div className="flex items-center justify-between px-4 py-4">
-          {/* <div className="text-sm text-muted-foreground">
-            {table.getFilteredSelectedRowModel().rows.length} de{" "}
-            {table.getFilteredRowModel().rows.length} fila(s) seleccionadas
-          </div> */}
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
