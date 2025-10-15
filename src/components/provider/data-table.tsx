@@ -117,7 +117,15 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-// Función de fallback para copiar al portapapeles
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+
+// Funcion de fallback para copiar al portapapeles
 function fallbackCopyToClipboard(text: string): boolean {
   try {
     const textArea = document.createElement('textarea')
@@ -139,10 +147,10 @@ function fallbackCopyToClipboard(text: string): boolean {
   }
 }
 
-// Función segura para copiar al portapapeles
+// Funcion segura para copiar al portapapeles
 const safeCopyToClipboard = async (text: string): Promise<boolean> => {
   try {
-    // Verificar si estamos en un contexto seguro y el API está disponible
+    // Verificar si estamos en un contexto seguro y el API esta disponible
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(text)
       return true
@@ -156,13 +164,80 @@ const safeCopyToClipboard = async (text: string): Promise<boolean> => {
   }
 }
 
-// Funcion para limpiar la ruta S3
+// Funcion para limpiar la ruta S3 - MODIFICADA
 function cleanS3Path(path: string): string {
+  if (!path) return ''
+  
+  // Remover el prefijo s3://bucket-name/
+  const cleanedPath = path.replace(/^s3:\/\/[^\/]+\//, '')
+  return cleanedPath
+}
+
+function cleanS3Pathv(path: string): string {
   if (!path) return ''
   
   // Dividir por "/" y tomar el ultimo elemento (nombre del archivo)
   const parts = path.split('/')
   return parts[parts.length - 1]
+}
+
+// Funcion para descarga directa
+const handleDirectDownload = async (filePath: string) => {
+  try {
+    const cleanedPath = cleanS3Path(filePath)
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+    const apiKey = process.env.NEXT_PUBLIC_API_KEY
+    
+    const downloadUrl = `${baseUrl}/digital/download/${cleanedPath}`
+    
+    console.log("Solicitando descarga de:", downloadUrl)
+    
+    const response = await fetch(downloadUrl, {
+      method: 'GET',
+      headers: {
+        'x-api-key': apiKey || '',
+      },
+      redirect: 'manual'
+    })
+
+    if (response.status === 302 || response.status === 307) {
+      // Si hay redireccion, abrir la URL presigned en nueva pestaña
+      const presignedUrl = response.headers.get('Location')
+      if (presignedUrl) {
+        window.open(presignedUrl, '_blank')
+        toast.success('Descarga iniciada')
+        return true
+      }
+    } else if (response.ok) {
+      // Si la respuesta es OK, intentar procesar como JSON
+      const data = await response.json()
+      if (data.url) {
+        window.open(data.url, '_blank')
+        toast.success('Descarga iniciada')
+        return true
+      }
+    }
+    
+    // Si no hay redireccion, intentar descargar directamente
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    a.download = cleanedPath.split('/').pop() || 'download'
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    
+    toast.success('Descarga iniciada')
+    return true
+    
+  } catch (error) {
+    console.error('Error en descarga directa:', error)
+    toast.error('Error al descargar el archivo')
+    return false
+  }
 }
 
 function formatPeriod(period: string): string {
@@ -234,7 +309,7 @@ export const conciliationSchema = z.object({
 type DataType = z.infer<typeof liquidationSchema> | z.infer<typeof conciliationSchema>
 
 // API URL
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3030/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3040/api'
 
 // Funcion para fetch de datos
 async function fetchData(
@@ -301,25 +376,29 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
   const isMobile = useIsMobile()
   const [openAlert, setOpenAlert] = React.useState(false)
   const [openDetails, setOpenDetails] = React.useState(false)
+  const [openDownloadDialog, setOpenDownloadDialog] = React.useState(false)
 
-  const handleCopyAndRedirect = async () => {
-    if (item.files && item.files.length > 0) {
-      const cleanedPath = cleanS3Path(item.files[0].filePath)
-      
-      try {
-        const success = await safeCopyToClipboard(cleanedPath)
-        if (success) {
-          toast.success('Ruta copiada al portapapeles')
-          router.push('/download')
-        } else {
-          toast.error('No se pudo copiar la ruta')
-        }
-      } catch (error) {
-        console.error('Error al copiar:', error)
-        toast.error('Error al copiar la ruta')
-      }
-    } else {
+  // Funcion para manejar la descarga de un archivo especifico
+  const handleDownloadFile = async (filePath: string) => {
+    const success = await handleDirectDownload(filePath)
+    if (success) {
+      setOpenDownloadDialog(false)
+    }
+  }
+
+  // Funcion para el boton de descarga principal
+  const handleDownloadAction = () => {
+    if (!item.files || item.files.length === 0) {
       toast.error('No hay archivos disponibles')
+      return
+    }
+
+    if (item.files.length === 1) {
+      // Si solo hay un archivo, descargar directamente
+      handleDownloadFile(item.files[0].filePath)
+    } else {
+      // Si hay multiples archivos, abrir el dialogo
+      setOpenDownloadDialog(true)
     }
   }
 
@@ -356,9 +435,9 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
             <IconFileText className="mr-2 h-4 w-4" />
             Ver Detalles
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleCopyAndRedirect}>
+          <DropdownMenuItem onClick={handleDownloadAction}>
             <IconDownload className="mr-2 h-4 w-4" />
-            Descargar Archivo
+            Descargar Archivo{item.files && item.files.length > 1 && `s (${item.files.length})`}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => setOpenAlert(true)}
@@ -369,6 +448,45 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Dialogo para seleccionar archivo cuando hay multiples */}
+      <Dialog open={openDownloadDialog} onOpenChange={setOpenDownloadDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Seleccionar archivo para descargar</DialogTitle>
+            <DialogDescription>
+              Este registro contiene {item.files?.length} archivos. Selecciona cual deseas descargar.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 max-h-60 overflow-y-auto">
+            {item.files?.map((file, index) => (
+              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {cleanS3Pathv(file.filePath)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {getFileTypeName(
+                      type === 'liquidation' && 'liquidationFilesType' in file
+                        ? file.liquidationFilesType
+                        : 'conciliationFilesType' in file
+                        ? file.conciliationFilesType
+                        : 0
+                    )} • {format(new Date(file.createdAt), "PP", { locale: es })}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => handleDownloadFile(file.filePath)}
+                  className="ml-2"
+                >
+                  <IconDownload className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Drawer para Ver Detalles */}
       <FileDetailsDialog 
@@ -431,18 +549,10 @@ function FileDetailsDialog({
   }
 
   const handleDownload = async (path: string) => {
-    try {
-      const success = await safeCopyToClipboard(path)
-      if (success) {
-        toast.success('Ruta copiada, redirigiendo...')
-        router.push('/download')
-        onOpenChange(false)
-      } else {
-        toast.error('No se pudo copiar la ruta')
-      }
-    } catch (error) {
-      console.error('Error al copiar para descarga:', error)
-      toast.error('Error al copiar la ruta')
+    const success = await handleDirectDownload(path)
+    if (success) {
+      // No cerrar el drawer automaticamente
+      // onOpenChange(false)
     }
   }
 
@@ -513,7 +623,15 @@ function FileDetailsDialog({
                         <div className="flex-1 space-y-2">
                           <div>
                             <Label className="text-xs text-muted-foreground">Tipo de Archivo</Label>
-                            <Badge variant="outline" className="mt-1">
+                            <Badge 
+                              variant="outline" 
+                              className={`mt-1 ${
+                                (type === 'liquidation' && 'liquidationFilesType' in file ? file.liquidationFilesType : 
+                                'conciliationFilesType' in file ? file.conciliationFilesType : 0) === 2 
+                                  ? 'bg-green-600 text-white border-green-600' 
+                                  : 'bg-red-400 text-white border-red-400'
+                              }`}
+                            >
                               {getFileTypeName(
                                 type === 'liquidation' && 'liquidationFilesType' in file
                                   ? file.liquidationFilesType
@@ -528,16 +646,16 @@ function FileDetailsDialog({
                             <Label className="text-xs text-muted-foreground">Nombre del Archivo</Label>
                             <div className="flex items-center gap-2 mt-1">
                               <p className="text-xs font-mono bg-background p-2 rounded border flex-1 break-all">
-                                {cleanS3Path(file.filePath)}
+                                {cleanS3Pathv(file.filePath)}
                               </p>
-                              <Button
+                              {/* <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleCopyPath(cleanS3Path(file.filePath))}
+                                onClick={() => handleCopyPath(cleanS3Pathv(file.filePath))}
                                 className="shrink-0"
                               >
                                 <IconCopy className="h-3 w-3" />
-                              </Button>
+                              </Button> */}
                             </div>
                           </div>
 
@@ -553,7 +671,7 @@ function FileDetailsDialog({
                       <Button
                         size="sm"
                         className="w-full"
-                        onClick={() => handleDownload(cleanS3Path(file.filePath))}
+                        onClick={() => handleDownload(file.filePath)}
                       >
                         <IconDownload className="mr-2 h-4 w-4" />
                         Descargar este Archivo
