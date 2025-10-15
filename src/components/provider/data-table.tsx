@@ -34,6 +34,7 @@ import {
   IconDownload,
   IconFileText,
   IconCopy,
+  IconTrash,
 } from "@tabler/icons-react"
 import {
   ColumnDef,
@@ -102,6 +103,19 @@ import {
 } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { PeriodPicker } from "@/components/ui/period-picker"
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 // Funcion para limpiar la ruta S3
 function cleanS3Path(path: string): string {
@@ -111,6 +125,23 @@ function cleanS3Path(path: string): string {
   const parts = path.split('/')
   return parts[parts.length - 1]
 }
+
+function formatPeriod(period: string): string {
+  if (!period) return ''
+  
+  // Si es formato día: 20251013 -> 2025-10-13
+  if (period.length === 8) {
+    return `${period.slice(0, 4)}-${period.slice(4, 6)}-${period.slice(6, 8)}`
+  }
+  
+  // Si es formato mes: 202509 -> 2025-09
+  if (period.length === 6) {
+    return `${period.slice(0, 4)}-${period.slice(4, 6)}`
+  }
+  
+  return period
+}
+
 // Schema para Liquidaciones
 export const liquidationSchema = z.object({
   id: z.number(),
@@ -167,21 +198,34 @@ type DataType = z.infer<typeof liquidationSchema> | z.infer<typeof conciliationS
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3030/api'
 
 // Funcion para fetch de datos
-async function fetchData(type: string): Promise<DataType[]> {
-  const endpoint = type === 'liquidations' ? '/liquidations' : '/conciliations'
-  
-  try {
-    const response = await fetch(`${API_URL}${endpoint}`)
-    if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`)
+async function fetchData(
+    type: string, 
+    collector?: string, 
+    period?: string
+  ): Promise<DataType[]> {
+    let endpoint = type === 'liquidations' ? '/liquidations' : '/conciliations'
+    
+    // Si hay filtro de periodo
+    if (period && period.trim()) {
+      endpoint += `/period/${period.trim()}`
+    } 
+    // Si hay filtro de recaudador
+    else if (collector && collector.trim()) {
+      endpoint += `/collector/${encodeURIComponent(collector.trim())}`
     }
-    return await response.json()
-  } catch (error) {
-    console.error('Error fetching data:', error)
-    toast.error('Error al cargar los datos')
-    return []
+    
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`)
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`)
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching data:', error)
+      toast.error('Error al cargar los datos')
+      return []
+    }
   }
-}
 
 // Funcion para obtener el nombre completo del usuario
 function getCreatedByName(createdBy: { firstName: string; lastName: string } | undefined): string {
@@ -212,179 +256,40 @@ function DragHandle({ id }: { id: number }) {
   )
 }
 
-// Columnas para Liquidaciones
-const liquidationColumns: ColumnDef<z.infer<typeof liquidationSchema>>[] = [
-  {
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original.id} />,
-  },
-
-  {
-    accessorKey: "collector.name",
-    header: "Recaudador",
-    cell: ({ row }) => <TableCellViewer item={row.original} type="liquidation" />,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "liquidationsType",
-    header: "Tipo",
-    cell: ({ row }) => (
-      <Badge variant="outline" className="text-muted-foreground px-1.5">
-        {row.original.liquidationsType === 1 ? "Diario" : "Mensual"}
-      </Badge>
-    ),
-  },
-  {
-    accessorKey: "period",
-    header: "Periodo",
-    cell: ({ row }) => <div className="w-20">{row.original.period}</div>,
-  },
-  {
-    accessorKey: "liquidationsState",
-    header: "Estado",
-    cell: ({ row }) => (
-      <Badge variant={row.original.liquidationsState ? "default" : "secondary"}>
-        {row.original.liquidationsState ? (
-          <IconCircleCheckFilled className="w-4 h-4 mr-1" />
-        ) : (
-          <IconLoader className="w-4 h-4 mr-1 animate-spin" />
-        )}
-        {row.original.liquidationsState ? "Completado" : "En Proceso"}
-      </Badge>
-    ),
-  },
-  {
-    accessorKey: "amountCollector",
-    header: () => <div className="w-full text-right">Monto Recaudador</div>,
-    cell: ({ row }) => (
-      <div className="text-right font-medium">S/ {parseFloat(row.original.amountCollector).toFixed(2)}</div>
-    ),
-  },
-  {
-    accessorKey: "amountLiquidation",
-    header: () => <div className="w-full text-right">Monto Liquidacion</div>,
-    cell: ({ row }) => (
-      <div className="text-right font-medium">S/ {parseFloat(row.original.amountLiquidation).toFixed(2)}</div>
-    ),
-  },
-  {
-    accessorKey: "differenceAmounts",
-    header: () => <div className="w-full text-right">Diferencia</div>,
-    cell: ({ row }) => {
-      const diff = parseFloat(row.original.differenceAmounts)
-      return (
-        <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-          S/ {diff.toFixed(2)}
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "createdBy",
-    header: "Creado Por",
-    cell: ({ row }) => getCreatedByName(row.original.createdBy),
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => <ActionsMenu item={row.original} type="liquidation" />,
-  },
-]
-
-// Columnas para Conciliaciones
-const conciliationColumns: ColumnDef<z.infer<typeof conciliationSchema>>[] = [
-  {
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original.id} />,
-  },
-  {
-    accessorKey: "collector.name",
-    header: "Recaudador",
-    cell: ({ row }) => <TableCellViewer item={row.original} type="conciliation" />,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "conciliationsType",
-    header: "Tipo",
-    cell: ({ row }) => (
-      <Badge variant="outline" className="text-muted-foreground px-1.5">
-        {row.original.conciliationsType === 1 ? "Diario" : "Mensual"}
-      </Badge>
-    ),
-  },
-  {
-    accessorKey: "period",
-    header: "Periodo",
-    cell: ({ row }) => <div className="w-20">{row.original.period}</div>,
-  },
-  {
-    accessorKey: "conciliationsState",
-    header: "Estado",
-    cell: ({ row }) => (
-      <Badge variant={row.original.conciliationsState ? "default" : "secondary"}>
-        {row.original.conciliationsState ? (
-          <IconCircleCheckFilled className="w-4 h-4 mr-1" />
-        ) : (
-          <IconLoader className="w-4 h-4 mr-1 animate-spin" />
-        )}
-        {row.original.conciliationsState ? "Completado" : "En Proceso"}
-      </Badge>
-    ),
-  },
-  {
-    accessorKey: "amount",
-    header: () => <div className="w-full text-right">Monto</div>,
-    cell: ({ row }) => (
-      <div className="text-right font-medium">S/ {parseFloat(row.original.amount).toFixed(2)}</div>
-    ),
-  },
-  {
-    accessorKey: "amountCollector",
-    header: () => <div className="w-full text-right">Monto Recaudador</div>,
-    cell: ({ row }) => (
-      <div className="text-right font-medium">S/ {parseFloat(row.original.amountCollector).toFixed(2)}</div>
-    ),
-  },
-  {
-    accessorKey: "differenceAmounts",
-    header: () => <div className="w-full text-right">Diferencia</div>,
-    cell: ({ row }) => {
-      const diff = parseFloat(row.original.differenceAmounts)
-      return (
-        <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-          S/ {diff.toFixed(2)}
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "createdBy",
-    header: "Creado Por",
-    cell: ({ row }) => getCreatedByName(row.original.createdBy),
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => <ActionsMenu item={row.original} type="conciliation" />,
-  },
-]
-
 // Actions Menu Component
-function ActionsMenu({ item, type }: { item: DataType; type: 'liquidation' | 'conciliation' }) {
+// Actions Menu Component - Modifica esta parte:
+function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidation' | 'conciliation'; onDelete?: (id: number) => void; }) {
   const router = useRouter()
   const isMobile = useIsMobile()
+  const [openAlert, setOpenAlert] = React.useState(false)
+  const [openDetails, setOpenDetails] = React.useState(false) // ← Agregar este estado
 
   const handleCopyAndRedirect = () => {
     if (item.files && item.files.length > 0) {
       const cleanedPath = cleanS3Path(item.files[0].filePath)
-      // Copiar la ruta al portapapeles
       navigator.clipboard.writeText(cleanedPath)
       toast.success('Ruta copiada al portapapeles')
-      
-      // Redirigir a /download
       router.push('/download')
     } else {
       toast.error('No hay archivos disponibles')
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      const endpoint = `${API_URL}/${type === 'liquidation' ? 'liquidations' : 'conciliations'}/${item.id}`
+      const res = await fetch(endpoint, { method: 'DELETE' })
+
+      if (!res.ok) throw new Error('Error al eliminar registro')
+
+      toast.success('Registro eliminado correctamente')
+      setOpenAlert(false)
+
+      if (onDelete) onDelete(item.id)
+      else router.refresh()
+
+    } catch (err) {
+      toast.error('Error al eliminar el registro')
     }
   }
 
@@ -399,22 +304,69 @@ function ActionsMenu({ item, type }: { item: DataType; type: 'liquidation' | 'co
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem asChild>
-            <FileDetailsDialog item={item} type={type} />
+          {/* Cambiar esta parte: */}
+          <DropdownMenuItem onClick={() => setOpenDetails(true)}>
+            <IconFileText className="mr-2 h-4 w-4" />
+            Ver Detalles
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleCopyAndRedirect}>
             <IconDownload className="mr-2 h-4 w-4" />
             Descargar Archivo
           </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setOpenAlert(true)}
+            className="text-red-600 focus:text-red-700"
+          >
+            <IconTrash className="mr-2 h-4 w-4" />
+            Eliminar Registro
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Drawer para Ver Detalles */}
+      <FileDetailsDialog 
+        item={item} 
+        type={type} 
+        open={openDetails} 
+        onOpenChange={setOpenDetails} 
+      />
+
+      {/* Alert Dialog para confirmar eliminación */}
+      <AlertDialog open={openAlert} onOpenChange={setOpenAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar registro</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente el registro y sus archivos asociados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
 
 // File Details Dialog Component
-function FileDetailsDialog({ item, type }: { item: DataType; type: 'liquidation' | 'conciliation' }) {
-  const [open, setOpen] = React.useState(false)
+function FileDetailsDialog({ 
+  item, 
+  type, 
+  open, 
+  onOpenChange 
+}: { 
+  item: DataType; 
+  type: 'liquidation' | 'conciliation';
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const router = useRouter()
 
   const handleCopyPath = (path: string) => {
@@ -426,146 +378,138 @@ function FileDetailsDialog({ item, type }: { item: DataType; type: 'liquidation'
     navigator.clipboard.writeText(path)
     toast.success('Ruta copiada, redirigiendo...')
     router.push('/download')
-    setOpen(false)
+    onOpenChange(false)
   }
 
   return (
-    <>
-      <div className="flex items-center w-full cursor-pointer" onClick={() => setOpen(true)}>
-        <IconFileText className="mr-2 h-4 w-4" />
-        Ver Detalles
-      </div>
+    <Drawer open={open} onOpenChange={onOpenChange} direction="right">
+      <DrawerContent className="h-full w-full sm:max-w-md">
+        <DrawerHeader>
+          <DrawerTitle>Detalles del Registro</DrawerTitle>
+          <DrawerDescription>
+            {item.collector.name} - {item.period}
+          </DrawerDescription>
+        </DrawerHeader>
 
-      <Drawer open={open} onOpenChange={setOpen} direction="right">
-        <DrawerContent className="h-full w-full sm:max-w-md">
-          <DrawerHeader>
-            <DrawerTitle>Detalles del Registro</DrawerTitle>
-            <DrawerDescription>
-              {item.collector.name} - {item.period}
-            </DrawerDescription>
-          </DrawerHeader>
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <div className="space-y-6">
+            {/* Informacion General */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Informacion General</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Recaudador</Label>
+                  <p className="text-sm font-medium">{item.collector.name}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Periodo</Label>
+                    <p className="text-sm font-medium">{item.period}</p>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Estado</Label>
+                    <Badge variant={
+                      type === 'liquidation' 
+                        ? ('liquidationsState' in item && item.liquidationsState ? 'default' : 'secondary')
+                        : ('conciliationsState' in item && item.conciliationsState ? 'default' : 'secondary')
+                    }>
+                      {type === 'liquidation'
+                        ? ('liquidationsState' in item && item.liquidationsState ? 'Completado' : 'Pendiente')
+                        : ('conciliationsState' in item && item.conciliationsState ? 'Completado' : 'Pendiente')
+                      }
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Creado Por</Label>
+                  <p className="text-sm font-medium">{getCreatedByName(item.createdBy)}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Fecha de Creacion</Label>
+                  <p className="text-sm font-medium">
+                    {format(new Date(item.createdAt), "PPP 'a las' p", { locale: es })}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
-          <div className="flex-1 overflow-y-auto px-4 pb-4">
-            <div className="space-y-6">
-              {/* Informacion General */}
+            {/* Archivos */}
+            {item.files && item.files.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Informacion General</CardTitle>
+                  <CardTitle className="text-base">Archivos ({item.files.length})</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Recaudador</Label>
-                    <p className="text-sm font-medium">{item.collector.name}</p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Periodo</Label>
-                      <p className="text-sm font-medium">{item.period}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Estado</Label>
-                      <Badge variant={
-                        type === 'liquidation' 
-                          ? ('liquidationsState' in item && item.liquidationsState ? 'default' : 'secondary')
-                          : ('conciliationsState' in item && item.conciliationsState ? 'default' : 'secondary')
-                      }>
-                        {type === 'liquidation'
-                          ? ('liquidationsState' in item && item.liquidationsState ? 'Completado' : 'Pendiente')
-                          : ('conciliationsState' in item && item.conciliationsState ? 'Completado' : 'Pendiente')
-                        }
-                      </Badge>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Creado Por</Label>
-                    <p className="text-sm font-medium">{getCreatedByName(item.createdBy)}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Fecha de Creacion</Label>
-                    <p className="text-sm font-medium">
-                      {format(new Date(item.createdAt), "PPP 'a las' p", { locale: es })}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Archivos */}
-              {item.files && item.files.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Archivos ({item.files.length})</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {item.files.map((file, index) => (
-                      <div key={index} className="space-y-3 p-4 border rounded-lg bg-muted/50">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 space-y-2">
-                            <div>
-                              <Label className="text-xs text-muted-foreground">Tipo de Archivo</Label>
-                              <Badge variant="outline" className="mt-1">
-                                {getFileTypeName(
-                                  type === 'liquidation' && 'liquidationFilesType' in file
-                                    ? file.liquidationFilesType
-                                    : 'conciliationFilesType' in file
-                                    ? file.conciliationFilesType
-                                    : 0
-                                )}
-                              </Badge>
-                            </div>
-                            
-                            <div>
-                              <Label className="text-xs text-muted-foreground">Nombre del Archivo</Label>
-                              <div className="flex items-center gap-2 mt-1">
-                                <p className="text-xs font-mono bg-background p-2 rounded border flex-1 break-all">
-                                  {cleanS3Path(file.filePath)}
-                                </p>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleCopyPath(cleanS3Path(file.filePath))}
-                                  className="shrink-0"
-                                >
-                                  <IconCopy className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-
-                            <div>
-                              <Label className="text-xs text-muted-foreground">Fecha de Creacion</Label>
-                              <p className="text-sm">
-                                {format(new Date(file.createdAt), "PPP 'a las' p", { locale: es })}
+                  {item.files.map((file, index) => (
+                    <div key={index} className="space-y-3 p-4 border rounded-lg bg-muted/50">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 space-y-2">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Tipo de Archivo</Label>
+                            <Badge variant="outline" className="mt-1">
+                              {getFileTypeName(
+                                type === 'liquidation' && 'liquidationFilesType' in file
+                                  ? file.liquidationFilesType
+                                  : 'conciliationFilesType' in file
+                                  ? file.conciliationFilesType
+                                  : 0
+                              )}
+                            </Badge>
+                          </div>
+                          
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Nombre del Archivo</Label>
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className="text-xs font-mono bg-background p-2 rounded border flex-1 break-all">
+                                {cleanS3Path(file.filePath)}
                               </p>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleCopyPath(cleanS3Path(file.filePath))}
+                                className="shrink-0"
+                              >
+                                <IconCopy className="h-3 w-3" />
+                              </Button>
                             </div>
                           </div>
+
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Fecha de Creacion</Label>
+                            <p className="text-sm">
+                              {format(new Date(file.createdAt), "PPP 'a las' p", { locale: es })}
+                            </p>
+                          </div>
                         </div>
-
-                        <Button
-                          size="sm"
-                          className="w-full"
-                          onClick={() => handleDownload(cleanS3Path(file.filePath))}
-                        >
-                          <IconDownload className="mr-2 h-4 w-4" />
-                          Descargar este Archivo
-                        </Button>
                       </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </div>
 
-          <DrawerFooter className="border-t">
-            <DrawerClose asChild>
-              <Button variant="outline">Cerrar</Button>
-            </DrawerClose>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-    </>
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => handleDownload(cleanS3Path(file.filePath))}
+                      >
+                        <IconDownload className="mr-2 h-4 w-4" />
+                        Descargar este Archivo
+                      </Button>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+
+        <DrawerFooter className="border-t">
+          <DrawerClose asChild>
+            <Button variant="outline">Cerrar</Button>
+          </DrawerClose>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   )
 }
-
 // DraggableRow Component
 function DraggableRow({ row, type }: { row: Row<DataType>, type: string }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
@@ -592,6 +536,15 @@ function DraggableRow({ row, type }: { row: Row<DataType>, type: string }) {
   )
 }
 
+// TableCellViewer Component
+function TableCellViewer({ item, type }: { item: DataType; type: 'liquidation' | 'conciliation' }) {
+  return (
+    <div className="font-semibold">
+      {item.collector.name}
+    </div>
+  )
+}
+
 // Main DataTable Component
 export function DataTable() {
   const [currentView, setCurrentView] = React.useState<'liquidations' | 'conciliations'>('conciliations')
@@ -612,30 +565,212 @@ export function DataTable() {
     useSensor(TouchSensor, {}),
     useSensor(KeyboardSensor, {})
   )
+  const [searchCollector, setSearchCollector] = React.useState('')
+  const [searchPeriod, setSearchPeriod] = React.useState('')
 
-  // Cargar datos segun la vista
-React.useEffect(() => {
-  async function loadData() {
-    setLoading(true)
-    try {
-      const result = await fetchData(currentView)
-      setData(result)
-    } catch (error) {
-      console.error('Error loading data:', error)
-    } finally {
-      setLoading(false)
-    }
+  // Función para eliminar items
+  const handleDeleteItem = (deletedId: number) => {
+    setData(prevData => prevData.filter(item => item.id !== deletedId))
   }
 
-  loadData()
-}, [currentView])
+  // Cargar datos según la vista
+  React.useEffect(() => {
+    async function loadData() {
+      setLoading(true)
+      try {
+        const result = await fetchData(currentView, searchCollector, searchPeriod)
+        setData(result)
+      } catch (error) {
+        console.error('Error loading data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [currentView, searchCollector, searchPeriod])
+
+  // Definir columnas dentro del componente usando useMemo
+  const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidationSchema>>[] => [
+    {
+      id: "drag",
+      header: () => null,
+      cell: ({ row }) => <DragHandle id={row.original.id} />,
+    },
+    {
+      accessorKey: "collector.name",
+      header: "Recaudador",
+      cell: ({ row }) => <TableCellViewer item={row.original} type="liquidation" />,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "liquidationsType",
+      header: "Tipo",
+      cell: ({ row }) => (
+        <Badge variant="outline" className="text-muted-foreground px-1.5">
+          {row.original.liquidationsType === 1 ? "Diario" : "Mensual"}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "period",
+      header: "Periodo",
+      cell: ({ row }) => (
+        <div className="w-24 font-mono text-sm">
+          {formatPeriod(row.original.period)}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "liquidationsState",
+      header: "Estado",
+      cell: ({ row }) => (
+        <Badge variant={row.original.liquidationsState ? "default" : "secondary"}>
+          {row.original.liquidationsState ? (
+            <IconCircleCheckFilled className="w-4 h-4 mr-1" />
+          ) : (
+            <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-500" />
+          )}
+          {row.original.liquidationsState ? "Completado" : "Pendiente"}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "amountCollector",
+      header: () => <div className="w-full text-right">Monto Recaudador</div>,
+      cell: ({ row }) => (
+        <div className="text-right font-medium">S/ {parseFloat(row.original.amountCollector).toFixed(2)}</div>
+      ),
+    },
+    {
+      accessorKey: "amountLiquidation",
+      header: () => <div className="w-full text-right">Monto Liquidacion</div>,
+      cell: ({ row }) => (
+        <div className="text-right font-medium">S/ {parseFloat(row.original.amountLiquidation).toFixed(2)}</div>
+      ),
+    },
+    {
+      accessorKey: "differenceAmounts",
+      header: () => <div className="w-full text-right">Diferencia</div>,
+      cell: ({ row }) => {
+        const diff = parseFloat(row.original.differenceAmounts)
+        return (
+          <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+            S/ {diff.toFixed(2)}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "createdBy",
+      header: "Creado Por",
+      cell: ({ row }) => getCreatedByName(row.original.createdBy),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <ActionsMenu 
+          item={row.original} 
+          type="liquidation" 
+          onDelete={handleDeleteItem}
+        />
+      ),
+    },
+  ], [])
+
+  const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliationSchema>>[] => [
+    {
+      id: "drag",
+      header: () => null,
+      cell: ({ row }) => <DragHandle id={row.original.id} />,
+    },
+    {
+      accessorKey: "collector.name",
+      header: "Recaudador",
+      cell: ({ row }) => <TableCellViewer item={row.original} type="conciliation" />,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "conciliationsType",
+      header: "Tipo",
+      cell: ({ row }) => (
+        <Badge variant="outline" className="text-muted-foreground px-1.5">
+          {row.original.conciliationsType === 1 ? "Diario" : "Mensual"}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "period",
+      header: "Periodo",
+      cell: ({ row }) => (
+        <div className="w-24 font-mono text-sm">
+          {formatPeriod(row.original.period)}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "conciliationsState",
+      header: "Estado",
+      cell: ({ row }) => (
+        <Badge variant={row.original.conciliationsState ? "default" : "secondary"}>
+          {row.original.conciliationsState ? (
+            <IconCircleCheckFilled className="w-4 h-4 mr-1" />
+          ) : (
+            <IconLoader className="w-4 h-4 mr-1 animate-spin" />
+          )}
+          {row.original.conciliationsState ? "Completado" : "En Proceso"}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "amount",
+      header: () => <div className="w-full text-right">Monto</div>,
+      cell: ({ row }) => (
+        <div className="text-right font-medium">S/ {parseFloat(row.original.amount).toFixed(2)}</div>
+      ),
+    },
+    {
+      accessorKey: "amountCollector",
+      header: () => <div className="w-full text-right">Monto Recaudador</div>,
+      cell: ({ row }) => (
+        <div className="text-right font-medium">S/ {parseFloat(row.original.amountCollector).toFixed(2)}</div>
+      ),
+    },
+    {
+      accessorKey: "differenceAmounts",
+      header: () => <div className="w-full text-right">Diferencia</div>,
+      cell: ({ row }) => {
+        const diff = parseFloat(row.original.differenceAmounts)
+        return (
+          <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+            S/ {diff.toFixed(2)}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "createdBy",
+      header: "Creado Por",
+      cell: ({ row }) => getCreatedByName(row.original.createdBy),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <ActionsMenu 
+          item={row.original} 
+          type="conciliation" 
+          onDelete={handleDeleteItem}
+        />
+      ),
+    },
+  ], [])
 
   const dataIds = React.useMemo<UniqueIdentifier[]>(
     () => data?.map(({ id }) => id) || [],
     [data]
   )
 
-  // Determinar columnas segun el tipo actual
+  // Determinar columnas según el tipo actual
   const columns = currentView === 'liquidations' 
     ? liquidationColumns 
     : currentView === 'conciliations'
@@ -698,8 +833,32 @@ React.useEffect(() => {
           <TabsTrigger value="liquidations">Liquidaciones</TabsTrigger>
         </TabsList>
 
-        {/* Acciones */}
+        {/* Acciones y filtros */}
         <div className="flex items-center gap-2">
+          <Input
+              type="text"
+              placeholder="Buscar por recaudador..."
+              value={searchCollector}
+              onChange={(e) => setSearchCollector(e.target.value)}
+              className="w-48"
+            />
+            <PeriodPicker
+              value={searchPeriod}
+              onChange={setSearchPeriod}
+            />
+            {(searchCollector || searchPeriod) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSearchCollector('')
+                  setSearchPeriod('')
+                }}
+              >
+                Limpiar
+              </Button>
+            )}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -777,10 +936,10 @@ React.useEffect(() => {
 
         {/* Paginacion */}
         <div className="flex items-center justify-between px-4 py-4">
-          <div className="text-sm text-muted-foreground">
+          {/* <div className="text-sm text-muted-foreground">
             {table.getFilteredSelectedRowModel().rows.length} de{" "}
             {table.getFilteredRowModel().rows.length} fila(s) seleccionadas
-          </div>
+          </div> */}
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -823,14 +982,5 @@ React.useEffect(() => {
         </div>
       </TabsContent>
     </Tabs>
-  )
-}
-
-// TableCellViewer Component (simplificado - ya no necesario el drawer complejo)
-function TableCellViewer({ item, type }: { item: DataType; type: 'liquidation' | 'conciliation' }) {
-  return (
-    <div className="font-semibold">
-      {item.collector.name}
-    </div>
   )
 }
