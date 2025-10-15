@@ -56,7 +56,7 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
           <SelectValue placeholder="Periodo" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="day">Día</SelectItem>
+          <SelectItem value="day">Dia</SelectItem>
           <SelectItem value="month">Mes</SelectItem>
         </SelectContent>
       </Select>
@@ -98,7 +98,7 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
   )
 }
 
-// Función auxiliar para mostrar el periodo formateado
+// Funcion auxiliar para mostrar el periodo formateado
 function formatPeriodDisplay(value: string, type: "day" | "month"): string {
   if (!value) return ""
 

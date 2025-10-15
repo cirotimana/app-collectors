@@ -129,7 +129,7 @@ function cleanS3Path(path: string): string {
 function formatPeriod(period: string): string {
   if (!period) return ''
   
-  // Si es formato día: 20251013 -> 2025-10-13
+  // Si es formato dia: 20251013 -> 2025-10-13
   if (period.length === 8) {
     return `${period.slice(0, 4)}-${period.slice(4, 6)}-${period.slice(6, 8)}`
   }
@@ -331,13 +331,13 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
         onOpenChange={setOpenDetails} 
       />
 
-      {/* Alert Dialog para confirmar eliminación */}
+      {/* Alert Dialog para confirmar eliminacion */}
       <AlertDialog open={openAlert} onOpenChange={setOpenAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar registro</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el registro y sus archivos asociados.
+              Esta accion no se puede deshacer. Se eliminara permanentemente el registro y sus archivos asociados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -568,12 +568,12 @@ export function DataTable() {
   const [searchCollector, setSearchCollector] = React.useState('')
   const [searchPeriod, setSearchPeriod] = React.useState('')
 
-  // Función para eliminar items
+  // Funcion para eliminar items
   const handleDeleteItem = (deletedId: number) => {
     setData(prevData => prevData.filter(item => item.id !== deletedId))
   }
 
-  // Cargar datos según la vista
+  // Cargar datos segun la vista
   React.useEffect(() => {
     async function loadData() {
       setLoading(true)
@@ -629,7 +629,7 @@ export function DataTable() {
           {row.original.liquidationsState ? (
             <IconCircleCheckFilled className="w-4 h-4 mr-1" />
           ) : (
-            <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-500" />
+            <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-600" />
           )}
           {row.original.liquidationsState ? "Completado" : "Pendiente"}
         </Badge>
@@ -716,15 +716,15 @@ export function DataTable() {
           {row.original.conciliationsState ? (
             <IconCircleCheckFilled className="w-4 h-4 mr-1" />
           ) : (
-            <IconLoader className="w-4 h-4 mr-1 animate-spin" />
+            <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-600" />
           )}
-          {row.original.conciliationsState ? "Completado" : "En Proceso"}
+          {row.original.conciliationsState ? "Completado" : "Pendiente"}
         </Badge>
       ),
     },
     {
       accessorKey: "amount",
-      header: () => <div className="w-full text-right">Monto</div>,
+      header: () => <div className="w-full text-right">Monto Calimaco</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">S/ {parseFloat(row.original.amount).toFixed(2)}</div>
       ),
@@ -770,7 +770,7 @@ export function DataTable() {
     [data]
   )
 
-  // Determinar columnas según el tipo actual
+  // Determinar columnas segun el tipo actual
   const columns = currentView === 'liquidations' 
     ? liquidationColumns 
     : currentView === 'conciliations'
