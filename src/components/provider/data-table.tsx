@@ -125,6 +125,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
+// Funcion para formatear montos en formato bancario
+function formatCurrency(amount: number | string): string {
+  // Convertir a numero si es string
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  
+  // Verificar si es un numero valido
+  if (isNaN(numAmount)) return 'S/ 0.00';
+  
+  // Formatear el numero con separadores de miles y 2 decimales
+  return `S/ ${numAmount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;
+}
+
 // Funcion de fallback para copiar al portapapeles
 function fallbackCopyToClipboard(text: string): boolean {
   try {
@@ -823,14 +835,14 @@ export function DataTable() {
       accessorKey: "amountCollector",
       header: () => <div className="w-full text-right">Monto Recaudador</div>,
       cell: ({ row }) => (
-        <div className="text-right font-medium">S/ {parseFloat(row.original.amountCollector).toFixed(2)}</div>
+        <div className="text-right font-medium">{formatCurrency(row.original.amountCollector)}</div>
       ),
     },
     {
       accessorKey: "amountLiquidation",
       header: () => <div className="w-full text-right">Monto Liquidacion</div>,
       cell: ({ row }) => (
-        <div className="text-right font-medium">S/ {parseFloat(row.original.amountLiquidation).toFixed(2)}</div>
+        <div className="text-right font-medium">{formatCurrency(row.original.amountLiquidation)}</div>
       ),
     },
     {
@@ -840,7 +852,7 @@ export function DataTable() {
         const diff = parseFloat(row.original.differenceAmounts)
         return (
           <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-            S/ {diff.toFixed(2)}
+            {formatCurrency(row.original.differenceAmounts)}
           </div>
         )
       },
@@ -910,14 +922,14 @@ export function DataTable() {
       accessorKey: "amount",
       header: () => <div className="w-full text-right">Monto Calimaco</div>,
       cell: ({ row }) => (
-        <div className="text-right font-medium">S/ {parseFloat(row.original.amount).toFixed(2)}</div>
+        <div className="text-right font-medium">{formatCurrency(row.original.amount)}</div>
       ),
     },
     {
       accessorKey: "amountCollector",
       header: () => <div className="w-full text-right">Monto Recaudador</div>,
       cell: ({ row }) => (
-        <div className="text-right font-medium">S/ {parseFloat(row.original.amountCollector).toFixed(2)}</div>
+        <div className="text-right font-medium">{formatCurrency(row.original.amountCollector)}</div>
       ),
     },
     {
@@ -927,7 +939,7 @@ export function DataTable() {
         const diff = parseFloat(row.original.differenceAmounts)
         return (
           <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-            S/ {diff.toFixed(2)}
+            {formatCurrency(row.original.differenceAmounts)}
           </div>
         )
       },
