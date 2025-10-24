@@ -256,13 +256,13 @@ function formatPeriod(period: string): string {
   if (!period) return ''
   
   // Si es formato dia: 20251013 -> 2025-10-13
-  if (period.length === 8) {
-    return `${period.slice(0, 4)}-${period.slice(4, 6)}-${period.slice(6, 8)}`
+  if (period.length === 17) {
+    return `${period.slice(2, 4)}/${period.slice(4, 6)}/${period.slice(6, 8)} - ${period.slice(11, 13)}/${period.slice(13, 15)}/${period.slice(15, 17)} `
   }
   
   // Si es formato mes: 202509 -> 2025-09
-  if (period.length === 6) {
-    return `${period.slice(0, 4)}-${period.slice(4, 6)}`
+  if (period.length === 8) {
+    return `${period.slice(0, 4)}-${period.slice(4, 6)}-${period.slice(6, 8)}`
   }
   
   return period
@@ -819,28 +819,31 @@ export function DataTable() {
     },
     {
       accessorKey: "liquidationsState",
-      header: "Estado",
+      header: () => <div className="text-center w-32">Estado</div>,
       cell: ({ row }) => (
-        <Badge variant={row.original.liquidationsState ? "default" : "secondary"}>
-          {row.original.liquidationsState ? (
-            <IconCircleCheckFilled className="w-4 h-4 mr-1" />
-          ) : (
-            <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-600" />
-          )}
-          {row.original.liquidationsState ? "Completado" : "Pendiente"}
-        </Badge>
+        <div className="flex justify-center w-32">
+          <Badge variant={row.original.liquidationsState ? "default" : "secondary"}>
+            {row.original.liquidationsState ? (
+              <IconCircleCheckFilled className="w-4 h-4 mr-1" />
+            ) : (
+              <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-600" />
+            )}
+            {row.original.liquidationsState ? "Completado" : "Pendiente"}
+          </Badge>
+        </div>
       ),
     },
+
     {
       accessorKey: "amountCollector",
-      header: () => <div className="w-full text-right">Monto Recaudador</div>,
+      header: () => <div className="w-full text-right">Monto Neto R.</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">{formatCurrency(row.original.amountCollector)}</div>
       ),
     },
     {
       accessorKey: "amountLiquidation",
-      header: () => <div className="w-full text-right">Monto Liquidacion</div>,
+      header: () => <div className="w-full text-right">Monto Neto L.</div>,
       cell: ({ row }) => (
         <div className="text-right font-medium">{formatCurrency(row.original.amountLiquidation)}</div>
       ),
@@ -906,16 +909,18 @@ export function DataTable() {
     },
     {
       accessorKey: "conciliationsState",
-      header: "Estado",
+      header: () => <div className="text-center w-32">Estado</div>,
       cell: ({ row }) => (
-        <Badge variant={row.original.conciliationsState ? "default" : "secondary"}>
-          {row.original.conciliationsState ? (
-            <IconCircleCheckFilled className="w-4 h-4 mr-1" />
-          ) : (
-            <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-600" />
-          )}
-          {row.original.conciliationsState ? "Completado" : "Pendiente"}
-        </Badge>
+        <div className="flex justify-center w-32">
+          <Badge variant={row.original.conciliationsState ? "default" : "secondary"}>
+            {row.original.conciliationsState ? (
+              <IconCircleCheckFilled className="w-4 h-4 mr-1" />
+            ) : (
+              <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-600" />
+            )}
+            {row.original.conciliationsState ? "Completado" : "Pendiente"}
+          </Badge>
+        </div>
       ),
     },
     {

@@ -9,111 +9,22 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { Settings, Calendar as CalendarIcon, Loader2, Server, ArrowUpRight, AlertCircle } from "lucide-react";
-import { format, isAfter, isSameMonth, startOfMonth, isToday, isFuture } from "date-fns";
+import { format, isAfter, isBefore, addDays, isFuture } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { MonthPicker } from "@/components/ui/monthpicker";
 import { ConfirmationDialog } from "@/components/provider/confirmation-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { DateRange } from "react-day-picker";
 
 export default function ProcessPage() {
   const [tipo, setTipo] = useState("conciliacion");
   const [recaudador, setRecaudador] = useState("kashio");
-  const [periodo, setPeriodo] = useState("DIA");
-  const [date, setDate] = useState<Date>();
+  const [range, setRange] = useState<DateRange | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const apiKey = process.env.NEXT_PUBLIC_API_KEY;
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-  // Funcion para validar la fecha
-  const fechaEsValida = useMemo(() => {
-    if (!date) return true;
-    
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0); // Normalizar la hora
-    
-    if (periodo === "DIA") {
-      const fechaSeleccionada = new Date(date);
-      fechaSeleccionada.setHours(0, 0, 0, 0);
-      
-      // Calcular limites segun tipo y recaudador
-      let diasAtras = 1; // Por defecto para conciliacion (D-1)
-      
-      if (tipo === "liquidacion") {
-        if (recaudador === "kashio") {
-          diasAtras = 2; // Kashio hasta D-2
-        } else if (recaudador === "tupay") {
-          diasAtras = 7; // Tupay hasta D-7
-        }
-      }
-      
-      // Calcular la fecha limite
-      const fechaLimite = new Date(hoy);
-      fechaLimite.setDate(fechaLimite.getDate() - diasAtras);
-      
-      // La fecha debe ser menor o igual a la fecha limite y no debe ser futura
-      return fechaSeleccionada <= fechaLimite && !isFuture(fechaSeleccionada);
-      
-    } else {
-      // Para meses: no puede ser el mes actual ni meses futuros
-      const mesSeleccionado = startOfMonth(date);
-      const mesActual = startOfMonth(hoy);
-      return !isSameMonth(mesSeleccionado, mesActual) && !isAfter(mesSeleccionado, mesActual);
-    }
-  }, [date, periodo, tipo, recaudador]);
-
-  // Funcion para obtener el mensaje de error
-  const getMensajeErrorFecha = () => {
-    if (!date) return "";
-    
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    
-    if (periodo === "DIA") {
-      const fechaSeleccionada = new Date(date);
-      fechaSeleccionada.setHours(0, 0, 0, 0);
-      
-      if (isFuture(fechaSeleccionada)) {
-        return "No puedes seleccionar una fecha futura";
-      }
-      
-      // Calcular el limite segun el tipo y recaudador
-      let diasAtras = 1;
-      let mensajeLimite = "el dia de ayer";
-      
-      if (tipo === "liquidacion") {
-        if (recaudador === "kashio") {
-          diasAtras = 2;
-          mensajeLimite = "hasta hace 2 dias";
-        } else if (recaudador === "tupay") {
-          diasAtras = 7;
-          mensajeLimite = "hasta hace 7 dias";
-        }
-      }
-      
-      const fechaLimite = new Date(hoy);
-      fechaLimite.setDate(fechaLimite.getDate() - diasAtras);
-      
-      if (fechaSeleccionada > fechaLimite) {
-        if (tipo === "liquidacion") {
-          return `Para liquidacion de ${recaudador.charAt(0).toUpperCase() + recaudador.slice(1)}, solo puedes seleccionar fechas ${mensajeLimite} o anteriores`;
-        } else {
-          return "No puedes seleccionar el dia de hoy";
-        }
-      }
-      
-    } else {
-      const mesSeleccionado = startOfMonth(date);
-      const mesActual = startOfMonth(hoy);
-      
-      if (isSameMonth(mesSeleccionado, mesActual)) return "No puedes seleccionar el mes actual";
-      if (isAfter(mesSeleccionado, mesActual)) return "No puedes seleccionar un mes futuro";
-    }
-    
-    return "";
-  };
 
   const endpoints: Record<string, Record<string, string>> = {
     conciliacion: {
@@ -133,97 +44,97 @@ export default function ProcessPage() {
     },
   };
 
-  const formatearFecha = (date: Date) => {
-    return format(date, "ddMMyyyy");
-  };
+  const fromDate = range?.from;
+  const toDate = range?.to || range?.from;
 
-  const formatearMes = (date: Date) => {
-    return format(date, "MMyyyy");
-  };
-
-  // Funcion para deshabilitar fechas en el calendario
-  const deshabilitarFechas = (date: Date) => {
+  // Validacion del rango
+  const rangoEsValido = useMemo(() => {
+    if (!fromDate) return true;
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    
-    const fechaCheck = new Date(date);
-    fechaCheck.setHours(0, 0, 0, 0);
-    
-    if (periodo === "DIA") {
-      // Deshabilitar fechas futuras
-      if (isFuture(fechaCheck)) return true;
-      
-      // Calcular el limite segun tipo y recaudador
-      let diasAtras = 1;
-      
-      if (tipo === "liquidacion") {
-        if (recaudador === "kashio") {
-          diasAtras = 2;
-        } else if (recaudador === "tupay") {
-          diasAtras = 7;
-        }
-      }
-      
-      const fechaLimite = new Date(hoy);
-      fechaLimite.setDate(fechaLimite.getDate() - diasAtras);
-      
-      // Deshabilitar si la fecha es mayor que el limite permitido
-      return fechaCheck > fechaLimite;
-      
-    } else {
-      // Para el month picker, deshabilitar meses
-      const mesSeleccionado = startOfMonth(date);
-      const mesActual = startOfMonth(hoy);
-      return isSameMonth(mesSeleccionado, mesActual) || isAfter(mesSeleccionado, mesActual);
+
+    const fechaDesde = new Date(fromDate);
+    const fechaHasta = toDate ? new Date(toDate) : new Date(fromDate);
+    fechaDesde.setHours(0, 0, 0, 0);
+    fechaHasta.setHours(0, 0, 0, 0);
+
+    // Reglas por tipo y recaudador
+    let diasAtras = 1; // por defecto
+    if (tipo === "liquidacion") {
+      if (recaudador === "kashio") diasAtras = 2;
+      else if (recaudador === "tupay") diasAtras = 7;
     }
+
+    const fechaLimite = addDays(hoy, -diasAtras);
+
+    // Validaciones:
+    if (isFuture(fechaDesde) || isFuture(fechaHasta)) return false; // no futuras
+    if (isAfter(fechaDesde, fechaHasta)) return false; // rango invertido
+    if (isAfter(fechaDesde, fechaLimite) || isAfter(fechaHasta, fechaLimite)) return false; // no mas alla del limite
+    return true;
+  }, [fromDate, toDate, tipo, recaudador]);
+
+  const getMensajeErrorRango = () => {
+    if (!fromDate) return "";
+
+    let diasAtras = 1;
+    let mensajeLimite = "hasta ayer";
+
+    if (tipo === "liquidacion") {
+      if (recaudador === "kashio") {
+        diasAtras = 2;
+        mensajeLimite = "hasta hace 2 dias";
+      } else if (recaudador === "tupay") {
+        diasAtras = 7;
+        mensajeLimite = "hasta hace 7 dias";
+      }
+    }
+
+    const hoy = new Date();
+    const fechaLimite = addDays(hoy, -diasAtras);
+
+    if (isFuture(fromDate) || isFuture(toDate || fromDate)) return "No puedes seleccionar fechas futuras.";
+    if (isAfter(fromDate, toDate || fromDate)) return "El rango esta invertido.";
+    if (isAfter(fromDate, fechaLimite) || isAfter(toDate || fromDate, fechaLimite)) {
+      return `Para ${tipo} de ${recaudador}, solo puedes seleccionar fechas ${mensajeLimite} o anteriores.`;
+    }
+
+    return "";
   };
 
-  // Funcion que se llama al hacer clic en "Ejecutar Proceso"
+  const formatear = (d: Date) => format(d, "ddMMyyyy");
+
   const handleOpenConfirmation = () => {
-    if (!date) {
-      toast.error("Por favor selecciona una fecha");
+    if (!fromDate) {
+      toast.error("Selecciona un rango de fechas");
+      return;
+    }
+    if (!rangoEsValido) {
+      toast.error("Rango invalido", { description: getMensajeErrorRango() });
       return;
     }
 
-    if (!fechaEsValida) {
-      toast.error("Fecha no valida", {
-        description: getMensajeErrorFecha()
-      });
-      return;
-    }
-
-    const endpoint = endpoints[tipo]?.[recaudador.toLowerCase()];
+    const endpoint = endpoints[tipo]?.[recaudador];
     if (!endpoint) {
-      toast.error("Este recaudador aun no tiene endpoint configurado");
+      toast.error("Recaudador sin endpoint configurado");
       return;
     }
 
     setShowConfirmation(true);
   };
 
-  // Funcion que se ejecuta cuando se confirma en el dialogo
   const handleConfirmProcesar = async () => {
     setShowConfirmation(false);
-    
-    let periodoFinal = periodo;
-    if (tipo === 'liquidacion' && recaudador === 'kashio') {
-      periodoFinal = "DIA2";
-    }
 
-    if (tipo === 'liquidacion' && recaudador === 'tupay') {
-      periodoFinal = "DIA2";
-    }
+    const endpoint = endpoints[tipo]?.[recaudador];
+    if (!endpoint || !fromDate) return;
 
-    const endpoint = endpoints[tipo]?.[recaudador.toLowerCase()];
-    const dateParam = periodoFinal === "DIA" || periodoFinal === "DIA2" 
-      ? formatearFecha(date!) 
-      : formatearMes(date!);
-    const url = `${baseUrl}/digital/${endpoint}?period=${periodoFinal}&date_param=${dateParam}`;
+    const url = `${baseUrl}/digital/${endpoint}?from_date=${formatear(fromDate)}&to_date=${formatear(toDate || fromDate)}`;
 
-    console.log("enviando url", url);
+    console.log("URL enviada:", url);
 
     setIsLoading(true);
-    const toastId = toast.loading("Ejecutando proceso, por favor espere");
+    const toastId = toast.loading("Ejecutando proceso...");
 
     try {
       const res = await fetch(url, {
@@ -232,41 +143,45 @@ export default function ProcessPage() {
       });
 
       if (res.ok) {
-        toast.success("El proceso se ejecuto correctamente", {
-          id: toastId
-        });
+        toast.success("Proceso ejecutado correctamente", { id: toastId });
       } else {
         throw new Error(`Error ${res.status}`);
       }
     } catch (error: any) {
-      toast.error("Error de conexion", {
-        id: toastId,
-        description: error.message
-      });
+      toast.error("Error de conexion", { id: toastId, description: error.message });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Generar el mensaje de confirmacion para procesos
+  const deshabilitarFechas = (date: Date) => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    let diasAtras = 1;
+    if (tipo === "liquidacion") {
+      if (recaudador === "kashio") diasAtras = 2;
+      else if (recaudador === "tupay") diasAtras = 7;
+    }
+
+    const fechaLimite = addDays(hoy, -diasAtras);
+    return isFuture(date) || isAfter(date, fechaLimite);
+  };
+
   const getConfirmationMessage = () => {
-    const tipoTexto = tipo === "conciliacion" ? "conciliacion" : "liquidacion";
-    const fechaTexto = date ? (
-      periodo === "DIA" 
-        ? format(date, "dd/MM/yyyy", { locale: es })
-        : format(date, "MMMM yyyy", { locale: es })
-    ) : "fecha no seleccionada";
-    
-    return `Se esta enviando la ${tipoTexto} del recaudador ${recaudador.charAt(0).toUpperCase() + recaudador.slice(1)}, de la fecha ${fechaTexto}.`;
+    if (!fromDate) return "No se selecciono rango.";
+    const desde = format(fromDate, "dd/MM/yyyy");
+    const hasta = format(toDate || fromDate, "dd/MM/yyyy");
+    return `Se enviara la ${tipo} del recaudador ${recaudador}, del ${desde} al ${hasta}.`;
   };
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-bold text-gray-900">
-          Modulo de  <span className="text-red-600">Conciliaciones</span>
+          Modulo de <span className="text-red-600">Conciliaciones</span>
         </h1>
-        <p className="text-gray-600">Ejecuta procesos de conciliacion y liquidacion para lo recaudadores</p>
+        <p className="text-gray-600">Ejecuta procesos de conciliacion y liquidacion</p>
       </div>
 
       <Card className="border-red-100 shadow-lg">
@@ -276,10 +191,8 @@ export default function ProcessPage() {
               <Server className="w-6 h-6 text-red-600" />
             </div>
             <div>
-              <CardTitle>Gestion de procesos de conciliacion</CardTitle>
-              <CardDescription>
-                Ejecuta procesos de conciliacion y liquidacion segun el recaudador
-              </CardDescription>
+              <CardTitle>Gestion de procesos</CardTitle>
+              <CardDescription>Selecciona tipo, recaudador y rango de fechas</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -287,11 +200,9 @@ export default function ProcessPage() {
         <CardContent className="p-6 space-y-6">
           {/* Tipo */}
           <div className="space-y-2">
-            <Label htmlFor="tipo" className="text-sm font-semibold text-gray-700">
-              Tipo
-            </Label>
+            <Label>Tipo</Label>
             <Select value={tipo} onValueChange={setTipo}>
-              <SelectTrigger id="tipo" className="border-red-200 focus:ring-red-600">
+              <SelectTrigger className="border-red-200 focus:ring-red-600">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -303,11 +214,9 @@ export default function ProcessPage() {
 
           {/* Recaudador */}
           <div className="space-y-2">
-            <Label htmlFor="recaudador" className="text-sm font-semibold text-gray-700">
-              Recaudador
-            </Label>
+            <Label>Recaudador</Label>
             <Select value={recaudador} onValueChange={setRecaudador}>
-              <SelectTrigger id="recaudador" className="border-red-200 focus:ring-red-600">
+              <SelectTrigger className="border-red-200 focus:ring-red-600">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -320,104 +229,56 @@ export default function ProcessPage() {
             </Select>
           </div>
 
-          {/* Periodo */}
+          {/* Rango de Fechas */}
           <div className="space-y-2">
-            <Label htmlFor="periodo" className="text-sm font-semibold text-gray-700">
-              Periodo
-            </Label>
-            <Select value={periodo} onValueChange={setPeriodo}>
-              <SelectTrigger id="periodo" className="border-red-200 focus:ring-red-600">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="DIA">Dia</SelectItem>
-                {/* <SelectItem value="MES">Mes</SelectItem> */}
-                {tipo !== "liquidacion" && (
-                  <SelectItem value="MES">Mes</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Fecha */}
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold text-gray-700">
-              {periodo === "DIA" ? "Seleccionar Fecha" : "Seleccionar Mes"}
-            </Label>
-            
-            {periodo === "DIA" ? (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal border-red-200",
-                      !date && "text-muted-foreground",
-                      !fechaEsValida && "border-red-500 text-red-600"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? (
-                      format(date, "PPP", { locale: es })
+            <Label>Seleccionar rango de fechas</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  disabled={isLoading}
+                  className={cn(
+                    "w-full justify-start text-left font-normal border-red-200",
+                    !fromDate && "text-muted-foreground",
+                    !rangoEsValido && "border-red-500 text-red-600"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {fromDate ? (
+                    toDate ? (
+                      `${format(fromDate, "dd/MM/yyyy")} → ${format(toDate, "dd/MM/yyyy")}`
                     ) : (
-                      <span>Selecciona una fecha</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    initialFocus
-                    locale={es}
-                    disabled={deshabilitarFechas}
-                  />
-                </PopoverContent>
-              </Popover>
-            ) : (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal border-red-200",
-                      !date && "text-muted-foreground",
-                      !fechaEsValida && "border-red-500 text-red-600"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? (
-                      format(date, "MMMM yyyy", { locale: es })
-                    ) : (
-                      <span>Selecciona un mes</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <MonthPicker 
-                    onMonthSelect={setDate} 
-                    selectedMonth={date}
-                  />
-                </PopoverContent>
-              </Popover>
-            )}
+                      format(fromDate, "dd/MM/yyyy")
+                    )
+                  ) : (
+                    <span>Seleccionar rango</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="range"
+                  selected={range}
+                  onSelect={setRange}
+                  locale={es}
+                  numberOfMonths={2}
+                  disabled={isLoading ||deshabilitarFechas}
+                />
+              </PopoverContent>
+            </Popover>
 
-            {/* Alerta de fecha no valida */}
-            {date && !fechaEsValida && (
+            {fromDate && !rangoEsValido && (
               <Alert variant="destructive" className="py-2">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-sm">
-                  {getMensajeErrorFecha()}
-                </AlertDescription>
+                <AlertDescription className="text-sm">{getMensajeErrorRango()}</AlertDescription>
               </Alert>
             )}
           </div>
 
-          {/* Boton */}
+          {/* Boton ejecutar */}
           <Button
             onClick={handleOpenConfirmation}
-            disabled={isLoading || !date || !fechaEsValida}
+            disabled={isLoading || !fromDate || !rangoEsValido}
             className="w-full bg-gradient-to-r from-gray-900 to-gray-800 hover:from-red-600 hover:to-red-700 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
@@ -435,7 +296,7 @@ export default function ProcessPage() {
         </CardContent>
       </Card>
 
-      {/* Dialogo de confirmacion para procesos */}
+      {/* Dialogo de confirmacion */}
       <ConfirmationDialog
         open={showConfirmation}
         onOpenChange={setShowConfirmation}
