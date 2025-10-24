@@ -41,6 +41,7 @@ export default function ProcessPage() {
     liquidacion: {
       kashio: "execute-liqkashio",
       tupay: "execute-liqtupay",
+      pagoefectivo: "execute-liqpagoefectivo",
     },
   };
 
@@ -63,6 +64,7 @@ export default function ProcessPage() {
     if (tipo === "liquidacion") {
       if (recaudador === "kashio") diasAtras = 2;
       else if (recaudador === "tupay") diasAtras = 7;
+      else if (recaudador === "pagoefectivo") diasAtras = 7;
     }
 
     const fechaLimite = addDays(hoy, -diasAtras);
@@ -85,6 +87,9 @@ export default function ProcessPage() {
         diasAtras = 2;
         mensajeLimite = "hasta hace 2 dias";
       } else if (recaudador === "tupay") {
+        diasAtras = 7;
+        mensajeLimite = "hasta hace 7 dias";
+      } else if (recaudador === "pagoefectivo") {
         diasAtras = 7;
         mensajeLimite = "hasta hace 7 dias";
       }
@@ -162,6 +167,7 @@ export default function ProcessPage() {
     if (tipo === "liquidacion") {
       if (recaudador === "kashio") diasAtras = 2;
       else if (recaudador === "tupay") diasAtras = 7;
+      else if (recaudador === "pagoefectivo") diasAtras = 7;
     }
 
     const fechaLimite = addDays(hoy, -diasAtras);
