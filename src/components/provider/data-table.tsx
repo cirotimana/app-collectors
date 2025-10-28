@@ -252,30 +252,24 @@ const handleDirectDownload = async (filePath: string) => {
   }
 }
 
-function formatPeriod(period: string): string {
-  if (!period) return ''
-  
-  // Si es formato dia: 20251013 -> 2025-10-13
-  if (period.length === 17) {
-    return `${period.slice(2, 4)}/${period.slice(4, 6)}/${period.slice(6, 8)} - ${period.slice(11, 13)}/${period.slice(13, 15)}/${period.slice(15, 17)} `
-  }
-  
-  // Si es formato mes: 202509 -> 2025-09
-  if (period.length === 8) {
-    return `${period.slice(0, 4)}-${period.slice(4, 6)}-${period.slice(6, 8)}`
-  }
-  
-  return period
+
+
+function formatDateForAPI(dateStr: string): string {
+  if (!dateStr || dateStr.length !== 8) return ''
+  return `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`
 }
 
-// Schema para Liquidaciones
+
+
+// Schema actualizado para Liquidaciones
 export const liquidationSchema = z.object({
   id: z.number(),
   collector: z.object({
     name: z.string()
   }),
   liquidationsType: z.number(),
-  period: z.string(),
+  fromDate: z.string(), // CAMBIO: period -> fromDate
+  toDate: z.string(),   // NUEVO
   amountCollector: z.string(),
   amountLiquidation: z.string(),
   differenceAmounts: z.string(),
@@ -293,14 +287,15 @@ export const liquidationSchema = z.object({
   }))
 })
 
-// Schema para Conciliaciones
+// Schema actualizado para Conciliaciones
 export const conciliationSchema = z.object({
   id: z.number(),
   collector: z.object({
     name: z.string()
   }),
   conciliationsType: z.number(),
-  period: z.string(),
+  fromDate: z.string(), // CAMBIO: period -> fromDate
+  toDate: z.string(),   // NUEVO
   amount: z.string(),
   amountCollector: z.string(),
   differenceAmounts: z.string(),
@@ -323,35 +318,80 @@ type DataType = z.infer<typeof liquidationSchema> | z.infer<typeof conciliationS
 // API URL
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3040/api'
 
-// Funcion para fetch de datos
+
+
 async function fetchData(
-    type: string, 
-    collector?: string, 
-    period?: string
-  ): Promise<DataType[]> {
-    let endpoint = type === 'liquidations' ? '/liquidations' : '/conciliations'
-    
-    // Si hay filtro de periodo
-    if (period && period.trim()) {
-      endpoint += `/period/${period.trim()}`
+  type: string, 
+  collector?: string, 
+  dateRange?: string
+): Promise<DataType[]> {
+  let endpoint = type === 'liquidations' ? '/liquidations' : '/conciliations'
+  
+  try {
+    // Si hay filtro de rango de fechas
+    if (dateRange && dateRange.trim()) {
+      const range = dateRange.trim()
+      
+      if (range.includes('-')) {
+        // Rango de fechas: 20251001-20251015
+        const [fromDate, toDate] = range.split('-')
+        const from = formatDateForAPI(fromDate)
+        const to = formatDateForAPI(toDate)
+        endpoint += `/range?from=${from}&to=${to}`
+      } else {
+        // Fecha unica: 20251001
+        const from = formatDateForAPI(range)
+        const to = from
+        endpoint += `/range?from=${from}&to=${to}`
+      }
     } 
     // Si hay filtro de recaudador
     else if (collector && collector.trim()) {
       endpoint += `/collector/${encodeURIComponent(collector.trim())}`
     }
     
-    try {
-      const response = await fetch(`${API_URL}${endpoint}`)
-      if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`)
-      }
-      return await response.json()
-    } catch (error) {
-      console.error('Error fetching data:', error)
-      toast.error('Error al cargar los datos')
-      return []
+    console.log('Fetching from:', `${API_URL}${endpoint}`)
+    
+    const response = await fetch(`${API_URL}${endpoint}`)
+    if (!response.ok) {
+      throw new Error(`Error: ${response.statusText}`)
     }
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    toast.error('Error al cargar los datos')
+    return []
   }
+}
+
+
+// Funcion para formatear el periodo en la tabla
+function formatPeriod(fromDate: string, toDate?: string): string {
+  if (!fromDate) return ''
+  
+  // Formato: YYYY-MM-DD
+  const formatDate = (date: string) => {
+    if (date.length === 10 && date.includes('-')) {
+      // Ya esta en formato YYYY-MM-DD
+      const [year, month, day] = date.split('-')
+      return `${day}/${month}/${year}`
+    }
+    // Si es formato YYYYMMDD
+    if (date.length === 8) {
+      return `${date.slice(6, 8)}/${date.slice(4, 6)}/${date.slice(0, 4)}`
+    }
+    return date
+  }
+  
+  const from = formatDate(fromDate)
+  
+  if (toDate && toDate !== fromDate) {
+    const to = formatDate(toDate)
+    return `${from} - ${to}`
+  }
+  
+  return from
+}
 
 // Funcion para obtener el nombre completo del usuario
 function getCreatedByName(createdBy: { firstName: string; lastName: string } | undefined): string {
@@ -532,7 +572,7 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
   )
 }
 
-// File Details Dialog Component
+
 function FileDetailsDialog({ 
   item, 
   type, 
@@ -562,10 +602,6 @@ function FileDetailsDialog({
 
   const handleDownload = async (path: string) => {
     const success = await handleDirectDownload(path)
-    if (success) {
-      // No cerrar el drawer automaticamente
-      // onOpenChange(false)
-    }
   }
 
   return (
@@ -574,13 +610,12 @@ function FileDetailsDialog({
         <DrawerHeader>
           <DrawerTitle>Detalles del Registro</DrawerTitle>
           <DrawerDescription>
-            {item.collector.name} - {item.period}
+            {item.collector.name} - {formatPeriod(item.fromDate, item.toDate)}
           </DrawerDescription>
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto px-4 pb-4">
           <div className="space-y-6">
-            {/* Informacion General */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Informacion General</CardTitle>
@@ -592,22 +627,26 @@ function FileDetailsDialog({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-xs text-muted-foreground">Periodo</Label>
-                    <p className="text-sm font-medium">{item.period}</p>
+                    <Label className="text-xs text-muted-foreground">Fecha Desde</Label>
+                    <p className="text-sm font-medium">{formatPeriod(item.fromDate)}</p>
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground">Estado</Label>
-                    <Badge variant={
-                      type === 'liquidation' 
-                        ? ('liquidationsState' in item && item.liquidationsState ? 'default' : 'secondary')
-                        : ('conciliationsState' in item && item.conciliationsState ? 'default' : 'secondary')
-                    }>
-                      {type === 'liquidation'
-                        ? ('liquidationsState' in item && item.liquidationsState ? 'Completado' : 'Pendiente')
-                        : ('conciliationsState' in item && item.conciliationsState ? 'Completado' : 'Pendiente')
-                      }
-                    </Badge>
+                    <Label className="text-xs text-muted-foreground">Fecha Hasta</Label>
+                    <p className="text-sm font-medium">{formatPeriod(item.toDate)}</p>
                   </div>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Estado</Label>
+                  <Badge variant={
+                    type === 'liquidation' 
+                      ? ('liquidationsState' in item && item.liquidationsState ? 'default' : 'secondary')
+                      : ('conciliationsState' in item && item.conciliationsState ? 'default' : 'secondary')
+                  }>
+                    {type === 'liquidation'
+                      ? ('liquidationsState' in item && item.liquidationsState ? 'Completado' : 'Pendiente')
+                      : ('conciliationsState' in item && item.conciliationsState ? 'Completado' : 'Pendiente')
+                    }
+                  </Badge>
                 </div>
                 <div>
                   <Label className="text-xs text-muted-foreground">Creado Por</Label>
@@ -622,7 +661,6 @@ function FileDetailsDialog({
               </CardContent>
             </Card>
 
-            {/* Archivos */}
             {item.files && item.files.length > 0 && (
               <Card>
                 <CardHeader>
@@ -660,14 +698,6 @@ function FileDetailsDialog({
                               <p className="text-xs font-mono bg-background p-2 rounded border flex-1 break-all">
                                 {cleanS3Pathv(file.filePath)}
                               </p>
-                              {/* <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleCopyPath(cleanS3Pathv(file.filePath))}
-                                className="shrink-0"
-                              >
-                                <IconCopy className="h-3 w-3" />
-                              </Button> */}
                             </div>
                           </div>
 
@@ -706,7 +736,7 @@ function FileDetailsDialog({
   )
 }
 
-// DraggableRow Component
+
 function DraggableRow({ row, type }: { row: Row<DataType>, type: string }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
     id: row.original.id,
@@ -770,10 +800,12 @@ export function DataTable() {
   }
 
   // Cargar datos segun la vista
+  // Actualizar el useEffect de carga de datos
   React.useEffect(() => {
     async function loadData() {
       setLoading(true)
       try {
+        // Ahora usamos dateRange en lugar de period
         const result = await fetchData(currentView, searchCollector, searchPeriod)
         setData(result)
       } catch (error) {
@@ -786,185 +818,206 @@ export function DataTable() {
     loadData()
   }, [currentView, searchCollector, searchPeriod])
 
-  // Definir columnas dentro del componente usando useMemo
-  const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidationSchema>>[] => [
-    {
-      id: "drag",
-      header: () => null,
-      cell: ({ row }) => <DragHandle id={row.original.id} />,
-    },
-    {
-      accessorKey: "collector.name",
-      header: "Recaudador",
-      cell: ({ row }) => <TableCellViewer item={row.original} type="liquidation" />,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "liquidationsType",
-      header: "Tipo",
-      cell: ({ row }) => (
-        <Badge variant="outline" className="text-muted-foreground px-1.5">
-          {row.original.liquidationsType === 1 ? "Diario" : "Mensual"}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: "period",
-      header: "Periodo",
-      cell: ({ row }) => (
-        <div className="w-24 font-mono text-sm">
-          {formatPeriod(row.original.period)}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "liquidationsState",
-      header: () => <div className="text-center w-32">Estado</div>,
-      cell: ({ row }) => (
-        <div className="flex justify-center w-32">
-          <Badge variant={row.original.liquidationsState ? "default" : "secondary"}>
-            {row.original.liquidationsState ? (
-              <IconCircleCheckFilled className="w-4 h-4 mr-1" />
-            ) : (
-              <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-600" />
-            )}
-            {row.original.liquidationsState ? "Completado" : "Pendiente"}
-          </Badge>
-        </div>
-      ),
-    },
 
-    {
-      accessorKey: "amountCollector",
-      header: () => <div className="w-full text-right">Monto Neto R.</div>,
-      cell: ({ row }) => (
-        <div className="text-right font-medium">{formatCurrency(row.original.amountCollector)}</div>
-      ),
-    },
-    {
-      accessorKey: "amountLiquidation",
-      header: () => <div className="w-full text-right">Monto Neto L.</div>,
-      cell: ({ row }) => (
-        <div className="text-right font-medium">{formatCurrency(row.original.amountLiquidation)}</div>
-      ),
-    },
-    {
-      accessorKey: "differenceAmounts",
-      header: () => <div className="w-full text-right">Diferencia</div>,
-      cell: ({ row }) => {
-        const diff = parseFloat(row.original.differenceAmounts)
-        return (
-          <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-            {formatCurrency(row.original.differenceAmounts)}
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "createdBy",
-      header: "Creado Por",
-      cell: ({ row }) => getCreatedByName(row.original.createdBy),
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <ActionsMenu 
-          item={row.original} 
-          type="liquidation" 
-          onDelete={handleDeleteItem}
-        />
-      ),
-    },
-  ], [])
 
-  const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliationSchema>>[] => [
-    {
-      id: "drag",
-      header: () => null,
-      cell: ({ row }) => <DragHandle id={row.original.id} />,
-    },
-    {
-      accessorKey: "collector.name",
-      header: "Recaudador",
-      cell: ({ row }) => <TableCellViewer item={row.original} type="conciliation" />,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "conciliationsType",
-      header: "Tipo",
-      cell: ({ row }) => (
-        <Badge variant="outline" className="text-muted-foreground px-1.5">
-          {row.original.conciliationsType === 1 ? "Diario" : "Mensual"}
+  // Actualizar las columnas de liquidaciones
+const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidationSchema>>[] => [
+  {
+    id: "drag",
+    header: () => null,
+    cell: ({ row }) => <DragHandle id={row.original.id} />,
+  },
+  {
+    accessorKey: "collector.name",
+    header: "Recaudador",
+    cell: ({ row }) => <TableCellViewer item={row.original} type="liquidation" />,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "liquidationsType",
+    header: "Tipo",
+    cell: ({ row }) => (
+      <Badge variant="outline" className="text-muted-foreground px-1.5">
+        {row.original.liquidationsType === 1 ? "Diario" : "Mensual"}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: "fromDate",
+    header: "Desde",
+    cell: ({ row }) => (
+      <div className="w-24 font-mono text-sm">
+        {formatPeriod(row.original.fromDate)}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "toDate",
+    header: "Hasta",
+    cell: ({ row }) => (
+      <div className="w-24 font-mono text-sm">
+        {formatPeriod(row.original.toDate)}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "liquidationsState",
+    header: () => <div className="text-center w-32">Estado</div>,
+    cell: ({ row }) => (
+      <div className="flex justify-center w-32">
+        <Badge variant={row.original.liquidationsState ? "default" : "secondary"}>
+          {row.original.liquidationsState ? (
+            <IconCircleCheckFilled className="w-4 h-4 mr-1" />
+          ) : (
+            <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-600" />
+          )}
+          {row.original.liquidationsState ? "Completado" : "Pendiente"}
         </Badge>
-      ),
-    },
-    {
-      accessorKey: "period",
-      header: "Periodo",
-      cell: ({ row }) => (
-        <div className="w-24 font-mono text-sm">
-          {formatPeriod(row.original.period)}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "amountCollector",
+    header: () => <div className="w-full text-right">Monto Neto R.</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-medium">{formatCurrency(row.original.amountCollector)}</div>
+    ),
+  },
+  {
+    accessorKey: "amountLiquidation",
+    header: () => <div className="w-full text-right">Monto Neto L.</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-medium">{formatCurrency(row.original.amountLiquidation)}</div>
+    ),
+  },
+  {
+    accessorKey: "differenceAmounts",
+    header: () => <div className="w-full text-right">Diferencia</div>,
+    cell: ({ row }) => {
+      const diff = parseFloat(row.original.differenceAmounts)
+      return (
+        <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+          {formatCurrency(row.original.differenceAmounts)}
         </div>
-      ),
+      )
     },
-    {
-      accessorKey: "conciliationsState",
-      header: () => <div className="text-center w-32">Estado</div>,
-      cell: ({ row }) => (
-        <div className="flex justify-center w-32">
-          <Badge variant={row.original.conciliationsState ? "default" : "secondary"}>
-            {row.original.conciliationsState ? (
-              <IconCircleCheckFilled className="w-4 h-4 mr-1" />
-            ) : (
-              <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-600" />
-            )}
-            {row.original.conciliationsState ? "Completado" : "Pendiente"}
-          </Badge>
+  },
+  {
+    accessorKey: "createdBy",
+    header: "Creado Por",
+    cell: ({ row }) => getCreatedByName(row.original.createdBy),
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => (
+      <ActionsMenu 
+        item={row.original} 
+        type="liquidation" 
+        onDelete={handleDeleteItem}
+      />
+    ),
+  },
+], [])
+
+
+const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliationSchema>>[] => [
+  {
+    id: "drag",
+    header: () => null,
+    cell: ({ row }) => <DragHandle id={row.original.id} />,
+  },
+  {
+    accessorKey: "collector.name",
+    header: "Recaudador",
+    cell: ({ row }) => <TableCellViewer item={row.original} type="conciliation" />,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "conciliationsType",
+    header: "Tipo",
+    cell: ({ row }) => (
+      <Badge variant="outline" className="text-muted-foreground px-1.5">
+        {row.original.conciliationsType === 1 ? "Diario" : "Mensual"}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: "fromDate",
+    header: "Desde",
+    cell: ({ row }) => (
+      <div className="w-24 font-mono text-sm">
+        {formatPeriod(row.original.fromDate)}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "toDate",
+    header: "Hasta",
+    cell: ({ row }) => (
+      <div className="w-24 font-mono text-sm">
+        {formatPeriod(row.original.toDate)}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "conciliationsState",
+    header: () => <div className="text-center w-32">Estado</div>,
+    cell: ({ row }) => (
+      <div className="flex justify-center w-32">
+        <Badge variant={row.original.conciliationsState ? "default" : "secondary"}>
+          {row.original.conciliationsState ? (
+            <IconCircleCheckFilled className="w-4 h-4 mr-1" />
+          ) : (
+            <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-600" />
+          )}
+          {row.original.conciliationsState ? "Completado" : "Pendiente"}
+        </Badge>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "amount",
+    header: () => <div className="w-full text-right">Monto Calimaco</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-medium">{formatCurrency(row.original.amount)}</div>
+    ),
+  },
+  {
+    accessorKey: "amountCollector",
+    header: () => <div className="w-full text-right">Monto Recaudador</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-medium">{formatCurrency(row.original.amountCollector)}</div>
+    ),
+  },
+  {
+    accessorKey: "differenceAmounts",
+    header: () => <div className="w-full text-right">Diferencia</div>,
+    cell: ({ row }) => {
+      const diff = parseFloat(row.original.differenceAmounts)
+      return (
+        <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+          {formatCurrency(row.original.differenceAmounts)}
         </div>
-      ),
+      )
     },
-    {
-      accessorKey: "amount",
-      header: () => <div className="w-full text-right">Monto Calimaco</div>,
-      cell: ({ row }) => (
-        <div className="text-right font-medium">{formatCurrency(row.original.amount)}</div>
-      ),
-    },
-    {
-      accessorKey: "amountCollector",
-      header: () => <div className="w-full text-right">Monto Recaudador</div>,
-      cell: ({ row }) => (
-        <div className="text-right font-medium">{formatCurrency(row.original.amountCollector)}</div>
-      ),
-    },
-    {
-      accessorKey: "differenceAmounts",
-      header: () => <div className="w-full text-right">Diferencia</div>,
-      cell: ({ row }) => {
-        const diff = parseFloat(row.original.differenceAmounts)
-        return (
-          <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-            {formatCurrency(row.original.differenceAmounts)}
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "createdBy",
-      header: "Creado Por",
-      cell: ({ row }) => getCreatedByName(row.original.createdBy),
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <ActionsMenu 
-          item={row.original} 
-          type="conciliation" 
-          onDelete={handleDeleteItem}
-        />
-      ),
-    },
-  ], [])
+  },
+  {
+    accessorKey: "createdBy",
+    header: "Creado Por",
+    cell: ({ row }) => getCreatedByName(row.original.createdBy),
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => (
+      <ActionsMenu 
+        item={row.original} 
+        type="conciliation" 
+        onDelete={handleDeleteItem}
+      />
+    ),
+  },
+], [])
+
 
   const dataIds = React.useMemo<UniqueIdentifier[]>(
     () => data?.map(({ id }) => id) || [],

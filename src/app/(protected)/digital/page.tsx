@@ -5,22 +5,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 import { toast } from "sonner";
 import { Settings, Calendar as CalendarIcon, Loader2, Gpu, ArrowUpRight, AlertCircle } from "lucide-react";
-import { format, isAfter, isSameMonth, startOfMonth, isToday, isFuture } from "date-fns";
-import { es } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { MonthPicker } from "@/components/ui/monthpicker";
 import { ConfirmationDialog } from "@/components/provider/confirmation-dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+
 
 export default function ProcessPage() {
   const [tipo, setTipo] = useState("dnicorrelativos");
   const [proceso, setProceso] = useState("proceso");
-//   const [periodo, setPeriodo] = useState("DIA");
-//   const [date, setDate] = useState<Date>();
+
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
