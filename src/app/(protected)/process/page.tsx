@@ -187,7 +187,7 @@ export default function ProcessPage() {
         <h1 className="text-4xl font-bold text-gray-900">
           Modulo de <span className="text-red-600">Conciliaciones</span>
         </h1>
-        <p className="text-gray-600">Ejecuta procesos de conciliacion y liquidacion</p>
+        <p className="text-gray-600">Ejecuta procesos de conciliacion para venta y liquidacion</p>
       </div>
 
       <Card className="border-red-100 shadow-lg">
@@ -212,7 +212,7 @@ export default function ProcessPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="conciliacion">Conciliacion</SelectItem>
+                <SelectItem value="conciliacion">Venta</SelectItem>
                 <SelectItem value="liquidacion">Liquidacion</SelectItem>
               </SelectContent>
             </Select>

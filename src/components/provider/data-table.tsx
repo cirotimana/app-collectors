@@ -52,7 +52,7 @@ import {
   VisibilityState,
 } from "@tanstack/react-table"
 import { toast } from "sonner"
-import { z } from "zod"
+import { int, number, z } from "zod"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -126,15 +126,23 @@ import {
 } from "@/components/ui/dialog"
 
 // Funcion para formatear montos en formato bancario
-function formatCurrency(amount: number | string): string {
+// Funcion para formatear montos en formato bancario
+function formatCurrency(amount: number | string | null | undefined): string {
+  // Si es null, undefined o vacío, retornar valor por defecto
+  if (amount === null || amount === undefined || amount === '') {
+    return 'S/ 0.00';
+  }
+  
   // Convertir a numero si es string
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
   
-  // Verificar si es un numero valido
-  if (isNaN(numAmount)) return 'S/ 0.00';
+  // Verificar si es un numero valido y finito
+  if (isNaN(numAmount) || !isFinite(numAmount)) {
+    return 'S/ 0.00';
+  }
   
   // Formatear el numero con separadores de miles y 2 decimales
-  return `S/ ${numAmount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;
+  return `S/ ${Math.abs(numAmount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;
 }
 
 // Funcion de fallback para copiar al portapapeles
@@ -267,13 +275,13 @@ export const liquidationSchema = z.object({
   collector: z.object({
     name: z.string()
   }),
-  liquidationsType: z.number(),
+  // liquidationsType: z.number(),
   fromDate: z.string(), // CAMBIO: period -> fromDate
   toDate: z.string(),   // NUEVO
   amountCollector: z.string(),
   amountLiquidation: z.string(),
   differenceAmounts: z.string(),
-  liquidationsState: z.boolean(),
+  // liquidationsState: z.boolean(),
   createdAt: z.string(),
   createdBy: z.object({
     firstName: z.string(),
@@ -293,13 +301,18 @@ export const conciliationSchema = z.object({
   collector: z.object({
     name: z.string()
   }),
-  conciliationsType: z.number(),
-  fromDate: z.string(), // CAMBIO: period -> fromDate
-  toDate: z.string(),   // NUEVO
+  fromDate: z.string(),
+  toDate: z.string(),
   amount: z.string(),
   amountCollector: z.string(),
   differenceAmounts: z.string(),
-  conciliationsState: z.boolean(),
+  // NUEVAS COLUMNAS PARA CONCILIACIONES
+  recordsCalimaco: z.number(),
+  recordsCollector: z.number(),
+  unreconciledRecordsCalimaco: z.number(),
+  unreconciledRecordsCollector: z.number(),
+  unreconciledAmountCalimaco: z.string(),
+  unreconciledAmountCollector: z.string(),
   createdAt: z.string(),
   createdBy: z.object({
     firstName: z.string(),
@@ -635,7 +648,7 @@ function FileDetailsDialog({
                     <p className="text-sm font-medium">{formatPeriod(item.toDate)}</p>
                   </div>
                 </div>
-                <div>
+                {/* <div>
                   <Label className="text-xs text-muted-foreground">Estado</Label>
                   <Badge variant={
                     type === 'liquidation' 
@@ -647,7 +660,7 @@ function FileDetailsDialog({
                       : ('conciliationsState' in item && item.conciliationsState ? 'Completado' : 'Pendiente')
                     }
                   </Badge>
-                </div>
+                </div> */}
                 <div>
                   <Label className="text-xs text-muted-foreground">Creado Por</Label>
                   <p className="text-sm font-medium">{getCreatedByName(item.createdBy)}</p>
@@ -833,15 +846,7 @@ const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidatio
     cell: ({ row }) => <TableCellViewer item={row.original} type="liquidation" />,
     enableHiding: false,
   },
-  {
-    accessorKey: "liquidationsType",
-    header: "Tipo",
-    cell: ({ row }) => (
-      <Badge variant="outline" className="text-muted-foreground px-1.5">
-        {row.original.liquidationsType === 1 ? "Diario" : "Mensual"}
-      </Badge>
-    ),
-  },
+  // ELIMINADO: Columna de tipo de liquidación
   {
     accessorKey: "fromDate",
     header: "Desde",
@@ -860,22 +865,7 @@ const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidatio
       </div>
     ),
   },
-  {
-    accessorKey: "liquidationsState",
-    header: () => <div className="text-center w-32">Estado</div>,
-    cell: ({ row }) => (
-      <div className="flex justify-center w-32">
-        <Badge variant={row.original.liquidationsState ? "default" : "secondary"}>
-          {row.original.liquidationsState ? (
-            <IconCircleCheckFilled className="w-4 h-4 mr-1" />
-          ) : (
-            <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-600" />
-          )}
-          {row.original.liquidationsState ? "Completado" : "Pendiente"}
-        </Badge>
-      </div>
-    ),
-  },
+  // ELIMINADO: Columna de estado de liquidación
   {
     accessorKey: "amountCollector",
     header: () => <div className="w-full text-right">Monto Neto R.</div>,
@@ -902,11 +892,11 @@ const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidatio
       )
     },
   },
-  {
-    accessorKey: "createdBy",
-    header: "Creado Por",
-    cell: ({ row }) => getCreatedByName(row.original.createdBy),
-  },
+  // {
+  //   accessorKey: "createdBy",
+  //   header: "Creado Por",
+  //   cell: ({ row }) => getCreatedByName(row.original.createdBy),
+  // },
   {
     id: "actions",
     cell: ({ row }) => (
@@ -918,7 +908,6 @@ const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidatio
     ),
   },
 ], [])
-
 
 const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliationSchema>>[] => [
   {
@@ -932,15 +921,7 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
     cell: ({ row }) => <TableCellViewer item={row.original} type="conciliation" />,
     enableHiding: false,
   },
-  {
-    accessorKey: "conciliationsType",
-    header: "Tipo",
-    cell: ({ row }) => (
-      <Badge variant="outline" className="text-muted-foreground px-1.5">
-        {row.original.conciliationsType === 1 ? "Diario" : "Mensual"}
-      </Badge>
-    ),
-  },
+  // ELIMINADO: Columna de tipo de conciliación
   {
     accessorKey: "fromDate",
     header: "Desde",
@@ -959,21 +940,73 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
       </div>
     ),
   },
+  // ELIMINADO: Columna de estado de conciliación
+  // NUEVAS COLUMNAS PARA CONCILIACIONES
   {
-    accessorKey: "conciliationsState",
-    header: () => <div className="text-center w-32">Estado</div>,
+    accessorKey: "recordsCalimaco",
+    header: () => <div className="text-center">Registros C.</div>,
     cell: ({ row }) => (
-      <div className="flex justify-center w-32">
-        <Badge variant={row.original.conciliationsState ? "default" : "secondary"}>
-          {row.original.conciliationsState ? (
-            <IconCircleCheckFilled className="w-4 h-4 mr-1" />
-          ) : (
-            <IconLoader className="w-4 h-4 mr-1 animate-spin text-red-600" />
-          )}
-          {row.original.conciliationsState ? "Completado" : "Pendiente"}
-        </Badge>
-      </div>
+      <div className="text-center font-medium">{row.original.recordsCalimaco}</div>
     ),
+  },
+  {
+    accessorKey: "recordsCollector",
+    header: () => <div className="text-center">Registros R.</div>,
+    cell: ({ row }) => (
+      <div className="text-center font-medium">{row.original.recordsCollector}</div>
+    ),
+  },
+  {
+    accessorKey: "unreconciledRecordsCalimaco",
+    header: () => <div className="text-center">No Conciliados C.</div>,
+    cell: ({ row }) => {
+      // <div className="text-center font-medium">{row.original.unreconciledRecordsCalimaco}</div>
+      const noconc = (row.original.unreconciledRecordsCalimaco)
+      return(
+        <div className={`text-right font-medium ${noconc !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+          {(row.original.unreconciledRecordsCalimaco)}
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: "unreconciledRecordsCollector",
+    header: () => <div className="text-center">No Conciliados R.</div>,
+    cell: ({ row }) => {
+      // <div className="text-center font-medium">{row.original.unreconciledRecordsCollector}</div>
+      const noconr = (row.original.unreconciledRecordsCollector)
+      return(
+        <div className={`text-right font-medium ${noconr !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+          {(row.original.unreconciledRecordsCollector)}
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: "unreconciledAmountCalimaco",
+    header: () => <div className="text-right">Monto No Conc. C.</div>,
+    cell: ({ row }) => {
+      // <div className="text-right font-medium">{formatCurrency(row.original.unreconciledAmountCalimaco)}</div>
+      const amountncc = parseFloat(row.original.unreconciledAmountCalimaco)
+      return(
+        <div className={`text-right font-medium ${amountncc !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+          {formatCurrency(row.original.unreconciledAmountCalimaco)}
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: "unreconciledAmountCollector",
+    header: () => <div className="text-right">Monto No Conc. R.</div>,
+    cell: ({ row }) => {
+      // <div className="text-right font-medium">{formatCurrency(row.original.unreconciledAmountCollector)}</div>
+      const amountncr = parseFloat(row.original.unreconciledAmountCollector)
+      return(
+        <div className={`text-right font-medium ${amountncr !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+          {formatCurrency(row.original.unreconciledAmountCollector)}
+        </div>
+      )
+    },
   },
   {
     accessorKey: "amount",
@@ -1001,11 +1034,11 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
       )
     },
   },
-  {
-    accessorKey: "createdBy",
-    header: "Creado Por",
-    cell: ({ row }) => getCreatedByName(row.original.createdBy),
-  },
+  // {
+  //   accessorKey: "createdBy",
+  //   header: "Creado Por",
+  //   cell: ({ row }) => getCreatedByName(row.original.createdBy),
+  // },
   {
     id: "actions",
     cell: ({ row }) => (
@@ -1017,7 +1050,6 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
     ),
   },
 ], [])
-
 
   const dataIds = React.useMemo<UniqueIdentifier[]>(
     () => data?.map(({ id }) => id) || [],
@@ -1076,14 +1108,14 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="conciliations">Conciliaciones</SelectItem>
+            <SelectItem value="conciliations">Ventas</SelectItem>
             <SelectItem value="liquidations">Liquidaciones</SelectItem>
           </SelectContent>
         </Select>
 
         {/* Tabs desktop */}
         <TabsList className="hidden lg:flex">
-          <TabsTrigger value="conciliations">Conciliaciones</TabsTrigger>
+          <TabsTrigger value="conciliations">Ventas</TabsTrigger>
           <TabsTrigger value="liquidations">Liquidaciones</TabsTrigger>
         </TabsList>
 

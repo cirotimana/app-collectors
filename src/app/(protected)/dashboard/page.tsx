@@ -8,7 +8,7 @@ export default function DashboardPage() {
           Modulo <span className="text-red-600">Principal</span>
         </h1>
         <p className="text-gray-600">
-          Gestion de liquidaciones y conciliaciones
+          Gestion de ventas y liquidaciones
         </p>
       </div>
       

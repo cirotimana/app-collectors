@@ -104,7 +104,7 @@ export default function DownloadPage() {
         <h1 className="text-4xl font-bold text-gray-900">
           Modulo de <span className="text-red-600">Descarga</span>
         </h1>
-        <p className="text-gray-600">Descarga archivos procesados de recaudadores y liquidaciones</p>
+        <p className="text-gray-600">Descarga archivos procesados de ventas y liquidaciones</p>
       </div>
 
       <Card className="border-red-100 shadow-lg">

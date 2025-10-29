@@ -8,7 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Sistema de Gestion Digital",
+  title: "Plataforma Tesoreria",
   description: "Plataforma de descarga y procesamiento automatico",
 };
 

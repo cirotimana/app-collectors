@@ -61,7 +61,7 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
           onSelect={handleSelect}
           locale={es}
           initialFocus
-          numberOfMonths={2}
+          numberOfMonths={1}
         />
       </PopoverContent>
     </Popover>
