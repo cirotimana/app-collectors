@@ -21,12 +21,12 @@ import {
 export const description = "A bar chart with a label"
 
 const chartData = [
-  { month: "January", desktop: 186 },
-  { month: "February", desktop: 305 },
-  { month: "March", desktop: 237 },
-  { month: "April", desktop: 73 },
-  { month: "May", desktop: 209 },
-  { month: "June", desktop: 214 },
+  { month: "Enero", desktop: 186 },
+  { month: "Febrero", desktop: 305 },
+  { month: "Marzo", desktop: 237 },
+  { month: "Abril", desktop: 73 },
+  { month: "Mayo", desktop: 209 },
+  { month: "Junio", desktop: 214 },
 ]
 
 const chartConfig = {
@@ -40,8 +40,8 @@ export function BarChartCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Bar Chart - Label</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>Comparativa por Recaudador</CardTitle>
+        <CardDescription>01 Oct - 15 Oct</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
@@ -77,10 +77,10 @@ export function BarChartCard() {
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 leading-none font-medium">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+          Procentaje establecido segun el filtro aplicado <TrendingUp className="h-4 w-4" />
         </div>
         <div className="text-muted-foreground leading-none">
-          Showing total visitors for the last 6 months
+          Carga automatica de la Ultima Semana
         </div>
       </CardFooter>
     </Card>

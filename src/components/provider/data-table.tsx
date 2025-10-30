@@ -281,6 +281,12 @@ export const liquidationSchema = z.object({
   amountCollector: z.string(),
   amountLiquidation: z.string(),
   differenceAmounts: z.string(),
+  recordsCollector: z.number().nullable().default(0),
+  recordsLiquidation: z.number().nullable().default(0),
+  debitAmountCollector: z.string().nullable().default('0.00'),
+  debitAmountLiquidation: z.string().nullable().default('0.00'),
+  creditAmountCollector: z.string().nullable().default('0.00'),
+  creditAmountLiquidation: z.string().nullable().default('0.00'),
   // liquidationsState: z.boolean(),
   createdAt: z.string(),
   createdBy: z.object({
@@ -307,12 +313,12 @@ export const conciliationSchema = z.object({
   amountCollector: z.string(),
   differenceAmounts: z.string(),
   // NUEVAS COLUMNAS PARA CONCILIACIONES
-  recordsCalimaco: z.number(),
-  recordsCollector: z.number(),
-  unreconciledRecordsCalimaco: z.number(),
-  unreconciledRecordsCollector: z.number(),
-  unreconciledAmountCalimaco: z.string(),
-  unreconciledAmountCollector: z.string(),
+  recordsCalimaco: z.number().default(0),
+  recordsCollector: z.number().default(0),
+  unreconciledRecordsCalimaco: z.number().default(0),
+  unreconciledRecordsCollector: z.number().default(0),
+  unreconciledAmountCalimaco: z.string().default('0.00'),
+  unreconciledAmountCollector: z.string().default('0.00'),
   createdAt: z.string(),
   createdBy: z.object({
     firstName: z.string(),
@@ -846,7 +852,6 @@ const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidatio
     cell: ({ row }) => <TableCellViewer item={row.original} type="liquidation" />,
     enableHiding: false,
   },
-  // ELIMINADO: Columna de tipo de liquidación
   {
     accessorKey: "fromDate",
     header: "Desde",
@@ -865,17 +870,56 @@ const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidatio
       </div>
     ),
   },
-  // ELIMINADO: Columna de estado de liquidación
+  
+  // CRÉDITOS
+  {
+    accessorKey: "creditAmountCollector",
+    header: () => <div className="text-center">Venta<br />Recaudador</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-medium text-blue-600">
+        {formatCurrency(row.original.creditAmountCollector || '0.00')}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "creditAmountLiquidation",
+    header: () => <div className="text-center">Venta<br />Liquidacion</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-medium text-blue-600">
+        {formatCurrency(row.original.creditAmountLiquidation || '0.00')}
+      </div>
+    ),
+  },
+  // DÉBITOS
+  {
+    accessorKey: "debitAmountCollector",
+    header: () => <div className="text-center">Comision<br />Recaudador</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-medium text-orange-600">
+        {formatCurrency(row.original.debitAmountCollector || '0.00')}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "debitAmountLiquidation",
+    header: () => <div className="text-center">Comision<br />Liquidacion</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-medium text-orange-600">
+        {formatCurrency(row.original.debitAmountLiquidation || '0.00')}
+      </div>
+    ),
+  },
+  // MONTOS NETOS
   {
     accessorKey: "amountCollector",
-    header: () => <div className="w-full text-right">Monto Neto R.</div>,
+    header: () => <div className="w-full text-center">Neto<br />Recaudador</div>,
     cell: ({ row }) => (
       <div className="text-right font-medium">{formatCurrency(row.original.amountCollector)}</div>
     ),
   },
   {
     accessorKey: "amountLiquidation",
-    header: () => <div className="w-full text-right">Monto Neto L.</div>,
+    header: () => <div className="w-full text-center">Neto<br />Liquidacion</div>,
     cell: ({ row }) => (
       <div className="text-right font-medium">{formatCurrency(row.original.amountLiquidation)}</div>
     ),
@@ -884,13 +928,32 @@ const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidatio
     accessorKey: "differenceAmounts",
     header: () => <div className="w-full text-right">Diferencia</div>,
     cell: ({ row }) => {
-      const diff = parseFloat(row.original.differenceAmounts)
+      const diff = parseFloat(row.original.differenceAmounts || '0')
       return (
         <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
           {formatCurrency(row.original.differenceAmounts)}
         </div>
       )
     },
+  },
+  // REGISTROS
+  {
+    accessorKey: "recordsCollector",
+    header: () => <div className="text-center">Registros<br />Recaudador</div>,
+    cell: ({ row }) => (
+      <div className="text-center font-medium">
+        {row.original.recordsCollector || 0}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "recordsLiquidation",
+    header: () => <div className="text-center">Registros<br />Liquidacion</div>,
+    cell: ({ row }) => (
+      <div className="text-center font-medium">
+        {row.original.recordsLiquidation || 0}
+      </div>
+    ),
   },
   // {
   //   accessorKey: "createdBy",
@@ -908,6 +971,8 @@ const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidatio
     ),
   },
 ], [])
+
+
 
 const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliationSchema>>[] => [
   {
@@ -940,89 +1005,21 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
       </div>
     ),
   },
-  // ELIMINADO: Columna de estado de conciliación
-  // NUEVAS COLUMNAS PARA CONCILIACIONES
-  {
-    accessorKey: "recordsCalimaco",
-    header: () => <div className="text-center">Registros C.</div>,
-    cell: ({ row }) => (
-      <div className="text-center font-medium">{row.original.recordsCalimaco}</div>
-    ),
-  },
-  {
-    accessorKey: "recordsCollector",
-    header: () => <div className="text-center">Registros R.</div>,
-    cell: ({ row }) => (
-      <div className="text-center font-medium">{row.original.recordsCollector}</div>
-    ),
-  },
-  {
-    accessorKey: "unreconciledRecordsCalimaco",
-    header: () => <div className="text-center">No Conciliados C.</div>,
-    cell: ({ row }) => {
-      // <div className="text-center font-medium">{row.original.unreconciledRecordsCalimaco}</div>
-      const noconc = (row.original.unreconciledRecordsCalimaco)
-      return(
-        <div className={`text-right font-medium ${noconc !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-          {(row.original.unreconciledRecordsCalimaco)}
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "unreconciledRecordsCollector",
-    header: () => <div className="text-center">No Conciliados R.</div>,
-    cell: ({ row }) => {
-      // <div className="text-center font-medium">{row.original.unreconciledRecordsCollector}</div>
-      const noconr = (row.original.unreconciledRecordsCollector)
-      return(
-        <div className={`text-right font-medium ${noconr !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-          {(row.original.unreconciledRecordsCollector)}
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "unreconciledAmountCalimaco",
-    header: () => <div className="text-right">Monto No Conc. C.</div>,
-    cell: ({ row }) => {
-      // <div className="text-right font-medium">{formatCurrency(row.original.unreconciledAmountCalimaco)}</div>
-      const amountncc = parseFloat(row.original.unreconciledAmountCalimaco)
-      return(
-        <div className={`text-right font-medium ${amountncc !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-          {formatCurrency(row.original.unreconciledAmountCalimaco)}
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "unreconciledAmountCollector",
-    header: () => <div className="text-right">Monto No Conc. R.</div>,
-    cell: ({ row }) => {
-      // <div className="text-right font-medium">{formatCurrency(row.original.unreconciledAmountCollector)}</div>
-      const amountncr = parseFloat(row.original.unreconciledAmountCollector)
-      return(
-        <div className={`text-right font-medium ${amountncr !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-          {formatCurrency(row.original.unreconciledAmountCollector)}
-        </div>
-      )
-    },
-  },
   {
     accessorKey: "amount",
-    header: () => <div className="w-full text-right">Monto Calimaco</div>,
+    header: () => <div className="w-full text-right">Venta Calimaco</div>,
     cell: ({ row }) => (
       <div className="text-right font-medium">{formatCurrency(row.original.amount)}</div>
     ),
   },
   {
     accessorKey: "amountCollector",
-    header: () => <div className="w-full text-right">Monto Recaudador</div>,
+    header: () => <div className="w-full text-right">Venta Recaudador</div>,
     cell: ({ row }) => (
       <div className="text-right font-medium">{formatCurrency(row.original.amountCollector)}</div>
     ),
   },
-  {
+   {
     accessorKey: "differenceAmounts",
     header: () => <div className="w-full text-right">Diferencia</div>,
     cell: ({ row }) => {
@@ -1034,6 +1031,75 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
       )
     },
   },
+  // ELIMINADO: Columna de estado de conciliación
+  // NUEVAS COLUMNAS PARA CONCILIACIONES
+  {
+    accessorKey: "recordsCalimaco",
+    header: () => <div className="text-center">Registros<br />Calimaco</div>,
+    cell: ({ row }) => (
+      <div className="text-center font-medium">{row.original.recordsCalimaco || '0'}</div>
+    ),
+  },
+  {
+    accessorKey: "recordsCollector",
+    header: () => <div className="text-center">Registros<br />Recaudador</div>,
+    cell: ({ row }) => (
+      <div className="text-center font-medium">{row.original.recordsCollector || '0'}</div>
+    ),
+  },
+  {
+    accessorKey: "unreconciledRecordsCalimaco",
+    header: () => <div className="text-center">No Conciliados<br />Calimaco</div>,
+    cell: ({ row }) => {
+      // <div className="text-center font-medium">{row.original.unreconciledRecordsCalimaco}</div>
+      const noconc = (row.original.unreconciledRecordsCalimaco)
+      return(
+        <div className={`text-right font-medium ${noconc !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+          {(row.original.unreconciledRecordsCalimaco || '0')}
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: "unreconciledRecordsCollector",
+    header: () => <div className="text-center">No Conciliados<br />Recaudador</div>,
+    cell: ({ row }) => {
+      // <div className="text-center font-medium">{row.original.unreconciledRecordsCollector}</div>
+      const noconr = (row.original.unreconciledRecordsCollector)
+      return(
+        <div className={`text-right font-medium ${noconr !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+          {(row.original.unreconciledRecordsCollector || '0')}
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: "unreconciledAmountCalimaco",
+    header: () => <div className="text-center">No Conciliados<br />Venta Calimaco</div>,
+    cell: ({ row }) => {
+      const amountncc = parseFloat(row.original.unreconciledAmountCalimaco)
+      return(
+        <div className={`text-right font-medium ${amountncc !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+          {formatCurrency(row.original.unreconciledAmountCalimaco)}
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: "unreconciledAmountCollector",
+    header: () => <div className="text-center">No Conciliados<br />Venta Recaudador</div>,
+    cell: ({ row }) => {
+      // <div className="text-right font-medium">{formatCurrency(row.original.unreconciledAmountCollector)}</div>
+      const amountncr = parseFloat(row.original.unreconciledAmountCollector)
+      return(
+        <div className={`text-right font-medium ${amountncr !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+          {formatCurrency(row.original.unreconciledAmountCollector)}
+        </div>
+      )
+    },
+  },
+  
+ 
   // {
   //   accessorKey: "createdBy",
   //   header: "Creado Por",
