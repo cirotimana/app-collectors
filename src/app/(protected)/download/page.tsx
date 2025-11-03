@@ -101,10 +101,10 @@ export default function DownloadPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-8">
       <div className="text-center space-y-2">
-        <h1 className="text-4xl font-bold text-gray-900">
-          Modulo de <span className="text-red-600">Descarga</span>
+        <h1 className="text-4xl font-black text-gray-900">
+          Modulo de <span className="text-red-600">Descargas</span>
         </h1>
-        <p className="text-gray-600">Descarga archivos procesados de ventas y liquidaciones</p>
+        <p className="text-gray-600 mt-1">Descarga archivos procesados de ventas y liquidaciones</p>
       </div>
 
       <Card className="border-red-100 shadow-lg">

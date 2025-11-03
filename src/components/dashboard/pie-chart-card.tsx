@@ -1,8 +1,15 @@
-"use client"
+"use client";
 
 import { TrendingUp } from "lucide-react"
-import { Pie, PieChart } from "recharts"
 
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 import {
   Card,
   CardContent,
@@ -11,75 +18,100 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
 
-export const description = "A pie chart with a label"
+const COLORS = ["#FF6B35", "#FFA500", "#FFD166", "#06D6A0", "#118AB2"];
 
-const chartData = [
-  { browser: "Kashio", visitors: 275, fill: "var(--color-Kashio)" },
-  { browser: "Monnet", visitors: 200, fill: "var(--color-Monnet)" },
-  { browser: "PagoEfectivo", visitors: 187, fill: "var(--color-PagoEfectivo)" },
-  { browser: "Tupay", visitors: 173, fill: "var(--color-Tupay)" },
-  { browser: "Kushki", visitors: 90, fill: "var(--color-Kushki)" },
-]
+interface DataItem {
+  name: string;
+  value: number;
+  process: string;
+}
 
-const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  Kashio: {
-    label: "Kashio",
-    color: "var(--chart-1)",
-  },
-  PagoEfectivo: {
-    label: "PagoEfectivo",
-    color: "var(--chart-2)",
-  },
-  Tupay: {
-    label: "Tupay",
-    color: "var(--chart-3)",
-  },
-  Kushki: {
-    label: "Kushki",
-    color: "var(--chart-4)",
-  },
-  Monnet: {
-    label: "Monnet",
-    color: "var(--chart-5)",
-  },
-} satisfies ChartConfig
+interface PieChartCardProps {
+  data: DataItem[];
+}
 
-export function PieChartCard() {
+export function PieChartCard({ data }: PieChartCardProps) {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+
+  const processes: string[] = data.map(item => item.process);
+
+  const titulo = processes[0] === "conciliations" ? "Calimaco" : "Recaudador";
+
+  // console.log("proceso pie-chart: ", processes)
+
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="items-center pb-0">
-        <CardTitle>Resumen de venta/liquidacion para Recaudador</CardTitle>
-        <CardDescription>01 Oct -15 Oct</CardDescription>
+    <Card>
+      <CardHeader className="text-lg font-semibold mb-2 text-gray-800">
+      <CardTitle>Distribucion por Metodo</CardTitle>
+      <CardDescription>
+        Monto {titulo} (%)
+      </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="[&_.recharts-pie-label-text]:fill-foreground mx-auto aspect-square max-h-[250px] pb-0"
-        >
+
+      <CardContent>
+
+      <div className="w-full h-100">
+        <ResponsiveContainer>
           <PieChart>
-            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-            <Pie data={chartData} dataKey="visitors" label nameKey="browser" />
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              outerRadius={130}
+              dataKey="value"
+              label={({ name, percent }) =>
+                `${name}: ${(percent * 100).toFixed(1)}%`
+              }
+              labelLine={true}
+              stroke="#fff"
+              strokeWidth={2}
+            >
+              {data.map((_, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                  className="transition-all duration-300 hover:opacity-80"
+                />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(value: number, name: string) => [
+                `S/. ${value.toLocaleString()}`,
+                name,
+              ]}
+            />
           </PieChart>
-        </ChartContainer>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="w-full mt-6 space-y-2">
+        {data.map((item, index) => {
+          const percent = ((item.value / total) * 100).toFixed(1);
+          return (
+            <div
+              key={item.name}
+              className="flex items-center justify-between text-sm text-gray-700"
+            >
+              <div className="flex items-center space-x-2">
+                <div
+                  className="w-4 h-4 rounded-full"
+                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                ></div>
+                <span>{item.name}</span>
+              </div>
+              <span className="font-semibold">{percent}%</span>
+            </div>
+          );
+        })}
+      </div>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 leading-none font-medium">
-          Procentaje establecido segun el filtro aplicado <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="text-muted-foreground leading-none">
-          Carga automatica de la Ultima Semana
+
+      <CardFooter className="flex-col items-start gap-2 text-sm">
+        <div className="text-sm text-gray-500 mt-4">
+          Distribucion porcentual — Datos segun el filtro aplicado
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }

@@ -16,7 +16,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Logo from "../../assets/img/logo.jpg";
-import { Server, CloudDownload, Gpu, LayoutDashboard  } from "lucide-react";
+import { Server, CloudDownload, Gpu, LayoutDashboard, BookText   } from "lucide-react";
 import { ModeToggle } from "@/components/provider/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogOut } from "lucide-react";
@@ -29,6 +29,7 @@ import {
 
 const menuItems = [
   { icon: <LayoutDashboard  />, label: "Dashboard", href: "/dashboard" },
+  { icon: <BookText  />, label: "Detalles", href: "/details" },
   { icon: <CloudDownload />, label: "Descargas", href: "/download" },
   { icon: <Server />, label: "Procesos", href: "/process" },
   { icon: <Gpu />, label: "Digital", href: "/digital" },
@@ -61,9 +62,14 @@ export function AppSidebar() {
               AT
             </AvatarFallback>
           </Avatar>
-          <div className="font-bold text-lg">
-            Apuesta <span className="text-red-600">Total</span>
-          </div>
+          <div>
+            <h1 className="text-lg font-black text-gray-900">
+              Apuesta <span className="text-red-600">Total</span>
+            </h1>
+            <p className="text-xs text-gray-600">
+              Plataforma de Tesoreria
+            </p>
+          </div>  
         </div>
       </SidebarHeader>
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { TrendingUp } from "lucide-react"
-import { Bar, BarChart, CartesianGrid, LabelList, XAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 
 import {
   Card,
@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+
 import {
   ChartConfig,
   ChartContainer,
@@ -18,69 +19,93 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 
-export const description = "A bar chart with a label"
+type ChartItem = {
+  metodo: string
+  calimaco: number
+  proveedor: number
+  proceso: string
+}
 
-const chartData = [
-  { month: "Enero", desktop: 186 },
-  { month: "Febrero", desktop: 305 },
-  { month: "Marzo", desktop: 237 },
-  { month: "Abril", desktop: 73 },
-  { month: "Mayo", desktop: 209 },
-  { month: "Junio", desktop: 214 },
-]
+interface BarChartCardProps {
+  data: ChartItem[]
+  proceso: string
+}
 
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--chart-1)",
-  },
-} satisfies ChartConfig
+export function BarChartCard({ data, proceso }: BarChartCardProps) {
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Comparativa por Recaudador</CardTitle>
+          <CardDescription>Sin datos disponibles</CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
 
-export function BarChartCard() {
+  // console.log("data: ",data)
+
+  const t1 = proceso === "venta" ? "Calimaco" : "Recaudador"
+  const t2 = proceso === "venta" ? "Recaudador" : "Liquidacion"
+
+  const chartConfig = {
+    calimaco: {
+      label: t1,
+      color: "var(--chart-1)",
+    },
+    proveedor: {
+      label: t2,
+      color: "var(--chart-2)",
+    },
+  } satisfies ChartConfig
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="text-lg font-semibold mb-2 text-gray-800">
         <CardTitle>Comparativa por Recaudador</CardTitle>
-        <CardDescription>01 Oct - 15 Oct</CardDescription>
+        <CardDescription>
+          Comparativa {t1} vs {t2}
+        </CardDescription>
       </CardHeader>
+
       <CardContent>
         <ChartContainer config={chartConfig}>
-          <BarChart
-            accessibilityLayer
-            data={chartData}
-            margin={{
-              top: 20,
-            }}
-          >
+          <BarChart accessibilityLayer data={data}>
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="month"
+              dataKey="metodo"
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
+              tickFormatter={(value) => value}
             />
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel />}
+              content={
+                <ChartTooltipContent
+                  indicator="dashed"
+                  labelFormatter={(label) => `Metodo: ${label}`}
+                //   formatter={(value: unknown) => {
+                //   const val = Array.isArray(value) ? value[0] : value
+                //   return new Intl.NumberFormat("es-PE", {
+                //     style: "currency",
+                //     currency: "PEN",
+                //   }).format(Number(val))
+                // }}
+
+
+                />
+              }
             />
-            <Bar dataKey="desktop" fill="var(--color-desktop)" radius={8}>
-              <LabelList
-                position="top"
-                offset={12}
-                className="fill-foreground"
-                fontSize={12}
-              />
-            </Bar>
+            <Bar dataKey="calimaco" fill="var(--color-calimaco)" radius={6} />
+            <Bar dataKey="proveedor" fill="var(--color-proveedor)" radius={6} />
           </BarChart>
         </ChartContainer>
       </CardContent>
+
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 leading-none font-medium">
-          Procentaje establecido segun el filtro aplicado <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="text-muted-foreground leading-none">
-          Carga automatica de la Ultima Semana
+        <div className="text-sm text-gray-500 mt-4">
+          Comparativa total por recaudador — Datos segun el filtro aplicado
         </div>
       </CardFooter>
     </Card>

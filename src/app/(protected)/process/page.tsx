@@ -184,10 +184,10 @@ export default function ProcessPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-8">
       <div className="text-center space-y-2">
-        <h1 className="text-4xl font-bold text-gray-900">
+        <h1 className="text-4xl font-black text-gray-900">
           Modulo de <span className="text-red-600">Conciliaciones</span>
         </h1>
-        <p className="text-gray-600">Ejecuta procesos de conciliacion para venta y liquidacion</p>
+        <p className="text-gray-600 mt-1">Ejecuta procesos de conciliacion para ventas y liquidaciones</p>
       </div>
 
       <Card className="border-red-100 shadow-lg">

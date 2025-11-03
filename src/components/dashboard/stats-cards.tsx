@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 interface StatsCardsProps {
   ventaCalimaco: number
   ventaProveedor: number
+  t1: string
+  t2: string
 }
 
-export function StatsCards({ ventaCalimaco, ventaProveedor }: StatsCardsProps) {
+export function StatsCards({ ventaCalimaco, ventaProveedor, t1, t2 }: StatsCardsProps) {
   const formatCurrency = (amount: number) => {
     return `S/. ${amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`
   }
@@ -15,7 +17,7 @@ export function StatsCards({ ventaCalimaco, ventaProveedor }: StatsCardsProps) {
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
         <CardTitle className="text-lg font-bold text-center uppercase tracking-wide">
-          Venta Calimaco
+          {t1}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
@@ -28,7 +30,7 @@ export function StatsCards({ ventaCalimaco, ventaProveedor }: StatsCardsProps) {
     <Card className="flex flex-col">
       <CardHeader className="items-center pb-0">
         <CardTitle className="text-lg font-bold text-center uppercase tracking-wide">
-          Venta Proveedor
+          {t2}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 pb-0">

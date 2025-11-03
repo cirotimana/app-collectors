@@ -128,7 +128,7 @@ import {
 // Funcion para formatear montos en formato bancario
 // Funcion para formatear montos en formato bancario
 function formatCurrency(amount: number | string | null | undefined): string {
-  // Si es null, undefined o vacío, retornar valor por defecto
+  // Si es null, undefined o vacio, retornar valor por defecto
   if (amount === null || amount === undefined || amount === '') {
     return 'S/ 0.00';
   }
@@ -871,7 +871,7 @@ const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidatio
     ),
   },
   
-  // CRÉDITOS
+  // CREDITOS
   {
     accessorKey: "creditAmountCollector",
     header: () => <div className="text-center">Venta<br />Recaudador</div>,
@@ -890,7 +890,7 @@ const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidatio
       </div>
     ),
   },
-  // DÉBITOS
+  // DEBITOS
   {
     accessorKey: "debitAmountCollector",
     header: () => <div className="text-center">Comision<br />Recaudador</div>,
@@ -986,7 +986,7 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
     cell: ({ row }) => <TableCellViewer item={row.original} type="conciliation" />,
     enableHiding: false,
   },
-  // ELIMINADO: Columna de tipo de conciliación
+  // ELIMINADO: Columna de tipo de conciliacion
   {
     accessorKey: "fromDate",
     header: "Desde",
@@ -1031,7 +1031,7 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
       )
     },
   },
-  // ELIMINADO: Columna de estado de conciliación
+  // ELIMINADO: Columna de estado de conciliacion
   // NUEVAS COLUMNAS PARA CONCILIACIONES
   {
     accessorKey: "recordsCalimaco",
@@ -1192,26 +1192,26 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
               placeholder="Buscar por recaudador..."
               value={searchCollector}
               onChange={(e) => setSearchCollector(e.target.value)}
-              className="w-48"
+              className="w-48 border-2 border-gray-400 focus:border-red-500 focus:ring-red-500"
             />
-            <PeriodPicker
-              value={searchPeriod}
-              onChange={setSearchPeriod}
-            />
-            {(searchCollector || searchPeriod) && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSearchCollector('')
-                  setSearchPeriod('')
-                }}
-              >
-                Limpiar
-              </Button>
-            )}
+          <PeriodPicker
+            value={searchPeriod}
+            onChange={setSearchPeriod}
+          />
+          {(searchCollector || searchPeriod) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearchCollector('')
+                setSearchPeriod('')
+              }}
+            >
+              Limpiar
+            </Button>
+          )}
 
-          <DropdownMenu>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 <IconLayoutColumns className="h-4 w-4 mr-2" />
@@ -1234,7 +1234,7 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
                   </DropdownMenuCheckboxItem>
                 ))}
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
         </div>
       </div>
 

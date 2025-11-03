@@ -46,9 +46,12 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
         <Button
           variant="outline"
           className={cn(
-            "w-60 justify-start text-left font-normal",
+            "w-60 justify-start border-2 border-gray-400 text-left font-normal",
             !value && "text-muted-foreground"
           )}
+
+          //className="w-full h-10 justify-between border-2 border-gray-300 focus:border-red-500 focus:ring-red-500"
+
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {value ? formatPeriodDisplay(value) : "Seleccionar fecha o rango"}
