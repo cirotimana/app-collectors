@@ -30,8 +30,8 @@ import {
 const menuItems = [
   { icon: <LayoutDashboard  />, label: "Dashboard", href: "/dashboard" },
   { icon: <BookText  />, label: "Detalles", href: "/details" },
-  { icon: <CloudDownload />, label: "Descargas", href: "/download" },
   { icon: <Server />, label: "Procesos", href: "/process" },
+  { icon: <CloudDownload />, label: "Descargas", href: "/download" },
   { icon: <Gpu />, label: "Digital", href: "/digital" },
 ];
 
