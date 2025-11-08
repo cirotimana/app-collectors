@@ -342,11 +342,11 @@ export default function ProcessPage() {
         // ✅ PRESERVAR LOS SALTOS DE LÍNEA del backend
         detailedMessage = errorDetail.message || detailedMessage;
         
-        // Si hay operaciones fallidas, formatear con saltos de línea
-        if (errorDetail.failed_operations && Array.isArray(errorDetail.failed_operations)) {
-          const failedOps = errorDetail.failed_operations.join('\n• ');
-          detailedMessage = `${errorDetail.message}\n\nOperaciones fallidas:\n• ${failedOps}`;
-        }
+        // // Si hay operaciones fallidas, formatear con saltos de línea
+        // if (errorDetail.failed_operations && Array.isArray(errorDetail.failed_operations)) {
+        //   const failedOps = errorDetail.failed_operations.join('\n• ');
+        //   detailedMessage = `${errorDetail.message}\n\nOperaciones fallidas:\n• ${failedOps}`;
+        // }
       } else if (typeof errorDetail === 'string') {
         detailedMessage = errorDetail;
       }
