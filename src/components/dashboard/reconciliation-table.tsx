@@ -68,12 +68,12 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
     fetchData()
   }, [proceso, metodo, fromDate, toDate])
 
-  // Función para verificar coincidencia entre dos montos
+  // Funcion para verificar coincidencia entre dos montos
   const checkMatch = (value1: number, value2: number): boolean => {
     return Math.abs(value1 - value2) < 0.01 // Tolerancia de 1 centavo
   }
 
-  // Función para obtener el color de la fila según coincidencia
+  // Funcion para obtener el color de la fila segun coincidencia
   const getRowColor = (item: any, compareField1: string, compareField2: string): string => {
     const val1 = Number(item[compareField1] || 0)
     const val2 = Number(item[compareField2] || 0)
@@ -98,9 +98,9 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-white z-10">
                 <tr className="border-b-2 border-black">
-                  <th className="font-bold text-left p-2">Día</th>
+                  <th className="font-bold text-left p-2">Dia</th>
                   <th className="font-bold text-left p-2">Mes</th>
-                  <th className="font-bold text-left p-2">Método</th>
+                  <th className="font-bold text-left p-2">Metodo</th>
                   <th className="font-bold text-right p-2">Monto (S/.)</th>
                 </tr>
               </thead>
@@ -167,11 +167,11 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-white z-10">
                 <tr className="border-b-2 border-black">
-                  <th className="font-bold text-left p-2">Día</th>
+                  <th className="font-bold text-left p-2">Dia</th>
                   <th className="font-bold text-left p-2">Mes</th>
-                  <th className="font-bold text-left p-2">Método</th>
+                  <th className="font-bold text-left p-2">Metodo</th>
                   <th className="font-bold text-right p-2">Monto (S/.)</th>
-                  <th className="font-bold text-right p-2">Comisión (S/.)</th>
+                  <th className="font-bold text-right p-2">Comision (S/.)</th>
                   <th className="font-bold text-right p-2">Neto (S/.)</th>
                 </tr>
               </thead>
@@ -211,7 +211,7 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
             Total Monto: S/. {totalMonto.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
           </span>
           <span className="font-bold text-gray-800">
-            Total Comisión: S/. {totalComision.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+            Total Comision: S/. {totalComision.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
           </span>
           <span className="font-bold text-gray-800">
             Total Neto: S/. {totalNeto.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
@@ -246,7 +246,7 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
             }
           )}
           {renderTableLiquidacion(
-            "Liquidación",
+            "Liquidacion",
             { 
               monto: "monto_liquidacion", 
               comision: "comision_liquidacion", 
@@ -272,7 +272,7 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
             }
           )}
           {renderTableLiquidacion(
-            "Liquidación No Conciliada",
+            "Liquidacion No Conciliada",
             { 
               monto: "nc_monto_liquidacion", 
               comision: "nc_comision_liquidacion", 

@@ -126,22 +126,17 @@ import {
 } from "@/components/ui/dialog"
 
 // Funcion para formatear montos en formato bancario
-// Funcion para formatear montos en formato bancario
 function formatCurrency(amount: number | string | null | undefined): string {
-  // Si es null, undefined o vacio, retornar valor por defecto
   if (amount === null || amount === undefined || amount === '') {
     return 'S/ 0.00';
   }
   
-  // Convertir a numero si es string
   const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
   
-  // Verificar si es un numero valido y finito
   if (isNaN(numAmount) || !isFinite(numAmount)) {
     return 'S/ 0.00';
   }
   
-  // Formatear el numero con separadores de miles y 2 decimales
   return `S/ ${Math.abs(numAmount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;
 }
 
@@ -170,12 +165,10 @@ function fallbackCopyToClipboard(text: string): boolean {
 // Funcion segura para copiar al portapapeles
 const safeCopyToClipboard = async (text: string): Promise<boolean> => {
   try {
-    // Verificar si estamos en un contexto seguro y el API esta disponible
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(text)
       return true
     } else {
-      // Usar fallback para entornos no seguros
       return fallbackCopyToClipboard(text)
     }
   } catch (error) {
@@ -184,19 +177,15 @@ const safeCopyToClipboard = async (text: string): Promise<boolean> => {
   }
 }
 
-// Funcion para limpiar la ruta S3 - MODIFICADA
+// Funcion para limpiar la ruta S3
 function cleanS3Path(path: string): string {
   if (!path) return ''
-  
-  // Remover el prefijo s3://bucket-name/
   const cleanedPath = path.replace(/^s3:\/\/[^\/]+\//, '')
   return cleanedPath
 }
 
 function cleanS3Pathv(path: string): string {
   if (!path) return ''
-  
-  // Dividir por "/" y tomar el ultimo elemento (nombre del archivo)
   const parts = path.split('/')
   return parts[parts.length - 1]
 }
@@ -221,7 +210,6 @@ const handleDirectDownload = async (filePath: string) => {
     })
 
     if (response.status === 302 || response.status === 307) {
-      // Si hay redireccion, abrir la URL presigned en nueva pestaña
       const presignedUrl = response.headers.get('Location')
       if (presignedUrl) {
         window.open(presignedUrl, '_blank')
@@ -229,7 +217,6 @@ const handleDirectDownload = async (filePath: string) => {
         return true
       }
     } else if (response.ok) {
-      // Si la respuesta es OK, intentar procesar como JSON
       const data = await response.json()
       if (data.url) {
         window.open(data.url, '_blank')
@@ -238,7 +225,6 @@ const handleDirectDownload = async (filePath: string) => {
       }
     }
     
-    // Si no hay redireccion, intentar descargar directamente
     const blob = await response.blob()
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -260,14 +246,10 @@ const handleDirectDownload = async (filePath: string) => {
   }
 }
 
-
-
 function formatDateForAPI(dateStr: string): string {
   if (!dateStr || dateStr.length !== 8) return ''
   return `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`
 }
-
-
 
 // Schema actualizado para Liquidaciones
 export const liquidationSchema = z.object({
@@ -275,9 +257,8 @@ export const liquidationSchema = z.object({
   collector: z.object({
     name: z.string()
   }),
-  // liquidationsType: z.number(),
-  fromDate: z.string(), // CAMBIO: period -> fromDate
-  toDate: z.string(),   // NUEVO
+  fromDate: z.string(),
+  toDate: z.string(),
   amountCollector: z.string(),
   amountLiquidation: z.string(),
   differenceAmounts: z.string(),
@@ -287,7 +268,12 @@ export const liquidationSchema = z.object({
   debitAmountLiquidation: z.string().nullable().default('0.00'),
   creditAmountCollector: z.string().nullable().default('0.00'),
   creditAmountLiquidation: z.string().nullable().default('0.00'),
-  // liquidationsState: z.boolean(),
+  unreconciledDebitAmountCollector: z.string().nullable().default('0.00'),
+  unreconciledDebitAmountLiquidation: z.string().nullable().default('0.00'),
+  unreconciledCreditAmountCollector: z.string().nullable().default('0.00'),
+  unreconciledCreditAmountLiquidation: z.string().nullable().default('0.00'),
+  unreconciledAmountCollector: z.string().nullable().default('0.00'),
+  unreconciledAmountLiquidation: z.string().nullable().default('0.00'),
   createdAt: z.string(),
   createdBy: z.object({
     firstName: z.string(),
@@ -312,7 +298,6 @@ export const conciliationSchema = z.object({
   amount: z.string(),
   amountCollector: z.string(),
   differenceAmounts: z.string(),
-  // NUEVAS COLUMNAS PARA CONCILIACIONES
   recordsCalimaco: z.number().default(0),
   recordsCollector: z.number().default(0),
   unreconciledRecordsCalimaco: z.number().default(0),
@@ -337,8 +322,6 @@ type DataType = z.infer<typeof liquidationSchema> | z.infer<typeof conciliationS
 // API URL
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3040/api'
 
-
-
 async function fetchData(
   type: string, 
   collector?: string, 
@@ -347,24 +330,20 @@ async function fetchData(
   let endpoint = type === 'liquidations' ? '/liquidations' : '/conciliations'
   
   try {
-    // Si hay filtro de rango de fechas
     if (dateRange && dateRange.trim()) {
       const range = dateRange.trim()
       
       if (range.includes('-')) {
-        // Rango de fechas: 20251001-20251015
         const [fromDate, toDate] = range.split('-')
         const from = formatDateForAPI(fromDate)
         const to = formatDateForAPI(toDate)
         endpoint += `/range?from=${from}&to=${to}`
       } else {
-        // Fecha unica: 20251001
         const from = formatDateForAPI(range)
         const to = from
         endpoint += `/range?from=${from}&to=${to}`
       }
     } 
-    // Si hay filtro de recaudador
     else if (collector && collector.trim()) {
       endpoint += `/collector/${encodeURIComponent(collector.trim())}`
     }
@@ -383,19 +362,15 @@ async function fetchData(
   }
 }
 
-
 // Funcion para formatear el periodo en la tabla
 function formatPeriod(fromDate: string, toDate?: string): string {
   if (!fromDate) return ''
   
-  // Formato: YYYY-MM-DD
   const formatDate = (date: string) => {
     if (date.length === 10 && date.includes('-')) {
-      // Ya esta en formato YYYY-MM-DD
       const [year, month, day] = date.split('-')
       return `${day}/${month}/${year}`
     }
-    // Si es formato YYYYMMDD
     if (date.length === 8) {
       return `${date.slice(6, 8)}/${date.slice(4, 6)}/${date.slice(0, 4)}`
     }
@@ -449,7 +424,6 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
   const [openDetails, setOpenDetails] = React.useState(false)
   const [openDownloadDialog, setOpenDownloadDialog] = React.useState(false)
 
-  // Funcion para manejar la descarga de un archivo especifico
   const handleDownloadFile = async (filePath: string) => {
     const success = await handleDirectDownload(filePath)
     if (success) {
@@ -457,7 +431,6 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
     }
   }
 
-  // Funcion para el boton de descarga principal
   const handleDownloadAction = () => {
     if (!item.files || item.files.length === 0) {
       toast.error('No hay archivos disponibles')
@@ -465,10 +438,8 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
     }
 
     if (item.files.length === 1) {
-      // Si solo hay un archivo, descargar directamente
       handleDownloadFile(item.files[0].filePath)
     } else {
-      // Si hay multiples archivos, abrir el dialogo
       setOpenDownloadDialog(true)
     }
   }
@@ -493,7 +464,6 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
 
   return (
     <>
-      {/* Version Desktop */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -559,7 +529,7 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
         </DialogContent>
       </Dialog>
 
-      {/* Drawer para Ver Detalles */}
+      {/* Dialog para Ver Detalles */}
       <FileDetailsDialog 
         item={item} 
         type={type} 
@@ -591,7 +561,6 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
   )
 }
 
-
 function FileDetailsDialog({ 
   item, 
   type, 
@@ -605,156 +574,400 @@ function FileDetailsDialog({
 }) {
   const router = useRouter()
 
-  const handleCopyPath = async (path: string) => {
-    try {
-      const success = await safeCopyToClipboard(path)
-      if (success) {
-        toast.success('Ruta copiada al portapapeles')
-      } else {
-        toast.error('No se pudo copiar la ruta')
-      }
-    } catch (error) {
-      console.error('Error al copiar:', error)
-      toast.error('Error al copiar la ruta')
-    }
-  }
-
   const handleDownload = async (path: string) => {
     const success = await handleDirectDownload(path)
   }
 
-  return (
-    <Drawer open={open} onOpenChange={onOpenChange} direction="right">
-      <DrawerContent className="h-full w-full sm:max-w-md">
-        <DrawerHeader>
-          <DrawerTitle>Detalles del Registro</DrawerTitle>
-          <DrawerDescription>
-            {item.collector.name} - {formatPeriod(item.fromDate, item.toDate)}
-          </DrawerDescription>
-        </DrawerHeader>
+  const isLiquidation = type === 'liquidation'
+  const liquidationItem = isLiquidation ? item as z.infer<typeof liquidationSchema> : null
+  const conciliationItem = !isLiquidation ? item as z.infer<typeof conciliationSchema> : null
 
-        <div className="flex-1 overflow-y-auto px-4 pb-4">
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Informacion General</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="!max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold">
+            Detalles del Registro - {isLiquidation ? 'Liquidacion' : 'Ventas'}
+          </DialogTitle>
+          <DialogDescription>
+            {item.collector.name} • {formatPeriod(item.fromDate, item.toDate)}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6 py-4">
+          {/* Informacion General */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Informacion General</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-xs text-muted-foreground">Recaudador</Label>
                   <p className="text-sm font-medium">{item.collector.name}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Fecha Desde</Label>
-                    <p className="text-sm font-medium">{formatPeriod(item.fromDate)}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Fecha Hasta</Label>
-                    <p className="text-sm font-medium">{formatPeriod(item.toDate)}</p>
-                  </div>
-                </div>
-                {/* <div>
-                  <Label className="text-xs text-muted-foreground">Estado</Label>
-                  <Badge variant={
-                    type === 'liquidation' 
-                      ? ('liquidationsState' in item && item.liquidationsState ? 'default' : 'secondary')
-                      : ('conciliationsState' in item && item.conciliationsState ? 'default' : 'secondary')
-                  }>
-                    {type === 'liquidation'
-                      ? ('liquidationsState' in item && item.liquidationsState ? 'Completado' : 'Pendiente')
-                      : ('conciliationsState' in item && item.conciliationsState ? 'Completado' : 'Pendiente')
-                    }
-                  </Badge>
-                </div> */}
                 <div>
                   <Label className="text-xs text-muted-foreground">Creado Por</Label>
                   <p className="text-sm font-medium">{getCreatedByName(item.createdBy)}</p>
                 </div>
                 <div>
+                  <Label className="text-xs text-muted-foreground">Fecha Desde</Label>
+                  <p className="text-sm font-medium">{formatPeriod(item.fromDate)}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Fecha Hasta</Label>
+                  <p className="text-sm font-medium">{formatPeriod(item.toDate)}</p>
+                </div>
+                <div className="col-span-2">
                   <Label className="text-xs text-muted-foreground">Fecha de Creacion</Label>
                   <p className="text-sm font-medium">
                     {format(new Date(item.createdAt), "PPP 'a las' p", { locale: es })}
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-            {item.files && item.files.length > 0 && (
+          {/* Detalles segun tipo */}
+          {isLiquidation && liquidationItem && (
+            <>
+              {/* Montos de Venta (Creditos) */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Archivos ({item.files.length})</CardTitle>
+                  <CardTitle className="text-base">Montos de Venta</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {item.files.map((file, index) => (
-                    <div key={index} className="space-y-3 p-4 border rounded-lg bg-muted/50">
-                      <div className="flex items-start justify-between">
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Venta Recaudador</Label>
+                      <p className="text-lg font-bold text-blue-600">
+                        {formatCurrency(liquidationItem.creditAmountCollector)}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Venta Liquidacion</Label>
+                      <p className="text-lg font-bold text-blue-600">
+                        {formatCurrency(liquidationItem.creditAmountLiquidation)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Montos de Comision (Debitos) */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Montos de Comision</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Comision Recaudador</Label>
+                      <p className="text-lg font-bold text-orange-600">
+                        {formatCurrency(liquidationItem.debitAmountCollector)}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Comision Liquidacion</Label>
+                      <p className="text-lg font-bold text-orange-600">
+                        {formatCurrency(liquidationItem.debitAmountLiquidation)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Montos Netos */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Montos Netos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Neto Recaudador</Label>
+                      <p className="text-lg font-bold">{formatCurrency(liquidationItem.amountCollector)}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Neto Liquidacion</Label>
+                      <p className="text-lg font-bold">{formatCurrency(liquidationItem.amountLiquidation)}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Diferencia</Label>
+                      <p className={`text-lg font-bold ${
+                        parseFloat(liquidationItem.differenceAmounts || '0') !== 0 
+                          ? 'text-red-600' 
+                          : 'text-green-600'
+                      }`}>
+                        {formatCurrency(liquidationItem.differenceAmounts)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Registros */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Cantidad de Registros</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Registros Recaudador</Label>
+                      <p className="text-lg font-bold">{liquidationItem.recordsCollector || 0}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Registros Liquidacion</Label>
+                      <p className="text-lg font-bold">{liquidationItem.recordsLiquidation || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Montos No Conciliados */}
+              {(liquidationItem.unreconciledAmountCollector || liquidationItem.unreconciledAmountLiquidation) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Montos No Conciliados</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Monto Venta No Conciliada - Recaudador</Label>
+                        <p className={`text-base font-bold ${
+                          parseFloat(liquidationItem.unreconciledCreditAmountCollector || '0') !== 0 
+                            ? 'text-red-600' 
+                            : 'text-green-600'
+                        }`}>
+                          {formatCurrency(liquidationItem.unreconciledCreditAmountCollector)}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Monto Venta No Conciliada - Liquidacion</Label>
+                        <p className={`text-base font-bold ${
+                          parseFloat(liquidationItem.unreconciledCreditAmountLiquidation || '0') !== 0 
+                            ? 'text-red-600' 
+                            : 'text-green-600'
+                        }`}>
+                          {formatCurrency(liquidationItem.unreconciledCreditAmountLiquidation)}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Monto Comision No Conciliada - Recaudador</Label>
+                        <p className={`text-base font-bold ${
+                          parseFloat(liquidationItem.unreconciledDebitAmountCollector || '0') !== 0 
+                            ? 'text-red-600' 
+                            : 'text-green-600'
+                        }`}>
+                          {formatCurrency(liquidationItem.unreconciledDebitAmountCollector)}
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Monto Comision No Conciliada - Liquidacion</Label>
+                        <p className={`text-base font-bold ${
+                          parseFloat(liquidationItem.unreconciledDebitAmountLiquidation || '0') !== 0 
+                            ? 'text-red-600' 
+                            : 'text-green-600'
+                        }`}>
+                          {formatCurrency(liquidationItem.unreconciledDebitAmountLiquidation)}
+                        </p>
+                      </div>
+                      
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+
+          {!isLiquidation && conciliationItem && (
+            <>
+              {/* Montos de Venta */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Montos de Venta</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Venta Calimaco</Label>
+                      <p className="text-lg font-bold">{formatCurrency(conciliationItem.amount)}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Venta Recaudador</Label>
+                      <p className="text-lg font-bold">{formatCurrency(conciliationItem.amountCollector)}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Diferencia</Label>
+                      <p className={`text-lg font-bold ${
+                        parseFloat(conciliationItem.differenceAmounts) !== 0 
+                          ? 'text-red-600' 
+                          : 'text-green-600'
+                      }`}>
+                        {formatCurrency(conciliationItem.differenceAmounts)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Registros */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Cantidad de Registros</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Registros Calimaco</Label>
+                      <p className="text-lg font-bold">{conciliationItem.recordsCalimaco || 0}</p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Registros Recaudador</Label>
+                      <p className="text-lg font-bold">{conciliationItem.recordsCollector || 0}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Registros No Conciliados */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Registros No Conciliados</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">No Conciliados Calimaco</Label>
+                      <p className={`text-lg font-bold ${
+                        conciliationItem.unreconciledRecordsCalimaco !== 0 
+                          ? 'text-red-600' 
+                          : 'text-green-600'
+                      }`}>
+                        {conciliationItem.unreconciledRecordsCalimaco}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">No Conciliados Recaudador</Label>
+                      <p className={`text-lg font-bold ${
+                        conciliationItem.unreconciledRecordsCollector !== 0 
+                          ? 'text-red-600' 
+                          : 'text-green-600'
+                      }`}>
+                        {conciliationItem.unreconciledRecordsCollector}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Montos No Conciliados */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Montos No Conciliados</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Venta No Conciliada Calimaco</Label>
+                      <p className={`text-lg font-bold ${
+                        parseFloat(conciliationItem.unreconciledAmountCalimaco) !== 0 
+                          ? 'text-red-600' 
+                          : 'text-green-600'
+                      }`}>
+                        {formatCurrency(conciliationItem.unreconciledAmountCalimaco)}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Venta No Conciliada Recaudador</Label>
+                      <p className={`text-lg font-bold ${
+                        parseFloat(conciliationItem.unreconciledAmountCollector) !== 0 
+                          ? 'text-red-600' 
+                          : 'text-green-600'
+                      }`}>
+                        {formatCurrency(conciliationItem.unreconciledAmountCollector)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {/* Archivos */}
+          {item.files && item.files.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Archivos ({item.files.length})</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {item.files.map((file, index) => {
+                  const fileType = type === 'liquidation' && 'liquidationFilesType' in file
+                    ? file.liquidationFilesType
+                    : 'conciliationFilesType' in file
+                    ? file.conciliationFilesType
+                    : 0
+                  const isFinalFile = fileType === 2
+                  
+                  return (
+                    <div key={index} className={`p-4 border rounded-lg ${
+                      isFinalFile ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                    }`}>
+                      <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 space-y-2">
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Tipo de Archivo</Label>
+                          <div className="flex items-center gap-2">
                             <Badge 
                               variant="outline" 
-                              className={`mt-1 ${
-                                (type === 'liquidation' && 'liquidationFilesType' in file ? file.liquidationFilesType : 
-                                'conciliationFilesType' in file ? file.conciliationFilesType : 0) === 2 
+                              className={`${
+                                isFinalFile 
                                   ? 'bg-green-600 text-white border-green-600' 
                                   : 'bg-red-400 text-white border-red-400'
                               }`}
                             >
-                              {getFileTypeName(
-                                type === 'liquidation' && 'liquidationFilesType' in file
-                                  ? file.liquidationFilesType
-                                  : 'conciliationFilesType' in file
-                                  ? file.conciliationFilesType
-                                  : 0
-                              )}
+                              {getFileTypeName(fileType)}
                             </Badge>
                           </div>
                           
                           <div>
-                            <Label className="text-xs text-muted-foreground">Nombre del Archivo</Label>
-                            <div className="flex items-center gap-2 mt-1">
-                              <p className="text-xs font-mono bg-background p-2 rounded border flex-1 break-all">
-                                {cleanS3Pathv(file.filePath)}
-                              </p>
-                            </div>
+                            <p className="text-sm font-mono font-medium break-all">
+                              {cleanS3Pathv(file.filePath)}
+                            </p>
                           </div>
 
                           <div>
-                            <Label className="text-xs text-muted-foreground">Fecha de Creacion</Label>
-                            <p className="text-sm">
+                            <p className="text-xs text-muted-foreground">
                               {format(new Date(file.createdAt), "PPP 'a las' p", { locale: es })}
                             </p>
                           </div>
                         </div>
-                      </div>
 
-                      <Button
-                        size="sm"
-                        className="w-full"
-                        onClick={() => handleDownload(file.filePath)}
-                      >
-                        <IconDownload className="mr-2 h-4 w-4" />
-                        Descargar este Archivo
-                      </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleDownload(file.filePath)}
+                          className={isFinalFile ? 'bg-green-600 hover:bg-green-700' : ''}
+                        >
+                          <IconDownload className="mr-2 h-4 w-4" />
+                          Descargar
+                        </Button>
+                      </div>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-          </div>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        <DrawerFooter className="border-t">
-          <DrawerClose asChild>
-            <Button variant="outline">Cerrar</Button>
-          </DrawerClose>
-        </DrawerFooter>
-      </DrawerContent>
-    </Drawer>
+        <div className="flex justify-end gap-2 pt-4 border-t">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cerrar
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
-
 
 function DraggableRow({ row, type }: { row: Row<DataType>, type: string }) {
   const { transform, transition, setNodeRef, isDragging } = useSortable({
@@ -813,18 +1026,14 @@ export function DataTable() {
   const [searchCollector, setSearchCollector] = React.useState('')
   const [searchPeriod, setSearchPeriod] = React.useState('')
 
-  // Funcion para eliminar items
   const handleDeleteItem = (deletedId: number) => {
     setData(prevData => prevData.filter(item => item.id !== deletedId))
   }
 
-  // Cargar datos segun la vista
-  // Actualizar el useEffect de carga de datos
   React.useEffect(() => {
     async function loadData() {
       setLoading(true)
       try {
-        // Ahora usamos dateRange en lugar de period
         const result = await fetchData(currentView, searchCollector, searchPeriod)
         setData(result)
       } catch (error) {
@@ -837,292 +1046,167 @@ export function DataTable() {
     loadData()
   }, [currentView, searchCollector, searchPeriod])
 
+  // Columnas simplificadas para liquidaciones
+  const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidationSchema>>[] => [
+    {
+      id: "drag",
+      header: () => null,
+      cell: ({ row }) => <DragHandle id={row.original.id} />,
+    },
+    {
+      accessorKey: "collector.name",
+      header: "Recaudador",
+      cell: ({ row }) => <TableCellViewer item={row.original} type="liquidation" />,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "fromDate",
+      header: "Desde",
+      cell: ({ row }) => (
+        <div className="w-24 font-mono text-sm">
+          {formatPeriod(row.original.fromDate)}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "toDate",
+      header: "Hasta",
+      cell: ({ row }) => (
+        <div className="w-24 font-mono text-sm">
+          {formatPeriod(row.original.toDate)}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "amountCollector",
+      header: () => <div className="text-right">Neto Recaudador</div>,
+      cell: ({ row }) => (
+        <div className="text-right font-medium">{formatCurrency(row.original.amountCollector)}</div>
+      ),
+    },
+    {
+      accessorKey: "amountLiquidation",
+      header: () => <div className="text-right">Neto Liquidacion</div>,
+      cell: ({ row }) => (
+        <div className="text-right font-medium">{formatCurrency(row.original.amountLiquidation)}</div>
+      ),
+    },
+    {
+      accessorKey: "differenceAmounts",
+      header: () => <div className="text-right">Diferencia</div>,
+      cell: ({ row }) => {
+        const diff = parseFloat(row.original.differenceAmounts || '0')
+        return (
+          <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+            {formatCurrency(row.original.differenceAmounts)}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Fecha de Creacion",
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {format(new Date(row.original.createdAt), "dd/MM/yyyy HH:mm", { locale: es })}
+        </div>
+      ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <ActionsMenu 
+          item={row.original} 
+          type="liquidation" 
+          onDelete={handleDeleteItem}
+        />
+      ),
+    },
+  ], [])
 
-
-  // Actualizar las columnas de liquidaciones
-const liquidationColumns = React.useMemo((): ColumnDef<z.infer<typeof liquidationSchema>>[] => [
-  {
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original.id} />,
-  },
-  {
-    accessorKey: "collector.name",
-    header: "Recaudador",
-    cell: ({ row }) => <TableCellViewer item={row.original} type="liquidation" />,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "fromDate",
-    header: "Desde",
-    cell: ({ row }) => (
-      <div className="w-24 font-mono text-sm">
-        {formatPeriod(row.original.fromDate)}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "toDate",
-    header: "Hasta",
-    cell: ({ row }) => (
-      <div className="w-24 font-mono text-sm">
-        {formatPeriod(row.original.toDate)}
-      </div>
-    ),
-  },
-  
-  // CREDITOS
-  {
-    accessorKey: "creditAmountCollector",
-    header: () => <div className="text-center">Venta<br />Recaudador</div>,
-    cell: ({ row }) => (
-      <div className="text-right font-medium text-blue-600">
-        {formatCurrency(row.original.creditAmountCollector || '0.00')}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "creditAmountLiquidation",
-    header: () => <div className="text-center">Venta<br />Liquidacion</div>,
-    cell: ({ row }) => (
-      <div className="text-right font-medium text-blue-600">
-        {formatCurrency(row.original.creditAmountLiquidation || '0.00')}
-      </div>
-    ),
-  },
-  // DEBITOS
-  {
-    accessorKey: "debitAmountCollector",
-    header: () => <div className="text-center">Comision<br />Recaudador</div>,
-    cell: ({ row }) => (
-      <div className="text-right font-medium text-orange-600">
-        {formatCurrency(row.original.debitAmountCollector || '0.00')}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "debitAmountLiquidation",
-    header: () => <div className="text-center">Comision<br />Liquidacion</div>,
-    cell: ({ row }) => (
-      <div className="text-right font-medium text-orange-600">
-        {formatCurrency(row.original.debitAmountLiquidation || '0.00')}
-      </div>
-    ),
-  },
-  // MONTOS NETOS
-  {
-    accessorKey: "amountCollector",
-    header: () => <div className="w-full text-center">Neto<br />Recaudador</div>,
-    cell: ({ row }) => (
-      <div className="text-right font-medium">{formatCurrency(row.original.amountCollector)}</div>
-    ),
-  },
-  {
-    accessorKey: "amountLiquidation",
-    header: () => <div className="w-full text-center">Neto<br />Liquidacion</div>,
-    cell: ({ row }) => (
-      <div className="text-right font-medium">{formatCurrency(row.original.amountLiquidation)}</div>
-    ),
-  },
-  {
-    accessorKey: "differenceAmounts",
-    header: () => <div className="w-full text-right">Diferencia</div>,
-    cell: ({ row }) => {
-      const diff = parseFloat(row.original.differenceAmounts || '0')
-      return (
-        <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-          {formatCurrency(row.original.differenceAmounts)}
-        </div>
-      )
+  // Columnas simplificadas para conciliaciones
+  const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliationSchema>>[] => [
+    {
+      id: "drag",
+      header: () => null,
+      cell: ({ row }) => <DragHandle id={row.original.id} />,
     },
-  },
-  // REGISTROS
-  {
-    accessorKey: "recordsCollector",
-    header: () => <div className="text-center">Registros<br />Recaudador</div>,
-    cell: ({ row }) => (
-      <div className="text-center font-medium">
-        {row.original.recordsCollector || 0}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "recordsLiquidation",
-    header: () => <div className="text-center">Registros<br />Liquidacion</div>,
-    cell: ({ row }) => (
-      <div className="text-center font-medium">
-        {row.original.recordsLiquidation || 0}
-      </div>
-    ),
-  },
-  // {
-  //   accessorKey: "createdBy",
-  //   header: "Creado Por",
-  //   cell: ({ row }) => getCreatedByName(row.original.createdBy),
-  // },
-  {
-    id: "actions",
-    cell: ({ row }) => (
-      <ActionsMenu 
-        item={row.original} 
-        type="liquidation" 
-        onDelete={handleDeleteItem}
-      />
-    ),
-  },
-], [])
-
-
-
-const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliationSchema>>[] => [
-  {
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original.id} />,
-  },
-  {
-    accessorKey: "collector.name",
-    header: "Recaudador",
-    cell: ({ row }) => <TableCellViewer item={row.original} type="conciliation" />,
-    enableHiding: false,
-  },
-  // ELIMINADO: Columna de tipo de conciliacion
-  {
-    accessorKey: "fromDate",
-    header: "Desde",
-    cell: ({ row }) => (
-      <div className="w-24 font-mono text-sm">
-        {formatPeriod(row.original.fromDate)}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "toDate",
-    header: "Hasta",
-    cell: ({ row }) => (
-      <div className="w-24 font-mono text-sm">
-        {formatPeriod(row.original.toDate)}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "amount",
-    header: () => <div className="w-full text-right">Venta Calimaco</div>,
-    cell: ({ row }) => (
-      <div className="text-right font-medium">{formatCurrency(row.original.amount)}</div>
-    ),
-  },
-  {
-    accessorKey: "amountCollector",
-    header: () => <div className="w-full text-right">Venta Recaudador</div>,
-    cell: ({ row }) => (
-      <div className="text-right font-medium">{formatCurrency(row.original.amountCollector)}</div>
-    ),
-  },
-   {
-    accessorKey: "differenceAmounts",
-    header: () => <div className="w-full text-right">Diferencia</div>,
-    cell: ({ row }) => {
-      const diff = parseFloat(row.original.differenceAmounts)
-      return (
-        <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-          {formatCurrency(row.original.differenceAmounts)}
-        </div>
-      )
+    {
+      accessorKey: "collector.name",
+      header: "Recaudador",
+      cell: ({ row }) => <TableCellViewer item={row.original} type="conciliation" />,
+      enableHiding: false,
     },
-  },
-  // ELIMINADO: Columna de estado de conciliacion
-  // NUEVAS COLUMNAS PARA CONCILIACIONES
-  {
-    accessorKey: "recordsCalimaco",
-    header: () => <div className="text-center">Registros<br />Calimaco</div>,
-    cell: ({ row }) => (
-      <div className="text-center font-medium">{row.original.recordsCalimaco || '0'}</div>
-    ),
-  },
-  {
-    accessorKey: "recordsCollector",
-    header: () => <div className="text-center">Registros<br />Recaudador</div>,
-    cell: ({ row }) => (
-      <div className="text-center font-medium">{row.original.recordsCollector || '0'}</div>
-    ),
-  },
-  {
-    accessorKey: "unreconciledRecordsCalimaco",
-    header: () => <div className="text-center">No Conciliados<br />Calimaco</div>,
-    cell: ({ row }) => {
-      // <div className="text-center font-medium">{row.original.unreconciledRecordsCalimaco}</div>
-      const noconc = (row.original.unreconciledRecordsCalimaco)
-      return(
-        <div className={`text-right font-medium ${noconc !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-          {(row.original.unreconciledRecordsCalimaco || '0')}
+    {
+      accessorKey: "fromDate",
+      header: "Desde",
+      cell: ({ row }) => (
+        <div className="w-24 font-mono text-sm">
+          {formatPeriod(row.original.fromDate)}
         </div>
-      )
+      ),
     },
-  },
-  {
-    accessorKey: "unreconciledRecordsCollector",
-    header: () => <div className="text-center">No Conciliados<br />Recaudador</div>,
-    cell: ({ row }) => {
-      // <div className="text-center font-medium">{row.original.unreconciledRecordsCollector}</div>
-      const noconr = (row.original.unreconciledRecordsCollector)
-      return(
-        <div className={`text-right font-medium ${noconr !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-          {(row.original.unreconciledRecordsCollector || '0')}
+    {
+      accessorKey: "toDate",
+      header: "Hasta",
+      cell: ({ row }) => (
+        <div className="w-24 font-mono text-sm">
+          {formatPeriod(row.original.toDate)}
         </div>
-      )
+      ),
     },
-  },
-  {
-    accessorKey: "unreconciledAmountCalimaco",
-    header: () => <div className="text-center">No Conciliados<br />Venta Calimaco</div>,
-    cell: ({ row }) => {
-      const amountncc = parseFloat(row.original.unreconciledAmountCalimaco)
-      return(
-        <div className={`text-right font-medium ${amountncc !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-          {formatCurrency(row.original.unreconciledAmountCalimaco)}
+    {
+      accessorKey: "amount",
+      header: () => <div className="text-right">Venta Calimaco</div>,
+      cell: ({ row }) => (
+        <div className="text-right font-medium">{formatCurrency(row.original.amount)}</div>
+      ),
+    },
+    {
+      accessorKey: "amountCollector",
+      header: () => <div className="text-right">Venta Recaudador</div>,
+      cell: ({ row }) => (
+        <div className="text-right font-medium">{formatCurrency(row.original.amountCollector)}</div>
+      ),
+    },
+    {
+      accessorKey: "differenceAmounts",
+      header: () => <div className="text-right">Diferencia</div>,
+      cell: ({ row }) => {
+        const diff = parseFloat(row.original.differenceAmounts)
+        return (
+          <div className={`text-right font-medium ${diff !== 0 ? 'text-red-600' : 'text-green-600'}`}>
+            {formatCurrency(row.original.differenceAmounts)}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Fecha de Creacion",
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {format(new Date(row.original.createdAt), "dd/MM/yyyy HH:mm", { locale: es })}
         </div>
-      )
+      ),
     },
-  },
-  {
-    accessorKey: "unreconciledAmountCollector",
-    header: () => <div className="text-center">No Conciliados<br />Venta Recaudador</div>,
-    cell: ({ row }) => {
-      // <div className="text-right font-medium">{formatCurrency(row.original.unreconciledAmountCollector)}</div>
-      const amountncr = parseFloat(row.original.unreconciledAmountCollector)
-      return(
-        <div className={`text-right font-medium ${amountncr !== 0 ? 'text-red-600' : 'text-green-600'}`}>
-          {formatCurrency(row.original.unreconciledAmountCollector)}
-        </div>
-      )
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <ActionsMenu 
+          item={row.original} 
+          type="conciliation" 
+          onDelete={handleDeleteItem}
+        />
+      ),
     },
-  },
-  
- 
-  // {
-  //   accessorKey: "createdBy",
-  //   header: "Creado Por",
-  //   cell: ({ row }) => getCreatedByName(row.original.createdBy),
-  // },
-  {
-    id: "actions",
-    cell: ({ row }) => (
-      <ActionsMenu 
-        item={row.original} 
-        type="conciliation" 
-        onDelete={handleDeleteItem}
-      />
-    ),
-  },
-], [])
+  ], [])
 
   const dataIds = React.useMemo<UniqueIdentifier[]>(
     () => data?.map(({ id }) => id) || [],
     [data]
   )
 
-  // Determinar columnas segun el tipo actual
   const columns = currentView === 'liquidations' 
     ? liquidationColumns 
     : currentView === 'conciliations'
@@ -1168,7 +1252,6 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
   return (
     <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as any)} className="w-full">
       <div className="flex items-center justify-between px-4 lg:px-6 mb-4">
-        {/* Selector movil */}
         <Select value={currentView} onValueChange={(value) => setCurrentView(value as any)}>
           <SelectTrigger className="w-[180px] lg:hidden">
             <SelectValue />
@@ -1179,21 +1262,19 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
           </SelectContent>
         </Select>
 
-        {/* Tabs desktop */}
         <TabsList className="hidden lg:flex">
           <TabsTrigger value="conciliations">Ventas</TabsTrigger>
           <TabsTrigger value="liquidations">Liquidaciones</TabsTrigger>
         </TabsList>
 
-        {/* Acciones y filtros */}
         <div className="flex items-center gap-2">
           <Input
-              type="text"
-              placeholder="Buscar por recaudador..."
-              value={searchCollector}
-              onChange={(e) => setSearchCollector(e.target.value)}
-              className="w-48 border-2 border-gray-400 focus:border-red-500 focus:ring-red-500"
-            />
+            type="text"
+            placeholder="Buscar por recaudador..."
+            value={searchCollector}
+            onChange={(e) => setSearchCollector(e.target.value)}
+            className="w-48 border-2 border-gray-400 focus:border-red-500 focus:ring-red-500"
+          />
           <PeriodPicker
             value={searchPeriod}
             onChange={setSearchPeriod}
@@ -1210,31 +1291,6 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
               Limpiar
             </Button>
           )}
-
-          {/* <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <IconLayoutColumns className="h-4 w-4 mr-2" />
-                Columnas
-                <IconChevronDown className="h-4 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu> */}
         </div>
       </div>
 
@@ -1284,9 +1340,8 @@ const conciliationColumns = React.useMemo((): ColumnDef<z.infer<typeof conciliat
               </Table>
             </DndContext>
           )}
-          </div>
+        </div>
 
-        {/* Paginacion */}
         <div className="flex items-center justify-between px-4 py-4">
           <div className="flex items-center gap-2">
             <Button
