@@ -73,7 +73,7 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
   const getRowColor = (item: any, compareField1: string, compareField2: string): string => {
     const val1 = Number(item[compareField1] || 0)
     const val2 = Number(item[compareField2] || 0)
-    return checkMatch(val1, val2) ? "bg-green-50" : "bg-red-50"
+    return checkMatch(val1, val2) ? "bg-green-50 dark:bg-green-900/20" : "bg-red-50 dark:bg-red-900/20"
   }
 
   const renderTableVenta = (title: string, field: string, compareField: string) => {
@@ -90,21 +90,21 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
         </CardHeader>
 
         <CardContent className="flex-1 pb-0">
-          <div className="max-h-[380px] overflow-y-auto rounded-md border border-gray-200">
+          <div className="max-h-[380px] overflow-y-auto rounded-md border border-border">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-white z-10">
-                <tr className="border-b-2 border-black">
-                  <th className="font-bold text-left p-2">Dia</th>
-                  <th className="font-bold text-left p-2">Mes</th>
-                  <th className="font-bold text-left p-2">Metodo</th>
-                  <th className="font-bold text-right p-2">Monto (S/.)</th>
+              <thead className="sticky top-0 bg-background dark:bg-card z-10">
+                <tr className="border-b-2 border-border">
+                  <th className="font-bold text-left p-2 text-foreground">Dia</th>
+                  <th className="font-bold text-left p-2 text-foreground">Mes</th>
+                  <th className="font-bold text-left p-2 text-foreground">Metodo</th>
+                  <th className="font-bold text-right p-2 text-foreground">Monto (S/.)</th>
                 </tr>
               </thead>
               <tbody>
                 {data.map((item, idx) => (
                   <tr 
                     key={idx} 
-                    className={`border-b border-gray-200 ${getRowColor(item, field, compareField)}`}
+                    className={`border-b border-border text-foreground ${getRowColor(item, field, compareField)}`}
                   >
                     <td className="p-2">{item.dia}</td>
                     <td className="p-2">{item.mes}</td>
@@ -122,7 +122,7 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
         </CardContent>
 
         <CardFooter>
-          <span className="font-bold text-gray-800">
+          <span className="font-bold text-foreground">
             Total S/.{" "}
             {total.toLocaleString("es-PE", {
               minimumFractionDigits: 2,
@@ -159,23 +159,23 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
         </CardHeader>
 
         <CardContent className="flex-1 pb-0">
-          <div className="max-h-[380px] overflow-y-auto rounded-md border border-gray-200">
+          <div className="max-h-[380px] overflow-y-auto rounded-md border border-border">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-white z-10">
-                <tr className="border-b-2 border-black">
-                  <th className="font-bold text-left p-2">Dia</th>
-                  <th className="font-bold text-left p-2">Mes</th>
-                  <th className="font-bold text-left p-2">Metodo</th>
-                  <th className="font-bold text-right p-2">Monto (S/.)</th>
-                  <th className="font-bold text-right p-2">Comision (S/.)</th>
-                  <th className="font-bold text-right p-2">Neto (S/.)</th>
+              <thead className="sticky top-0 bg-background dark:bg-card z-10">
+                <tr className="border-b-2 border-border">
+                  <th className="font-bold text-left p-2 text-foreground">Dia</th>
+                  <th className="font-bold text-left p-2 text-foreground">Mes</th>
+                  <th className="font-bold text-left p-2 text-foreground">Metodo</th>
+                  <th className="font-bold text-right p-2 text-foreground">Monto (S/.)</th>
+                  <th className="font-bold text-right p-2 text-foreground">Comision (S/.)</th>
+                  <th className="font-bold text-right p-2 text-foreground">Neto (S/.)</th>
                 </tr>
               </thead>
               <tbody>
                 {data.map((item, idx) => (
                   <tr 
                     key={idx} 
-                    className={`border-b border-gray-200 ${getRowColor(item, fields.monto, compareFields.monto)}`}
+                    className={`border-b border-border text-foreground ${getRowColor(item, fields.monto, compareFields.monto)}`}
                   >
                     <td className="p-2">{item.dia}</td>
                     <td className="p-2">{item.mes}</td>
@@ -203,13 +203,13 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
         </CardContent>
 
         <CardFooter className="flex flex-col items-start gap-1">
-          <span className="font-bold text-gray-800">
+          <span className="font-bold text-foreground">
             Total Monto: S/. {totalMonto.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
           </span>
-          <span className="font-bold text-gray-800">
+          <span className="font-bold text-foreground">
             Total Comision: S/. {totalComision.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
           </span>
-          <span className="font-bold text-gray-800">
+          <span className="font-bold text-foreground">
             Total Neto: S/. {totalNeto.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
           </span>
         </CardFooter>

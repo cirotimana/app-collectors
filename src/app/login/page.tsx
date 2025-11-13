@@ -20,12 +20,12 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <AuthForm mode="login" />
-          <p className="mt-4 text-center text-sm text-muted-foreground">
+          {/* <p className="mt-4 text-center text-sm text-muted-foreground">
             ¿No tienes una cuenta?{" "}
             <Link href="/signup" className="font-medium text-red-600 hover:underline">
               Registrate
             </Link>
-          </p>
+          </p> */}
         </CardContent>
       </Card>
     </div>
