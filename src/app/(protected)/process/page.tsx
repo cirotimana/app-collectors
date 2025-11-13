@@ -339,10 +339,10 @@ export default function ProcessPage() {
       let detailedMessage = "Algunas operaciones fallaron";
 
       if (typeof errorDetail === 'object' && errorDetail !== null) {
-        // ✅ PRESERVAR LOS SALTOS DE LÍNEA del backend
+        //  PRESERVAR LOS SALTOS DE LINEA del backend
         detailedMessage = errorDetail.message || detailedMessage;
         
-        // // Si hay operaciones fallidas, formatear con saltos de línea
+        // // Si hay operaciones fallidas, formatear con saltos de linea
         // if (errorDetail.failed_operations && Array.isArray(errorDetail.failed_operations)) {
         //   const failedOps = errorDetail.failed_operations.join('\n• ');
         //   detailedMessage = `${errorDetail.message}\n\nOperaciones fallidas:\n• ${failedOps}`;
@@ -362,14 +362,14 @@ export default function ProcessPage() {
           : p
       ));
       
-      // ✅ PARA EL TOAST, usar JSX para mostrar saltos de línea
+      //  PARA EL TOAST, usar JSX para mostrar saltos de linea
       toast.error(`Error en ${proceso.recaudador}`, { 
         description: (
           <div className="whitespace-pre-line text-left">
             {detailedMessage}
           </div>
         ),
-        duration: 8000  // ✅ Más tiempo para leer múltiples líneas
+        duration: 8000  //  Mas tiempo para leer multiples lineas
       });
     } else if (res.status === 500) {
       const errorDetail = typeof data.detail === 'object' ? data.detail?.message : data.detail || "Error interno del servidor";
@@ -385,7 +385,7 @@ export default function ProcessPage() {
             }
           : p
       ));
-      toast.error(`Error crítico en ${proceso.recaudador}`, { 
+      toast.error(`Error critico en ${proceso.recaudador}`, { 
         description: (
           <div className="whitespace-pre-line text-left">
             {errorMessage}
@@ -399,7 +399,7 @@ export default function ProcessPage() {
   } catch (error: any) {
     clearInterval(intervalo);
     
-    const mensajeError = error.message || "Error de conexión con el servidor";
+    const mensajeError = error.message || "Error de conexion con el servidor";
     setProcesos(prev => prev.map(p => 
       p.id === procesoId 
         ? { 

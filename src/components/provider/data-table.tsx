@@ -56,6 +56,7 @@ import { int, number, z } from "zod"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
+import { liquidationsApi, conciliationsApi } from "@/lib/api"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Badge } from "@/components/ui/badge"
@@ -262,18 +263,18 @@ export const liquidationSchema = z.object({
   amountCollector: z.string(),
   amountLiquidation: z.string(),
   differenceAmounts: z.string(),
-  recordsCollector: z.number().nullable().default(0),
-  recordsLiquidation: z.number().nullable().default(0),
-  debitAmountCollector: z.string().nullable().default('0.00'),
-  debitAmountLiquidation: z.string().nullable().default('0.00'),
-  creditAmountCollector: z.string().nullable().default('0.00'),
-  creditAmountLiquidation: z.string().nullable().default('0.00'),
-  unreconciledDebitAmountCollector: z.string().nullable().default('0.00'),
-  unreconciledDebitAmountLiquidation: z.string().nullable().default('0.00'),
-  unreconciledCreditAmountCollector: z.string().nullable().default('0.00'),
-  unreconciledCreditAmountLiquidation: z.string().nullable().default('0.00'),
-  unreconciledAmountCollector: z.string().nullable().default('0.00'),
-  unreconciledAmountLiquidation: z.string().nullable().default('0.00'),
+  recordsCollector: z.number().nullable().optional().default(0),
+  recordsLiquidation: z.number().nullable().optional().default(0),
+  debitAmountCollector: z.string().nullable().optional().default('0.00'),
+  debitAmountLiquidation: z.string().nullable().optional().default('0.00'),
+  creditAmountCollector: z.string().nullable().optional().default('0.00'),
+  creditAmountLiquidation: z.string().nullable().optional().default('0.00'),
+  unreconciledDebitAmountCollector: z.string().nullable().optional().default('0.00'),
+  unreconciledDebitAmountLiquidation: z.string().nullable().optional().default('0.00'),
+  unreconciledCreditAmountCollector: z.string().nullable().optional().default('0.00'),
+  unreconciledCreditAmountLiquidation: z.string().nullable().optional().default('0.00'),
+  unreconciledAmountCollector: z.string().nullable().optional().default('0.00'),
+  unreconciledAmountLiquidation: z.string().nullable().optional().default('0.00'),
   createdAt: z.string(),
   createdBy: z.object({
     firstName: z.string(),
@@ -327,34 +328,36 @@ async function fetchData(
   collector?: string, 
   dateRange?: string
 ): Promise<DataType[]> {
-  let endpoint = type === 'liquidations' ? '/liquidations' : '/conciliations'
-  
   try {
-    if (dateRange && dateRange.trim()) {
-      const range = dateRange.trim()
-      
-      if (range.includes('-')) {
-        const [fromDate, toDate] = range.split('-')
-        const from = formatDateForAPI(fromDate)
-        const to = formatDateForAPI(toDate)
-        endpoint += `/range?from=${from}&to=${to}`
+    if (type === 'liquidations') {
+      if (dateRange && dateRange.trim()) {
+        const range = dateRange.trim()
+        if (range.includes('-')) {
+          const [fromDate, toDate] = range.split('-')
+          return await liquidationsApi.getByDateRange(fromDate, toDate) as DataType[]
+        } else {
+          return await liquidationsApi.getByDateRange(range, range) as DataType[]
+        }
+      } else if (collector && collector.trim()) {
+        return await liquidationsApi.getByCollector(collector.trim()) as DataType[]
       } else {
-        const from = formatDateForAPI(range)
-        const to = from
-        endpoint += `/range?from=${from}&to=${to}`
+        return await liquidationsApi.getAll() as DataType[]
       }
-    } 
-    else if (collector && collector.trim()) {
-      endpoint += `/collector/${encodeURIComponent(collector.trim())}`
+    } else {
+      if (dateRange && dateRange.trim()) {
+        const range = dateRange.trim()
+        if (range.includes('-')) {
+          const [fromDate, toDate] = range.split('-')
+          return await conciliationsApi.getByDateRange(fromDate, toDate) as DataType[]
+        } else {
+          return await conciliationsApi.getByDateRange(range, range) as DataType[]
+        }
+      } else if (collector && collector.trim()) {
+        return await conciliationsApi.getByCollector(collector.trim()) as DataType[]
+      } else {
+        return await conciliationsApi.getAll() as DataType[]
+      }
     }
-    
-    console.log('Fetching from:', `${API_URL}${endpoint}`)
-    
-    const response = await fetch(`${API_URL}${endpoint}`)
-    if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`)
-    }
-    return await response.json()
   } catch (error) {
     console.error('Error fetching data:', error)
     toast.error('Error al cargar los datos')
@@ -446,10 +449,11 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
 
   const handleDelete = async () => {
     try {
-      const endpoint = `${API_URL}/${type === 'liquidation' ? 'liquidations' : 'conciliations'}/${item.id}`
-      const res = await fetch(endpoint, { method: 'DELETE' })
-
-      if (!res.ok) throw new Error('Error al eliminar registro')
+      if (type === 'liquidation') {
+        await liquidationsApi.delete(item.id)
+      } else {
+        await conciliationsApi.delete(item.id)
+      }
 
       toast.success('Registro eliminado correctamente')
       setOpenAlert(false)
@@ -561,7 +565,7 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
   )
 }
 
-function FileDetailsDialog({ 
+export function FileDetailsDialog({ 
   item, 
   type, 
   open, 
@@ -637,7 +641,7 @@ function FileDetailsDialog({
                   <CardTitle className="text-base">Montos de Venta</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label className="text-xs text-muted-foreground">Venta Recaudador</Label>
                       <p className="text-lg font-bold text-blue-600">
@@ -650,6 +654,12 @@ function FileDetailsDialog({
                         {formatCurrency(liquidationItem.creditAmountLiquidation)}
                       </p>
                     </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Diferencia</Label>
+                      <p className="text-lg font-bold text-blue-600">
+                        {formatCurrency((parseFloat(liquidationItem.creditAmountCollector || '0')) - (parseFloat(liquidationItem.creditAmountLiquidation || '0')))}
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -660,7 +670,7 @@ function FileDetailsDialog({
                   <CardTitle className="text-base">Montos de Comision</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label className="text-xs text-muted-foreground">Comision Recaudador</Label>
                       <p className="text-lg font-bold text-orange-600">
@@ -671,6 +681,12 @@ function FileDetailsDialog({
                       <Label className="text-xs text-muted-foreground">Comision Liquidacion</Label>
                       <p className="text-lg font-bold text-orange-600">
                         {formatCurrency(liquidationItem.debitAmountLiquidation)}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Diferencia</Label>
+                      <p className="text-lg font-bold text-orange-600">
+                        {formatCurrency((parseFloat(liquidationItem.debitAmountCollector || '0'))-(parseFloat(liquidationItem.debitAmountLiquidation || '0')))}
                       </p>
                     </div>
                   </div>
@@ -773,6 +789,28 @@ function FileDetailsDialog({
                           {formatCurrency(liquidationItem.unreconciledDebitAmountLiquidation)}
                         </p>
                       </div>
+
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Monto Neto No Conciliado - Recaudador</Label>
+                        <p className={`text-base font-bold ${
+                          parseFloat(liquidationItem.unreconciledAmountCollector || '0') !== 0 
+                            ? 'text-red-600' 
+                            : 'text-green-600'
+                        }`}>
+                          {formatCurrency(liquidationItem.unreconciledAmountCollector)}
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label className="text-xs text-muted-foreground">Monto Neto No Conciliado - Liquidacion</Label>
+                        <p className={`text-base font-bold ${
+                          parseFloat(liquidationItem.unreconciledAmountLiquidation || '0') !== 0 
+                            ? 'text-red-600' 
+                            : 'text-green-600'
+                        }`}>
+                          {formatCurrency(liquidationItem.unreconciledAmountLiquidation)}
+                        </p>
+                      </div>
                       
                     </div>
                   </CardContent>
@@ -841,7 +879,7 @@ function FileDetailsDialog({
                     <div>
                       <Label className="text-xs text-muted-foreground">No Conciliados Calimaco</Label>
                       <p className={`text-lg font-bold ${
-                        conciliationItem.unreconciledRecordsCalimaco !== 0 
+(conciliationItem.unreconciledRecordsCalimaco || 0) !== 0 
                           ? 'text-red-600' 
                           : 'text-green-600'
                       }`}>
@@ -851,7 +889,7 @@ function FileDetailsDialog({
                     <div>
                       <Label className="text-xs text-muted-foreground">No Conciliados Recaudador</Label>
                       <p className={`text-lg font-bold ${
-                        conciliationItem.unreconciledRecordsCollector !== 0 
+(conciliationItem.unreconciledRecordsCollector || 0) !== 0 
                           ? 'text-red-600' 
                           : 'text-green-600'
                       }`}>
@@ -902,7 +940,24 @@ function FileDetailsDialog({
                 <CardTitle className="text-base">Archivos ({item.files.length})</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {item.files.map((file, index) => {
+                {item.files
+                  .sort((a, b) => {
+                    const aType = type === 'liquidation' && 'liquidationFilesType' in a
+                      ? a.liquidationFilesType
+                      : 'conciliationFilesType' in a
+                      ? a.conciliationFilesType
+                      : 0
+                    const bType = type === 'liquidation' && 'liquidationFilesType' in b
+                      ? b.liquidationFilesType
+                      : 'conciliationFilesType' in b
+                      ? b.conciliationFilesType
+                      : 0
+                    // Tipo 2 primero, luego el resto
+                    if (aType === 2 && bType !== 2) return -1
+                    if (aType !== 2 && bType === 2) return 1
+                    return 0
+                  })
+                  .map((file, index) => {
                   const fileType = type === 'liquidation' && 'liquidationFilesType' in file
                     ? file.liquidationFilesType
                     : 'conciliationFilesType' in file
@@ -1105,9 +1160,9 @@ export function DataTable() {
     },
     {
       accessorKey: "createdAt",
-      header: "Fecha de Creacion",
+      header: () => <div className="text-right">Fecha de Creacion</div>,
       cell: ({ row }) => (
-        <div className="text-sm">
+        <div className="text-right font-medium">
           {format(new Date(row.original.createdAt), "dd/MM/yyyy HH:mm", { locale: es })}
         </div>
       ),
@@ -1183,9 +1238,9 @@ export function DataTable() {
     },
     {
       accessorKey: "createdAt",
-      header: "Fecha de Creacion",
+      header: () => <div className="text-right">Fecha de Creacion</div>,
       cell: ({ row }) => (
-        <div className="text-sm">
+        <div className="text-right font-medium">
           {format(new Date(row.original.createdAt), "dd/MM/yyyy HH:mm", { locale: es })}
         </div>
       ),

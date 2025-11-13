@@ -52,12 +52,8 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
         const endpoint =
           proceso === "liquidacion" ? "liquidations" : "conciliations"
 
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/${endpoint}/summary?collectorIds=${collectorIds}&fromDate=${fromDatet}&toDate=${toDatet}`
-
-        const res = await fetch(url)
-        if (!res.ok) throw new Error("Error al obtener datos")
-
-        const json = await res.json()
+        const { dashboardApi } = await import('@/lib/api')
+        const json = await dashboardApi.getSummary(collectorIds, fromDatet, toDatet, endpoint as 'liquidations' | 'conciliations')
         setData(json)
       } catch (e) {
         console.error(e)

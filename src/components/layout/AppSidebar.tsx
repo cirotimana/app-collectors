@@ -16,7 +16,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Logo from "../../assets/img/logo.jpg";
-import { Server, CloudDownload, Gpu, LayoutDashboard, BookText   } from "lucide-react";
+import { Server, CloudDownload, Gpu, LayoutDashboard, BookText, History } from "lucide-react";
 import { ModeToggle } from "@/components/provider/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogOut } from "lucide-react";
@@ -32,7 +32,9 @@ const menuItems = [
   { icon: <BookText  />, label: "Detalles", href: "/details" },
   { icon: <Server />, label: "Procesos", href: "/process" },
   { icon: <CloudDownload />, label: "Descargas", href: "/download" },
+  { icon: <History />, label: "Historico", href: "/historico" },
   { icon: <Gpu />, label: "Digital", href: "/digital" },
+  
 ];
 
 export function AppSidebar() {
