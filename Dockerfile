@@ -25,10 +25,7 @@ WORKDIR /app-collectors
 # Copiar solo lo necesario desde la etapa anterior
 COPY --from=builder /app-collectors/package*.json ./
 COPY --from=builder /app-collectors/.next ./.next
-
-# Si existe carpeta public, se copia (seguro)
-# Puedes descomentar si mas adelante agregas assets publicos:
-# COPY --from=builder /app-collectors/public ./public
+COPY --from=builder /app-collectors/public ./public
 
 # Instalar solo dependencias de produccion
 RUN npm install --production --legacy-peer-deps
