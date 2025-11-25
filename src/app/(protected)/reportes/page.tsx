@@ -14,6 +14,7 @@ import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { DateRange } from "react-day-picker"
 import { conciliationReportsApi, type ConciliationReport, type PaginatedResponse } from "@/lib/api"
+import { formatDateForDisplay } from "@/lib/date-utils"
 import { toast } from "sonner"
 
 const COLLECTORS = [
@@ -209,7 +210,7 @@ export default function ReportesPage() {
                   {reports.data.map((report, index) => (
                     <tr key={index} className="border-b hover:bg-muted/50">
                       <td className="p-2">
-                        {format(new Date(report.report_fecha), "dd/MM/yyyy")}
+                        {formatDateForDisplay(report.report_fecha)}
                       </td>
                       <td className="p-2 font-medium">
                         {getCollectorName(report.report_collector_id)}
