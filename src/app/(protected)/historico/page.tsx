@@ -5,15 +5,16 @@ import { HistoricoDiscrepancias } from "@/components/historico/historico-discrep
 
 export default function HistoricoPage() {
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Historico de Discrepancias</h1>
-        <p className="text-muted-foreground">
-          Gestion completa del historial de discrepancias en conciliaciones
-        </p>
-      </div>
-      
-      <HistoricoDiscrepancias />
-    </div>
+    <div className="space-y-6">
+              <div>
+                <h1 className="text-4xl font-black text-gray-900">
+                  Historico de <span className="text-red-600">Discrepancias</span>
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  Gestion completa del historial de discrepancias en conciliaciones
+                </p>
+              </div>      
+          <HistoricoDiscrepancias />
+        </div>
   )
 }

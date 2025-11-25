@@ -184,6 +184,392 @@ export const dashboardApi = {
     const response = await fetch(url)
     if (!response.ok) throw new Error('Error al obtener resumen')
     return response.json()
+  },
+
+  async getStats(collectorId: number, fromDate: string, toDate: string, endpoint: 'liquidations' | 'conciliations') {
+    const url = `${API_URL}/${endpoint}/stats?collectorId=${collectorId}&fromDate=${fromDate}&toDate=${toDate}`
+    const response = await fetch(url)
+    if (!response.ok) throw new Error('Error al obtener estadisticas')
+    return response.json()
+  }
+}
+
+// Endpoints de procesamiento
+const PROCESS_ENDPOINTS = {
+  conciliacion: {
+    kashio: "execute-getkashio",
+    monnet: "execute-getmonnet",
+    kushki: "execute-getkushki",
+    niubiz: "execute-getniubiz",
+    yape: "execute-getyape",
+    nuvei: "execute-getnuvei",
+    pagoefectivo: "execute-getpagoefectivo",
+    safetypay: "execute-getsafetypay",
+    tupay: "execute-gettupay",
+  },
+  liquidacion: {
+    kashio: "execute-liqkashio",
+    tupay: "execute-liqtupay",
+    pagoefectivo: "execute-liqpagoefectivo",
+  },
+}
+
+const DIGITAL_ENDPOINTS = {
+  dnicorrelativos: "execute-dnicorrelatives",
+  concentracionips: "execute-concentratorip",
+}
+
+// API de Procesamiento
+export const processApi = {
+  async executeProcess(tipo: 'conciliacion' | 'liquidacion', recaudador: string, fromDate: string, toDate: string) {
+    const endpoint = PROCESS_ENDPOINTS[tipo]?.[recaudador as keyof typeof PROCESS_ENDPOINTS[typeof tipo]]
+    if (!endpoint) throw new Error(`Endpoint no encontrado para ${tipo} - ${recaudador}`)
+    
+    const apiKey = process.env.NEXT_PUBLIC_API_KEY
+    const url = `${API_BASE_URL}/digital/${endpoint}?from_date=${fromDate}&to_date=${toDate}`
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'x-api-key': apiKey || '' },
+    })
+    
+    const data = await response.json().catch(() => ({ message: 'Error desconocido' }))
+    
+    if (!response.ok) {
+      // El backend ya envia el mensaje formateado correctamente
+      const errorMessage = data.detail?.message || data.detail || data.message || `Error ${response.status}`
+      throw new Error(errorMessage)
+    }
+    
+    return data
+  },
+
+  async executeDigitalProcess(proceso: 'dnicorrelativos' | 'concentracionips') {
+    const endpoint = DIGITAL_ENDPOINTS[proceso]
+    if (!endpoint) throw new Error(`Endpoint no encontrado para ${proceso}`)
+    
+    const apiKey = process.env.NEXT_PUBLIC_API_KEY
+    const url = `${API_BASE_URL}/digital/${endpoint}`
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'x-api-key': apiKey || '' },
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }))
+      throw new Error(errorData.message || `Error ${response.status}`)
+    }
+    
+    return response.json()
+  }
+}
+
+// Tipos para los nuevos endpoints de BD
+export interface ConciliationReport {
+  report_fecha: string
+  report_collector_id: number
+  aprobados_calimaco: number
+  conciliados_calimaco: number
+  no_conciliados_calimaco: number
+  porcentaje_conciliado_calimaco: string
+  porcentaje_no_conciliado_calimaco: string
+  monto_total_calimaco: string
+  monto_conciliado_calimaco: string
+  monto_no_conciliado_calimaco: string
+  porcentaje_monto_conciliado_calimaco: string
+  porcentaje_monto_no_conciliado_calimaco: string
+  aprobados_collector: number
+  conciliados_collector: number
+  no_conciliados_collector: number
+  porcentaje_conciliado_collector: string
+  porcentaje_no_conciliado_collector: string
+  monto_total_collector: string
+  monto_conciliado_collector: string
+  monto_no_conciliado_collector: string
+  porcentaje_monto_conciliado_collector: string
+  porcentaje_monto_no_conciliado_collector: string
+}
+
+export interface ConciliatedRecord {
+  calimaco_id: number
+  collector_id: number
+  calimaco_original: string
+  calimaco_normalized: string
+  calimaco_date: string
+  modification_date: string
+  calimaco_status: string
+  calimaco_amount: string
+  external_id: string
+  comments: string
+  collector_record_id: number
+  collector_date: string
+  collector_calimaco_id: string
+  provider_id: string
+  client_name: string
+  collector_amount: string
+  provider_status: string
+  estado: string
+}
+
+export interface NonConciliatedRecord {
+  calimaco_id: number
+  collector_id: number
+  calimaco_normalized: string
+  record_date: string
+  status_calimaco: string
+  amount: string
+  status_match: string
+  collector_record_id: number | null
+  collector_amount: string | null
+  status_collector: string | null
+}
+
+export interface SalesReport {
+  recaudador_nombre: string
+  fecha_desde: string
+  fecha_hasta: string
+  venta_calimaco: string
+  venta_recaudador: string
+  diferencia: string
+  cantidad_calimaco: string
+  cantidad_recaudador: string
+  diferencia_cantidad: string
+}
+
+export interface CalimacoRecord {
+  id: number
+  collectorId: number
+  calimacoId: string
+  calimacoIdNormalized: string
+  recordDate: string
+  modificationDate: string
+  status: string
+  userId: string
+  amount: string
+  externalId: string
+  comments: string
+  createdAt: string
+  updatedAt: string
+  collector: {
+    id: number
+    name: string
+    createdAt: string
+    createdById: number
+    updatedAt: string
+    updatedById: number
+  }
+}
+
+export interface CollectorRecord {
+  id: number
+  collectorId: number
+  recordDate: string
+  calimacoId: string
+  calimacoIdNormalized: string
+  providerId: string
+  clientName: string
+  amount: string
+  providerStatus: string
+  createdAt: string
+  updatedAt: string
+  collector: {
+    id: number
+    name: string
+    createdAt: string
+    createdById: number
+    updatedAt: string
+    updatedById: number
+  }
+}
+
+// API de Reportes de Conciliacion
+export const conciliationReportsApi = {
+  async getCompleteReport(collectorIds: number[], fromDate: string, toDate: string, page = 1, limit = 50): Promise<PaginatedResponse<ConciliationReport>> {
+    const params = new URLSearchParams({
+      collectorIds: collectorIds.join(','),
+      fromDate,
+      toDate,
+      page: page.toString(),
+      limit: limit.toString()
+    })
+    const response = await fetch(`${API_URL}/conciliation-reports/conciliacion-completa-por-dia?${params}`)
+    if (!response.ok) throw new Error('Error al obtener reporte completo')
+    return response.json()
+  },
+
+  async getConciliatedRecords(collectorIds: number[], fromDate: string, toDate: string, page = 1, limit = 20): Promise<PaginatedResponse<ConciliatedRecord>> {
+    const params = new URLSearchParams({
+      collectorIds: collectorIds.join(','),
+      fromDate,
+      toDate,
+      page: page.toString(),
+      limit: limit.toString()
+    })
+    const response = await fetch(`${API_URL}/conciliation-reports/conciliados?${params}`)
+    if (!response.ok) throw new Error('Error al obtener registros conciliados')
+    return response.json()
+  },
+
+  async getNonConciliatedRecords(collectorIds: number[], fromDate: string, toDate: string, page = 1, limit = 20): Promise<PaginatedResponse<NonConciliatedRecord>> {
+    const params = new URLSearchParams({
+      collectorIds: collectorIds.join(','),
+      fromDate,
+      toDate,
+      page: page.toString(),
+      limit: limit.toString()
+    })
+    const response = await fetch(`${API_URL}/conciliation-reports/no-conciliados?${params}`)
+    if (!response.ok) throw new Error('Error al obtener registros no conciliados')
+    return response.json()
+  },
+
+  async getSalesReport(collectorIds: number[], fromDate: string, toDate: string, page = 1, limit = 20): Promise<PaginatedResponse<SalesReport>> {
+    const params = new URLSearchParams({
+      collectorIds: collectorIds.join(','),
+      fromDate,
+      toDate,
+      page: page.toString(),
+      limit: limit.toString()
+    })
+    const response = await fetch(`${API_URL}/conciliation-reports/reporte-ventas-recaudadores?${params}`)
+    if (!response.ok) throw new Error('Error al obtener reporte de ventas')
+    return response.json()
+  }
+}
+
+// Interfaz para paginacion
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+// API de Registros Calimaco
+export const calimacoRecordsApi = {
+  async getAll(page = 1, limit = 20, collectorId?: number, fromDate?: string, toDate?: string, status?: string): Promise<PaginatedResponse<CalimacoRecord>> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString()
+    })
+    
+    if (collectorId) params.append('collectorId', collectorId.toString())
+    if (fromDate) params.append('fromDate', fromDate)
+    if (toDate) params.append('toDate', toDate)
+    if (status) params.append('status', status)
+    
+    const response = await fetch(`${API_URL}/calimaco-records/filter?${params}`)
+    if (!response.ok) throw new Error('Error al obtener registros Calimaco')
+    return response.json()
+  },
+
+  async getById(id: number): Promise<CalimacoRecord> {
+    const response = await fetch(`${API_URL}/calimaco-records/${id}`)
+    if (!response.ok) throw new Error('Error al obtener registro Calimaco')
+    return response.json()
+  },
+
+  async update(id: number, data: Partial<CalimacoRecord>): Promise<CalimacoRecord> {
+    const response = await fetch(`${API_URL}/calimaco-records/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) throw new Error('Error al actualizar registro Calimaco')
+    return response.json()
+  },
+
+  async delete(id: number): Promise<void> {
+    const response = await fetch(`${API_URL}/calimaco-records/${id}`, { method: 'DELETE' })
+    if (!response.ok) throw new Error('Error al eliminar registro Calimaco')
+  },
+
+  async getByCollector(collectorId: number): Promise<CalimacoRecord[]> {
+    const response = await fetch(`${API_URL}/calimaco-records/by-collector/${collectorId}`)
+    if (!response.ok) throw new Error('Error al obtener registros por recaudador')
+    return response.json()
+  },
+
+  async getByStatus(status: string): Promise<CalimacoRecord[]> {
+    const response = await fetch(`${API_URL}/calimaco-records/by-status?status=${encodeURIComponent(status)}`)
+    if (!response.ok) throw new Error('Error al obtener registros por estado')
+    return response.json()
+  },
+
+  async getByCalimacoId(calimacoId: string): Promise<CalimacoRecord[]> {
+    const response = await fetch(`${API_URL}/calimaco-records/by-calimaco-id/${encodeURIComponent(calimacoId)}`)
+    if (!response.ok) {
+      if (response.status === 404) {
+        return []
+      }
+      throw new Error('Error al buscar por Calimaco ID')
+    }
+    return response.json()
+  }
+}
+
+// API de Registros Collector
+export const collectorRecordsApi = {
+  async getAll(page = 1, limit = 20, collectorId?: number, fromDate?: string, toDate?: string, providerStatus?: string): Promise<PaginatedResponse<CollectorRecord>> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString()
+    })
+    
+    if (collectorId) params.append('collectorId', collectorId.toString())
+    if (fromDate) params.append('fromDate', fromDate)
+    if (toDate) params.append('toDate', toDate)
+    if (providerStatus) params.append('providerStatus', providerStatus)
+    
+    const response = await fetch(`${API_URL}/collector-records/filter?${params}`)
+    if (!response.ok) throw new Error('Error al obtener registros Collector')
+    return response.json()
+  },
+
+  async getById(id: number): Promise<CollectorRecord> {
+    const response = await fetch(`${API_URL}/collector-records/${id}`)
+    if (!response.ok) throw new Error('Error al obtener registro Collector')
+    return response.json()
+  },
+
+  async update(id: number, data: Partial<CollectorRecord>): Promise<CollectorRecord> {
+    const response = await fetch(`${API_URL}/collector-records/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) throw new Error('Error al actualizar registro Collector')
+    return response.json()
+  },
+
+  async delete(id: number): Promise<void> {
+    const response = await fetch(`${API_URL}/collector-records/${id}`, { method: 'DELETE' })
+    if (!response.ok) throw new Error('Error al eliminar registro Collector')
+  },
+
+  async getByCollector(collectorId: number): Promise<CollectorRecord[]> {
+    const response = await fetch(`${API_URL}/collector-records/by-collector/${collectorId}`)
+    if (!response.ok) throw new Error('Error al obtener registros por recaudador')
+    return response.json()
+  },
+
+  async getByProviderStatus(providerStatus: string): Promise<CollectorRecord[]> {
+    const response = await fetch(`${API_URL}/collector-records/by-provider-status?providerStatus=${encodeURIComponent(providerStatus)}`)
+    if (!response.ok) throw new Error('Error al obtener registros por estado del proveedor')
+    return response.json()
+  },
+
+  async getByCalimacoId(calimacoId: string): Promise<CollectorRecord[]> {
+    const response = await fetch(`${API_URL}/collector-records/by-calimaco-id/${encodeURIComponent(calimacoId)}`)
+    if (!response.ok) {
+      if (response.status === 404) {
+        return []
+      }
+      throw new Error('Error al buscar por Calimaco ID')
+    }
+    return response.json()
   }
 }
 
@@ -229,6 +615,36 @@ export const downloadApi = {
       return true
     } catch (error) {
       console.error('Error en descarga:', error)
+      return false
+    }
+  },
+
+  async downloadProcessedFile(tipo: 'conciliaciones' | 'liquidaciones', fileName: string): Promise<boolean> {
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_API_KEY
+      const downloadUrl = `${API_BASE_URL}/digital/apps/total-secure/${tipo}/processed/${fileName}`
+      
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: { 'x-api-key': apiKey || '' },
+      })
+
+      if (!response.ok) throw new Error('Error al descargar archivo procesado')
+      
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      return true
+    } catch (error) {
+      console.error('Error en descarga de archivo procesado:', error)
       return false
     }
   }

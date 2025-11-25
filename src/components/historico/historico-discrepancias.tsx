@@ -3,7 +3,7 @@
 import * as React from "react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { Clock, CheckCircle, Eye, Trash2, Filter } from "lucide-react"
+import { Clock, CheckCircle, Eye, Trash2, Filter, ChevronLeft, ChevronRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,6 +22,8 @@ export function HistoricoDiscrepancias() {
   const [dateRange, setDateRange] = React.useState("")
   const [selectedItem, setSelectedItem] = React.useState<any>(null)
   const [showDetails, setShowDetails] = React.useState(false)
+  const [currentPage, setCurrentPage] = React.useState(1)
+  const itemsPerPage = 10
 
   const fetchDiscrepancies = async () => {
     try {
@@ -143,7 +145,9 @@ export function HistoricoDiscrepancias() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  discrepancies.map((discrepancy) => (
+                  discrepancies
+                    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                    .map((discrepancy) => (
                     <TableRow key={discrepancy.id}>
                       <TableCell>
                         <Badge variant={getStatusColor(discrepancy.status)}>
@@ -210,6 +214,36 @@ export function HistoricoDiscrepancias() {
             </Table>
           </div>
         </CardContent>
+        {discrepancies.length > itemsPerPage && (
+          <div className="flex items-center justify-between px-4 py-4 border-t">
+            <div className="text-sm text-muted-foreground">
+              Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, discrepancies.length)} de {discrepancies.length} registros
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage <= 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Anterior
+              </Button>
+              <span className="text-sm">
+                Pagina {currentPage} de {Math.ceil(discrepancies.length / itemsPerPage)}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage >= Math.ceil(discrepancies.length / itemsPerPage)}
+              >
+                Siguiente
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Modal de detalles */}

@@ -34,52 +34,33 @@ export default function DownloadPage() {
   const handleConfirmDownload = async () => {
     setShowConfirmation(false);
     
-    let s3_key = "";
-    if (tipo === "conciliacion") {
-      s3_key = `digital/apps/total-secure/conciliaciones/processed/${archivo}`;
-    } else {
-      s3_key = `digital/collectors/${recaudador.toLowerCase()}/liquidations/processed/${archivo}`;
-    }
-
-    const url = `${baseUrl}/digital/download/${s3_key}`;
-
-    console.log("Enviando url: ", url)
-
     setIsLoading(true);
     const toastId = toast.loading("Solicitando archivo del servidor");
 
     try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: { "x-api-key": apiKey || "" },
-        redirect: "manual",
-      });
-
-      if (response.status === 302 || response.status === 307) {
-        const presignedUrl = response.headers.get("Location");
-        if (presignedUrl) {
-          window.open(presignedUrl, "_blank");
-          toast.success("Descarga iniciada", {
-            id: toastId,
-            description: "El archivo se esta descargando"
-          });
-        }
-      } else if (response.ok) {
-        const data = await response.json();
-        if (data.url) {
-          window.open(data.url, "_blank");
-          toast.success("Descarga iniciada", {
-            id: toastId,
-            description: "El archivo se esta descargando"
-          });
-        }
+      const { downloadApi } = await import('@/lib/api');
+      
+      let success = false;
+      if (tipo === "conciliacion") {
+        success = await downloadApi.downloadProcessedFile('conciliaciones', archivo);
       } else {
-        throw new Error(`Error ${response.status}`);
+        // Para liquidaciones, construir la ruta completa
+        const fullPath = `digital/collectors/${recaudador.toLowerCase()}/liquidations/processed/${archivo}`;
+        success = await downloadApi.downloadFile(`s3://bucket/${fullPath}`);
+      }
+      
+      if (success) {
+        toast.success("Descarga iniciada", {
+          id: toastId,
+          description: "El archivo se esta descargando"
+        });
+      } else {
+        throw new Error("Error en la descarga");
       }
     } catch (error: any) {
       toast.error("Error en la descarga", {
         id: toastId,
-        description:  error.message === "Error 404" 
+        description: error.message === "Error 404" 
           ? "Archivo no encontrado" 
           : error.message
       });

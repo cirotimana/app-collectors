@@ -9,7 +9,7 @@ import { BarChartCard } from "@/components/dashboard/bar-chart-card"
 
 export default function DashboardPage() {
   const [filters, setFilters] = React.useState({
-    proceso: "venta",
+    proceso: "liquidacion",
     metodo: "kashio",
     fromDate: "",
     toDate: ""
@@ -66,12 +66,9 @@ export default function DashboardPage() {
           const collectorId = collectorMap[metodo]
           if (!collectorId) continue
 
-          const url = `${process.env.NEXT_PUBLIC_API_URL}/${proceso}/stats?collectorId=${collectorId}&fromDate=${fromDate}&toDate=${toDate}`
-
-          const res = await fetch(url)
-          if (!res.ok) continue
-
-          const data = await res.json()
+          try {
+            const { dashboardApi } = await import('@/lib/api')
+            const data = await dashboardApi.getStats(collectorId, fromDate, toDate, proceso as 'liquidations' | 'conciliations')
 
           let calimaco = 0
           let proveedor = 0
@@ -87,12 +84,16 @@ export default function DashboardPage() {
           totalVentaCalimaco += calimaco
           totalVentaProveedor += proveedor
 
-          chartRows.push({
-            metodo,
-            calimaco,
-            proveedor,
-            proceso
-          })
+            chartRows.push({
+              metodo,
+              calimaco,
+              proveedor,
+              proceso
+            })
+          } catch (error) {
+            console.error(`Error al obtener stats para ${metodo}:`, error)
+            continue
+          }
         }
 
         setStats({
@@ -117,7 +118,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-black text-gray-900">
-              Modulo de{" "}
+              Dashboard de{" "}
               <span className="text-red-600 capitalize">{filters.proceso}</span>
             </h1>
             <p className="text-gray-600 mt-1">

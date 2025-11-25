@@ -37,8 +37,8 @@ export default function ProcessPage() {
   const [procesos, setProcesos] = useState<Proceso[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "demo-key";
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api.demo.com";
+  const apiKey = process.env.NEXT_PUBLIC_API_KEY || "";
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
   // Cargar procesos desde localStorage al montar el componente
   useEffect(() => {
@@ -73,24 +73,7 @@ export default function ProcessPage() {
     }
   }, [procesos, isInitialized]);
 
-  const endpoints: Record<string, Record<string, string>> = {
-    conciliacion: {
-      kashio: "execute-getkashio",
-      monnet: "execute-getmonnet",
-      kushki: "execute-getkushki",
-      niubiz: "execute-getniubiz",
-      yape: "execute-getyape",
-      nuvei: "execute-getnuvei",
-      pagoefectivo: "execute-getpagoefectivo",
-      safetypay: "execute-getsafetypay",
-      tupay: "execute-gettupay",
-    },
-    liquidacion: {
-      kashio: "execute-liqkashio",
-      tupay: "execute-liqtupay",
-      pagoefectivo: "execute-liqpagoefectivo",
-    },
-  };
+  // Endpoints ahora estn centralizados en /lib/api.ts
 
   const fromDate = range?.from;
   const toDate = range?.to || range?.from;
@@ -160,11 +143,7 @@ export default function ProcessPage() {
       return;
     }
 
-    const endpoint = endpoints[tipo]?.[recaudador];
-    if (!endpoint) {
-      toast.error("Recaudador sin endpoint configurado");
-      return;
-    }
+    // Validacion se har en la API centralizada
 
     const nuevoProceso: Proceso = {
       id: `${Date.now()}-${Math.random()}`,
@@ -181,112 +160,7 @@ export default function ProcessPage() {
     toast.success("Proceso agregado a la cola");
   };
 
-  // const ejecutarProceso = async (procesoId: string) => {
-  //   const proceso = procesos.find(p => p.id === procesoId);
-  //   if (!proceso) return;
-
-  //   // Marcar como no recuperado al ejecutar manualmente
-  //   setProcesos(prev => prev.map(p => 
-  //     p.id === procesoId ? { ...p, estado: "ejecutando" as ProcesoEstado, progreso: 0, recuperado: false } : p
-  //   ));
-
-  //   const endpoint = endpoints[proceso.tipo]?.[proceso.recaudador];
-  //   const url = `${baseUrl}/digital/${endpoint}?from_date=${formatear(proceso.fromDate)}&to_date=${formatear(proceso.toDate)}`;
-
-  //   console.log("URL enviada:", url);
-
-  //   // Progreso mas lento y realista
-  //   const intervalo = setInterval(() => {
-  //     setProcesos(prev => prev.map(p => {
-  //       if (p.id === procesoId && p.estado === "ejecutando") {
-  //         // Progreso mas gradual: maximo 70% antes de recibir respuesta
-  //         const incremento = Math.random() * 3 + 1;
-  //         const nuevoProgreso = Math.min(p.progreso + incremento, 70);
-  //         return { ...p, progreso: nuevoProgreso };
-  //       }
-  //       return p;
-  //     }));
-  //   }, 800);
-
-  //   try {
-  //     const res = await fetch(url, {
-  //       method: "GET",
-  //       headers: { "x-api-key": apiKey },
-  //     });
-
-  //     const data = await res.json();
-
-  //     clearInterval(intervalo);
-
-  //     if (res.ok) {
-  //       setProcesos(prev => prev.map(p => 
-  //         p.id === procesoId 
-  //           ? { 
-  //               ...p, 
-  //               estado: "completado" as ProcesoEstado, 
-  //               progreso: 100, 
-  //               mensaje: data.message || "Completado exitosamente" 
-  //             }
-  //           : p
-  //       ));
-  //       toast.success(`${proceso.recaudador} completado`, {
-  //         description: data.message
-  //       });
-  //     } else if (res.status === 422) {
-  //       const errorDetail = typeof data.detail === 'string' ? data.detail : data.detail?.message || "Algunas operaciones fallaron";
-  //       setProcesos(prev => prev.map(p => 
-  //         p.id === procesoId 
-  //           ? { 
-  //               ...p, 
-  //               estado: "error" as ProcesoEstado, 
-  //               progreso: 0,
-  //               mensaje: errorDetail
-  //             }
-  //           : p
-  //       ));
-  //       toast.error(`Error en ${proceso.recaudador}`, { 
-  //         description: errorDetail,
-  //         duration: 5000
-  //       });
-  //     } else if (res.status === 500) {
-  //       const errorDetail = typeof data.detail === 'string' ? data.detail : data.detail?.message || "Error interno del servidor";
-  //       setProcesos(prev => prev.map(p => 
-  //         p.id === procesoId 
-  //           ? { 
-  //               ...p, 
-  //               estado: "error" as ProcesoEstado, 
-  //               progreso: 0,
-  //               mensaje: `Error del servidor: ${errorDetail}` 
-  //             }
-  //           : p
-  //       ));
-  //       toast.error(`Error critico en ${proceso.recaudador}`, { 
-  //         description: errorDetail,
-  //         duration: 6000
-  //       });
-  //     } else {
-  //       throw new Error(`Error ${res.status}: ${data.detail?.message || data.message || 'Error desconocido'}`);
-  //     }
-  //   } catch (error: any) {
-  //     clearInterval(intervalo);
-      
-  //     const mensajeError = error.message || "Error de conexion con el servidor";
-  //     setProcesos(prev => prev.map(p => 
-  //       p.id === procesoId 
-  //         ? { 
-  //             ...p, 
-  //             estado: "error" as ProcesoEstado, 
-  //             progreso: 0,
-  //             mensaje: mensajeError
-  //           }
-  //         : p
-  //     ));
-  //     toast.error(`Error en ${proceso.recaudador}`, { 
-  //       description: mensajeError,
-  //       duration: 5000
-  //     });
-  //   }
-  // };
+  
 
   const ejecutarProceso = async (procesoId: string) => {
   const proceso = procesos.find(p => p.id === procesoId);
@@ -295,9 +169,6 @@ export default function ProcessPage() {
   setProcesos(prev => prev.map(p => 
     p.id === procesoId ? { ...p, estado: "ejecutando" as ProcesoEstado, progreso: 0, recuperado: false } : p
   ));
-
-  const endpoint = endpoints[proceso.tipo]?.[proceso.recaudador];
-  const url = `${baseUrl}/digital/${endpoint}?from_date=${formatear(proceso.fromDate)}&to_date=${formatear(proceso.toDate)}`;
 
   const intervalo = setInterval(() => {
     setProcesos(prev => prev.map(p => {
@@ -311,108 +182,52 @@ export default function ProcessPage() {
   }, 800);
 
   try {
-    const res = await fetch(url, {
-      method: "GET",
-      headers: { "x-api-key": apiKey },
-    });
-
-    const data = await res.json();
+    const { processApi } = await import('@/lib/api');
+    const data = await processApi.executeProcess(
+      proceso.tipo as 'conciliacion' | 'liquidacion',
+      proceso.recaudador,
+      formatear(proceso.fromDate),
+      formatear(proceso.toDate)
+    );
 
     clearInterval(intervalo);
 
-    if (res.ok) {
-      setProcesos(prev => prev.map(p => 
-        p.id === procesoId 
-          ? { 
-              ...p, 
-              estado: "completado" as ProcesoEstado, 
-              progreso: 100, 
-              mensaje: data.message || "Completado exitosamente" 
-            }
-          : p
-      ));
-      toast.success(`${proceso.recaudador} completado`, {
-        description: data.message
-      });
-    } else if (res.status === 422) {
-      const errorDetail = data.detail;
-      let detailedMessage = "Algunas operaciones fallaron";
-
-      if (typeof errorDetail === 'object' && errorDetail !== null) {
-        //  PRESERVAR LOS SALTOS DE LINEA del backend
-        detailedMessage = errorDetail.message || detailedMessage;
-        
-        // // Si hay operaciones fallidas, formatear con saltos de linea
-        // if (errorDetail.failed_operations && Array.isArray(errorDetail.failed_operations)) {
-        //   const failedOps = errorDetail.failed_operations.join('\n• ');
-        //   detailedMessage = `${errorDetail.message}\n\nOperaciones fallidas:\n• ${failedOps}`;
-        // }
-      } else if (typeof errorDetail === 'string') {
-        detailedMessage = errorDetail;
-      }
-
-      setProcesos(prev => prev.map(p => 
-        p.id === procesoId 
-          ? { 
-              ...p, 
-              estado: "error" as ProcesoEstado, 
-              progreso: 0,
-              mensaje: detailedMessage
-            }
-          : p
-      ));
-      
-      //  PARA EL TOAST, usar JSX para mostrar saltos de linea
-      toast.error(`Error en ${proceso.recaudador}`, { 
-        description: (
-          <div className="whitespace-pre-line text-left">
-            {detailedMessage}
-          </div>
-        ),
-        duration: 8000  //  Mas tiempo para leer multiples lineas
-      });
-    } else if (res.status === 500) {
-      const errorDetail = typeof data.detail === 'object' ? data.detail?.message : data.detail || "Error interno del servidor";
-      const errorMessage = `Error del servidor:\n${errorDetail}`;
-      
-      setProcesos(prev => prev.map(p => 
-        p.id === procesoId 
-          ? { 
-              ...p, 
-              estado: "error" as ProcesoEstado, 
-              progreso: 0,
-              mensaje: errorMessage
-            }
-          : p
-      ));
-      toast.error(`Error critico en ${proceso.recaudador}`, { 
-        description: (
-          <div className="whitespace-pre-line text-left">
-            {errorMessage}
-          </div>
-        ),
-        duration: 6000
-      });
-    } else {
-      throw new Error(`Error ${res.status}: ${data.detail?.message || data.message || 'Error desconocido'}`);
-    }
+    setProcesos(prev => prev.map(p => 
+      p.id === procesoId 
+        ? { 
+            ...p, 
+            estado: "completado" as ProcesoEstado, 
+            progreso: 100, 
+            mensaje: data.message || "Completado exitosamente" 
+          }
+        : p
+    ));
+    toast.success(`${proceso.recaudador} completado`, {
+      description: data.message
+    });
   } catch (error: any) {
     clearInterval(intervalo);
     
-    const mensajeError = error.message || "Error de conexion con el servidor";
+    let detailedMessage = error.message || "Error desconocido";
+    
     setProcesos(prev => prev.map(p => 
       p.id === procesoId 
         ? { 
             ...p, 
             estado: "error" as ProcesoEstado, 
             progreso: 0,
-            mensaje: mensajeError
+            mensaje: detailedMessage
           }
         : p
     ));
+    
     toast.error(`Error en ${proceso.recaudador}`, { 
-      description: mensajeError,
-      duration: 5000
+      description: (
+        <div className="whitespace-pre-line text-left">
+          {detailedMessage}
+        </div>
+      ),
+      duration: 8000
     });
   }
 };
@@ -566,7 +381,15 @@ export default function ProcessPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.keys(endpoints[tipo] || {}).map((r) => (
+                    {tipo === "conciliacion" ? [
+                      "kashio", "monnet", "kushki", "niubiz", "yape", "nuvei", "pagoefectivo", "safetypay", "tupay"
+                    ].map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r.charAt(0).toUpperCase() + r.slice(1)}
+                      </SelectItem>
+                    )) : [
+                      "kashio", "tupay", "pagoefectivo"
+                    ].map((r) => (
                       <SelectItem key={r} value={r}>
                         {r.charAt(0).toUpperCase() + r.slice(1)}
                       </SelectItem>

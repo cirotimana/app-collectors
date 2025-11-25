@@ -22,16 +22,6 @@ export default function ProcessPage() {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 
-  const endpoints: Record<string, Record<string, string>> = {
-    dnicorrelativos: {
-      proceso: "execute-dnicorrelatives",
-    },
-    concentracionips: {
-      proceso: "execute-concentratorip",
-    },
-  };
-
-
   // Funcion que se llama al hacer clic en "Ejecutar Proceso"
   const handleOpenConfirmation = () => {
     setShowConfirmation(true);
@@ -41,29 +31,16 @@ export default function ProcessPage() {
   const handleConfirmProcesar = async () => {
     setShowConfirmation(false);
     
-
-    const endpoint = endpoints[tipo]?.[proceso.toLowerCase()];
-
-    const url = `${baseUrl}/digital/${endpoint}`;
-
-    console.log("enviando url", url);
-
     setIsLoading(true);
     const toastId = toast.loading("Ejecutando proceso, por favor espere");
 
     try {
-      const res = await fetch(url, {
-        method: "GET",
-        headers: { "x-api-key": apiKey || "" },
+      const { processApi } = await import('@/lib/api');
+      await processApi.executeDigitalProcess(tipo as 'dnicorrelativos' | 'concentracionips');
+      
+      toast.success("El proceso se ejecuto correctamente", {
+        id: toastId
       });
-
-      if (res.ok) {
-        toast.success("El proceso se ejecuto correctamente", {
-          id: toastId
-        });
-      } else {
-        throw new Error(`Error ${res.status}`);
-      }
     } catch (error: any) {
       toast.error("Error de conexion", {
         id: toastId,

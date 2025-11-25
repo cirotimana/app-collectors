@@ -191,55 +191,17 @@ function cleanS3Pathv(path: string): string {
   return parts[parts.length - 1]
 }
 
-// Funcion para descarga directa
+// Funcion para descarga directa usando API centralizada
 const handleDirectDownload = async (filePath: string) => {
   try {
-    const cleanedPath = cleanS3Path(filePath)
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
-    const apiKey = process.env.NEXT_PUBLIC_API_KEY
+    const { downloadApi } = await import('@/lib/api')
+    const success = await downloadApi.downloadFile(filePath)
     
-    const downloadUrl = `${baseUrl}/digital/download/${cleanedPath}`
-    
-    console.log("Solicitando descarga de:", downloadUrl)
-    
-    const response = await fetch(downloadUrl, {
-      method: 'GET',
-      headers: {
-        'x-api-key': apiKey || '',
-      },
-      redirect: 'manual'
-    })
-
-    if (response.status === 302 || response.status === 307) {
-      const presignedUrl = response.headers.get('Location')
-      if (presignedUrl) {
-        window.open(presignedUrl, '_blank')
-        toast.success('Descarga iniciada')
-        return true
-      }
-    } else if (response.ok) {
-      const data = await response.json()
-      if (data.url) {
-        window.open(data.url, '_blank')
-        toast.success('Descarga iniciada')
-        return true
-      }
+    if (!success) {
+      toast.error('Error al descargar el archivo')
     }
     
-    const blob = await response.blob()
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.style.display = 'none'
-    a.href = url
-    a.download = cleanedPath.split('/').pop() || 'download'
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
-    
-    toast.success('Descarga iniciada')
-    return true
-    
+    return success
   } catch (error) {
     console.error('Error en descarga directa:', error)
     toast.error('Error al descargar el archivo')

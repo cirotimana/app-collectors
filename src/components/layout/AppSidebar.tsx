@@ -11,12 +11,20 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Logo from "../../assets/img/logo.jpg";
-import { Server, CloudDownload, Gpu, LayoutDashboard, BookText, History } from "lucide-react";
+import { Server, CloudDownload, Gpu, LayoutDashboard, BookText, History, PieChart, Database, BarChart3, TrendingUp, ChevronRight, RefreshCw, Activity } from "lucide-react";
 import { ModeToggle } from "@/components/provider/theme-toggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { LogOut } from "lucide-react";
@@ -28,13 +36,23 @@ import {
 } from "@/components/ui/avatar";
 
 const menuItems = [
-  { icon: <LayoutDashboard  />, label: "Dashboard", href: "/dashboard" },
-  { icon: <BookText  />, label: "Detalles", href: "/details" },
-  { icon: <Server />, label: "Procesos", href: "/process" },
+  { icon: <TrendingUp />, label: "Dashboard Ventas", href: "/dashboard-ventas" },
+  { icon: <LayoutDashboard  />, label: "Dashboard Liquidaciones", href: "/dashboard" },
+  { icon: <PieChart />, label: "Reportes", href: "/reportes" },
+  { icon: <Database />, label: "Registros", href: "/registros" },
+  { icon: <BookText  />, label: "Resumen", href: "/detalles" },
   { icon: <CloudDownload />, label: "Descargas", href: "/download" },
-  { icon: <History />, label: "Historico", href: "/historico" },
   { icon: <Gpu />, label: "Digital", href: "/digital" },
-  
+];
+
+const processItems = [
+  { icon: <Activity />, label: "Conciliacion", href: "/process" },
+  { icon: <RefreshCw />, label: "Actualizacion", href: "/process/actualizacion" },
+];
+
+const historicoItems = [
+  { icon: <History />, label: "Discrepancias", href: "/historico" },
+  { icon: <BarChart3 />, label: "Ejecuciones", href: "/historico/ejecuciones" },
 ];
 
 export function AppSidebar() {
@@ -98,6 +116,76 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              {/* Submenu Procesos */}
+              <Collapsible>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className="text-sm font-semibold">
+                      <Server className="text-lg mr-2" />
+                      <span>Procesos</span>
+                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {processItems.map((item) => (
+                        <SidebarMenuSubItem key={item.href}>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={pathname === item.href}
+                            className={cn(
+                              "text-sm",
+                              pathname === item.href &&
+                                "bg-red-600 text-white hover:bg-red-700"
+                            )}
+                          >
+                            <Link href={item.href}>
+                              <span className="mr-2">{item.icon}</span>
+                              <span>{item.label}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+
+              {/* Submenu Historico */}
+              <Collapsible>
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className="text-sm font-semibold">
+                      <History className="text-lg mr-2" />
+                      <span>Historico</span>
+                      <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {historicoItems.map((item) => (
+                        <SidebarMenuSubItem key={item.href}>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={pathname === item.href}
+                            className={cn(
+                              "text-sm",
+                              pathname === item.href &&
+                                "bg-red-600 text-white hover:bg-red-700"
+                            )}
+                          >
+                            <Link href={item.href}>
+                              <span className="mr-2">{item.icon}</span>
+                              <span>{item.label}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

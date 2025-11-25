@@ -90,7 +90,7 @@ export function Filters({ filters, onFiltersChange }: FiltersProps) {
             <SelectValue placeholder="Seleccionar proceso..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="venta">Venta</SelectItem>
+            {/* <SelectItem value="venta">Venta</SelectItem> */}
             <SelectItem value="liquidacion">Liquidacion</SelectItem>
           </SelectContent>
         </Select>

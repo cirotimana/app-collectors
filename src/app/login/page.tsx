@@ -7,12 +7,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-secondary/50 p-4">
       <Card className="w-full max-w-sm">
-        <CardHeader>
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/imagelogin.png"
+              alt="Logo"
+              width={200}
+              height={150}
+              className="rounded-lg"
+            />
+          </div>
           <CardTitle className="font-headline text-2xl">Bienvenido</CardTitle>
           <CardDescription>
             Ingresa tus credenciales para acceder.

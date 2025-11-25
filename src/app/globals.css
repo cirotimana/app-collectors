@@ -137,7 +137,7 @@
   }
 
   .dark {
-    --background: 0 0% 8%;             /* Negro más oscuro */
+    --background: 0 0% 8%;             /* Negro ms oscuro */
     --foreground: 0 0% 98%;            /* Blanco */
 
     --primary: 0 84% 60%;              /* Rojo */
@@ -152,7 +152,7 @@
     --muted: 0 0% 18%;                /* Elementos silenciados */
     --muted-foreground: 0 0% 75%;
     
-    --border: 0 0% 20%;               /* Bordes más visibles */
+    --border: 0 0% 20%;               /* Bordes ms visibles */
     --input: 0 0% 15%;                /* Inputs */
   }
 }
