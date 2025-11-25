@@ -143,7 +143,7 @@ export default function ReporteDetallePage() {
             <CardHeader>
               <CardTitle>Registros Conciliados</CardTitle>
               <CardDescription>
-                {conciliatedData?.total || 0} registro(s) encontrado(s) - Pagina {conciliatedData?.page || 1} de {conciliatedData?.totalPages || 1}
+                {conciliatedData?.total || 0} registro(s) encontrado(s) - Página {conciliatedData?.page || 1} de {conciliatedData?.totalPages || 1}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -196,7 +196,7 @@ export default function ReporteDetallePage() {
                     Anterior
                   </Button>
                   <span className="text-sm">
-                    Pagina {conciliatedData.page} de {conciliatedData.totalPages}
+                    Página {conciliatedData.page} de {conciliatedData.totalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -218,7 +218,7 @@ export default function ReporteDetallePage() {
             <CardHeader>
               <CardTitle>Registros No Conciliados</CardTitle>
               <CardDescription>
-                {nonConciliatedData?.total || 0} registro(s) encontrado(s) - Pagina {nonConciliatedData?.page || 1} de {nonConciliatedData?.totalPages || 1}
+                {nonConciliatedData?.total || 0} registro(s) encontrado(s) - Página {nonConciliatedData?.page || 1} de {nonConciliatedData?.totalPages || 1}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -267,7 +267,7 @@ export default function ReporteDetallePage() {
                     Anterior
                   </Button>
                   <span className="text-sm">
-                    Pagina {nonConciliatedData.page} de {nonConciliatedData.totalPages}
+                    Página {nonConciliatedData.page} de {nonConciliatedData.totalPages}
                   </span>
                   <Button
                     variant="outline"
