@@ -47,6 +47,8 @@ const COLLECTORS = [
   { id: 9, name: "Tupay" },
 ]
 
+////Version 
+
 export default function HistoricoEjecucionesPage() {
   const [selectedCollectors, setSelectedCollectors] = React.useState<number[]>([1, 2, 3, 4, 5, 6, 7, 8, 9])
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(() => {
