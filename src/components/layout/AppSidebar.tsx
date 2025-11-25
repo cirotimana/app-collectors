@@ -40,7 +40,7 @@ const menuItems = [
   { icon: <LayoutDashboard  />, label: "Dashboard Liquidaciones", href: "/dashboard" },
   { icon: <PieChart />, label: "Reportes", href: "/reportes" },
   { icon: <Database />, label: "Registros", href: "/registros" },
-  { icon: <BookText  />, label: "Resumen", href: "/detalles" },
+  { icon: <BookText  />, label: "Resumen", href: "/resumen" },
   { icon: <CloudDownload />, label: "Descargas", href: "/download" },
   { icon: <Gpu />, label: "Digital", href: "/digital" },
 ];
