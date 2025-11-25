@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Download, FileText, Loader2, CloudDownload, ArrowUpRight } from "lucide-react";
-import { ConfirmationDialog } from "@/components/provider/confirmation-dialog"; // Ajusta la ruta según tu estructura
+import { ConfirmationDialog } from "@/components/provider/confirmation-dialog"; // Ajusta la ruta segun tu estructura
 
 export default function DownloadPage() {
   const [archivo, setArchivo] = useState("");
@@ -20,7 +20,7 @@ export default function DownloadPage() {
   const apiKey = process.env.NEXT_PUBLIC_API_KEY;
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  // Función que se llama al hacer clic en "Descargar Archivo"
+  // Funcion que se llama al hacer clic en "Descargar Archivo"
   const handleOpenConfirmation = () => {
     if (!archivo) {
       toast.error("Por favor ingresa un nombre de archivo");
@@ -30,65 +30,48 @@ export default function DownloadPage() {
     setShowConfirmation(true);
   };
 
-  // Función que se ejecuta cuando se confirma en el diálogo
+  // Funcion que se ejecuta cuando se confirma en el dialogo
   const handleConfirmDownload = async () => {
     setShowConfirmation(false);
     
-    let s3_key = "";
-    if (tipo === "conciliacion") {
-      s3_key = `digital/apps/total-secure/conciliaciones/processed/${archivo}`;
-    } else {
-      s3_key = `digital/collectors/${recaudador.toLowerCase()}/liquidations/processed/${archivo}`;
-    }
-
-    const url = `${baseUrl}/digital/download/${s3_key}`;
-
-    console.log("Enviando url: ", url)
-
     setIsLoading(true);
     const toastId = toast.loading("Solicitando archivo del servidor");
 
     try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: { "x-api-key": apiKey || "" },
-        redirect: "manual",
-      });
-
-      if (response.status === 302 || response.status === 307) {
-        const presignedUrl = response.headers.get("Location");
-        if (presignedUrl) {
-          window.open(presignedUrl, "_blank");
-          toast.success("Descarga iniciada", {
-            id: toastId,
-            description: "El archivo se está descargando"
-          });
-        }
-      } else if (response.ok) {
-        const data = await response.json();
-        if (data.url) {
-          window.open(data.url, "_blank");
-          toast.success("Descarga iniciada", {
-            id: toastId,
-            description: "El archivo se está descargando"
-          });
-        }
+      const { downloadApi } = await import('@/lib/api');
+      
+      let success = false;
+      if (tipo === "conciliacion") {
+        success = await downloadApi.downloadProcessedFile('conciliaciones', archivo);
       } else {
-        throw new Error(`Error ${response.status}`);
+        // Para liquidaciones, construir la ruta completa
+        const fullPath = `digital/collectors/${recaudador.toLowerCase()}/liquidations/processed/${archivo}`;
+        success = await downloadApi.downloadFile(`s3://bucket/${fullPath}`);
+      }
+      
+      if (success) {
+        toast.success("Descarga iniciada", {
+          id: toastId,
+          description: "El archivo se esta descargando"
+        });
+      } else {
+        throw new Error("Error en la descarga");
       }
     } catch (error: any) {
       toast.error("Error en la descarga", {
         id: toastId,
-        description: error.message
+        description: error.message === "Error 404" 
+          ? "Archivo no encontrado" 
+          : error.message
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Generar el mensaje de confirmación para descarga
+  // Generar el mensaje de confirmacion para descarga
   const getConfirmationMessage = () => {
-    const tipoTexto = tipo === "conciliacion" ? "conciliación" : "liquidación";
+    const tipoTexto = tipo === "conciliacion" ? "conciliacion" : "liquidacion";
     const recaudadorTexto = tipo === "liquidacion" 
       ? ` del recaudador ${recaudador.charAt(0).toUpperCase() + recaudador.slice(1)}` 
       : "";
@@ -99,10 +82,10 @@ export default function DownloadPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-8">
       <div className="text-center space-y-2">
-        <h1 className="text-4xl font-bold text-gray-900">
-          Modulo de <span className="text-red-600">Descarga</span>
+        <h1 className="text-4xl font-black text-gray-900">
+          Modulo de <span className="text-red-600">Descargas</span>
         </h1>
-        <p className="text-gray-600">Descarga archivos procesados de recaudadores y liquidaciones</p>
+        <p className="text-gray-600 mt-1">Descarga archivos procesados de ventas y liquidaciones</p>
       </div>
 
       <Card className="border-red-100 shadow-lg">
@@ -131,8 +114,8 @@ export default function DownloadPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="conciliacion">Conciliación</SelectItem>
-                <SelectItem value="liquidacion">Liquidación</SelectItem>
+                <SelectItem value="conciliacion">Conciliacion</SelectItem>
+                <SelectItem value="liquidacion">Liquidacion</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -180,11 +163,11 @@ export default function DownloadPage() {
               />
             </div>
             <p className="text-xs text-gray-500">
-              Incluye la extensión del archivo (ej: .xlsx, .csv, .pdf)
+              Incluye la extension del archivo (ej: .xlsx, .csv, .pdf)
             </p>
           </div>
 
-          {/* Botón */}
+          {/* Boton */}
           <Button
             onClick={handleOpenConfirmation}
             disabled={isLoading || !archivo}
@@ -205,7 +188,7 @@ export default function DownloadPage() {
         </CardContent>
       </Card>
 
-      {/* Diálogo de confirmación para descarga */}
+      {/* Dialogo de confirmacion para descarga */}
       <ConfirmationDialog
         open={showConfirmation}
         onOpenChange={setShowConfirmation}

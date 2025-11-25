@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AppSidebar } from "@/components/layout/AppSidebar";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Toaster } from "@/components/ui/sonner"
-import { ThemeProvider } from "@/components/provider/theme-provider"
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/provider/theme-provider";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Sistema de Gestión Digital",
-  description: "Plataforma de descarga y procesamiento automático",
+  title: "Plataforma Tesoreria",
+  description: "Plataforma de descarga y procesamiento automatico",
 };
 
 export default function RootLayout({
@@ -22,23 +21,15 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-          <SidebarProvider>
-            <AppSidebar />
-            <main className="flex-1 w-full">
-              <div className="p-2">
-                <SidebarTrigger />
-              </div>
-              <div className="p-8">
-                {children}
-                <Toaster />
-              </div>
-            </main>
-          </SidebarProvider>
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            {children}
+            <Toaster />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

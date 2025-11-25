@@ -3,7 +3,7 @@
 # ===============================
 FROM node:20-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app-collectors
 
 # Copiar archivos de configuracion e instalacion
 COPY package*.json ./
@@ -20,15 +20,12 @@ RUN npm run build
 # ===============================
 FROM node:20-alpine AS runner
 
-WORKDIR /app
+WORKDIR /app-collectors
 
 # Copiar solo lo necesario desde la etapa anterior
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/.next ./.next
-
-# Si existe carpeta public, se copia (seguro)
-# Puedes descomentar si mas adelante agregas assets publicos:
-# COPY --from=builder /app/public ./public
+COPY --from=builder /app-collectors/package*.json ./
+COPY --from=builder /app-collectors/.next ./.next
+COPY --from=builder /app-collectors/public ./public
 
 # Instalar solo dependencias de produccion
 RUN npm install --production --legacy-peer-deps
