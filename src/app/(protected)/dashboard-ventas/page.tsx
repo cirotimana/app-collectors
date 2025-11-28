@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, TrendingUp, TrendingDown, DollarSign, BarChart3 } from "lucide-react"
+import { CalendarIcon, TrendingUp, TrendingDown, DollarSign, BarChart3, Download } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, LineChart, Line, Legend } from "recharts"
 import { format, subDays } from "date-fns"
 import { es } from "date-fns/locale"
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 import { DateRange } from "react-day-picker"
 import { conciliationReportsApi, type ConciliationReport, type PaginatedResponse } from "@/lib/api"
 import { toast } from "sonner"
+import { generateExcelReport } from "@/lib/excel-utils"
 
 const COLLECTORS = [
   { id: 1, name: "Kashio" },
@@ -127,6 +128,30 @@ export default function DashboardVentasPage() {
 
   const stats = calculateStats()
 
+  const handleExport = async () => {
+    if (!reportsData || !reportsData.data.length) {
+      toast.error("No hay datos para exportar")
+      return
+    }
+    
+    const currentStats = calculateStats()
+    if (!currentStats) return
+
+    const toastId = toast.loading("Procesando reporte...")
+
+    try {
+      // small delay to allow toast to show
+      await new Promise(resolve => setTimeout(resolve, 100))
+      generateExcelReport(currentStats, reportsData)
+      toast.dismiss(toastId)
+      toast.success("Reporte descargado con exito")
+    } catch (error) {
+      console.error(error)
+      toast.dismiss(toastId)
+      toast.error("Error al exportar el reporte")
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -203,9 +228,20 @@ export default function DashboardVentasPage() {
             </div>
           </div>
 
-          <Button onClick={handleSearch} disabled={loading} className="w-full">
-            {loading ? "Cargando..." : "Actualizar Dashboard"}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button onClick={handleSearch} disabled={loading} className="flex-1">
+              {loading ? "Cargando..." : "Actualizar Dashboard"}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleExport} 
+              disabled={!reportsData || loading}
+              className="flex-1 sm:flex-none bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Exportar Excel
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

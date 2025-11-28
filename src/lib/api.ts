@@ -424,7 +424,7 @@ export const conciliationReportsApi = {
     return response.json()
   },
 
-  async getSalesReport(collectorIds: number[], fromDate: string, toDate: string, page = 1, limit = 20): Promise<PaginatedResponse<SalesReport>> {
+  async getSalesReport(collectorIds: number[], fromDate: string, toDate: string, page = 1, limit = 20): Promise<PaginatedResponse<ConciliationReport>> {
     const params = new URLSearchParams({
       collectorIds: collectorIds.join(','),
       fromDate,
@@ -435,6 +435,38 @@ export const conciliationReportsApi = {
     const response = await fetch(`${API_URL}/conciliation-reports/reporte-ventas-recaudadores?${params}`)
     if (!response.ok) throw new Error('Error al obtener reporte de ventas')
     return response.json()
+  },
+
+  async fetchAllConciliatedRecords(collectorIds: number[], fromDate: string, toDate: string): Promise<ConciliatedRecord[]> {
+    let allRecords: ConciliatedRecord[] = []
+    let page = 1
+    let totalPages = 1
+    const limit = 1000 // Larger limit for efficiency
+
+    do {
+      const response = await this.getConciliatedRecords(collectorIds, fromDate, toDate, page, limit)
+      allRecords = [...allRecords, ...response.data]
+      totalPages = response.totalPages
+      page++
+    } while (page <= totalPages)
+
+    return allRecords
+  },
+
+  async fetchAllNonConciliatedRecords(collectorIds: number[], fromDate: string, toDate: string): Promise<NonConciliatedRecord[]> {
+    let allRecords: NonConciliatedRecord[] = []
+    let page = 1
+    let totalPages = 1
+    const limit = 1000
+
+    do {
+      const response = await this.getNonConciliatedRecords(collectorIds, fromDate, toDate, page, limit)
+      allRecords = [...allRecords, ...response.data]
+      totalPages = response.totalPages
+      page++
+    } while (page <= totalPages)
+
+    return allRecords
   }
 }
 

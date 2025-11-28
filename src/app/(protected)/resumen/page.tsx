@@ -1,23 +1,3 @@
-// import { DataTable } from "@/components/provider/data-table";
-
-// export default function DetallesPage() {
-//   return (
-//       <div className="space-y-6">
-//           <div>
-//             <h1 className="text-4xl font-black text-gray-900">
-//               Modulo de <span className="text-red-600">Detalles</span>
-//             </h1>
-//             <p className="text-gray-600 mt-1">
-//               Gestion de documentos en las conciliaciones de ventas y liquidaciones
-//             </p>
-//           </div>      
-//       <DataTable />
-//     </div>
-//   );
-// }
-
-
-
 "use client"
 
 import * as React from "react"
@@ -27,12 +7,13 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
+import { CalendarIcon, ChevronLeft, ChevronRight, Eye } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { format, subDays } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { DateRange } from "react-day-picker"
-import { conciliationReportsApi, type SalesReport, type PaginatedResponse } from "@/lib/api"
+import { conciliationReportsApi, type ConciliationReport, type PaginatedResponse } from "@/lib/api"
 import { toast } from "sonner"
 
 const COLLECTORS = [
@@ -50,13 +31,14 @@ const COLLECTORS = [
 ////Version 
 
 export default function HistoricoEjecucionesPage() {
+  const router = useRouter()
   const [selectedCollectors, setSelectedCollectors] = React.useState<number[]>([1, 2, 3, 4, 5, 6, 7, 8, 9])
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(() => {
     const today = new Date()
-    const sevenDaysAgo = subDays(today, 7)
-    return { from: sevenDaysAgo, to: today }
+    const threeDaysAgo = subDays(today, 0)
+    return { from: threeDaysAgo, to: today }
   })
-  const [salesData, setSalesData] = React.useState<PaginatedResponse<SalesReport> | null>(null)
+  const [salesData, setSalesData] = React.useState<PaginatedResponse<ConciliationReport> | null>(null)
   const [loading, setLoading] = React.useState(false)
   const [currentPage, setCurrentPage] = React.useState(1)
 
@@ -80,7 +62,7 @@ export default function HistoricoEjecucionesPage() {
       const fromDate = format(dateRange.from, "yyyy-MM-dd")
       const toDate = format(dateRange.to, "yyyy-MM-dd")
       
-      const data = await conciliationReportsApi.getSalesReport(
+      const data = await conciliationReportsApi.getCompleteReport(
         selectedCollectors,
         fromDate,
         toDate,
@@ -106,12 +88,12 @@ export default function HistoricoEjecucionesPage() {
       const fromDate = format(dateRange.from, "yyyy-MM-dd")
       const toDate = format(dateRange.to, "yyyy-MM-dd")
       
-      const data = await conciliationReportsApi.getSalesReport(
+      const data = await conciliationReportsApi.getCompleteReport(
         selectedCollectors,
         fromDate,
         toDate,
         page,
-        9
+        100
       )
       
       setSalesData(data)
@@ -122,6 +104,36 @@ export default function HistoricoEjecucionesPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "-"
+    try {
+      return format(new Date(dateStr), "dd/MM/yyyy")
+    } catch (e) {
+      return "-"
+    }
+  }
+
+  const handleViewDetail = (report: ConciliationReport) => {
+    try {
+      const fromDate = format(new Date(report.report_fecha), "yyyy-MM-dd")
+      const toDate = format(new Date(report.report_fecha), "yyyy-MM-dd")
+      const collectorId = report.report_collector_id
+      
+      router.push(`/reportes/detalle?collectorId=${collectorId}&fromDate=${fromDate}&toDate=${toDate}`)
+    } catch (e) {
+      toast.error("Fecha invalida en el reporte")
+    }
+  }
+
+  const formatCurrency = (amount: string) => {
+    const num = parseFloat(amount)
+    return `S/ ${num.toLocaleString("es-PE", { minimumFractionDigits: 2 })}`
+  }
+
+  const getCollectorName = (id: number) => {
+    return COLLECTORS.find(c => c.id === id)?.name || `Collector ${id}`
   }
 
   return (
@@ -226,41 +238,81 @@ export default function HistoricoEjecucionesPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">Recaudador</th>
-                    <th className="text-left p-2">Fecha</th>
-                    <th className="text-right p-2">Venta Calimaco</th>
-                    <th className="text-right p-2">Venta Recaudador</th>
-                    <th className="text-right p-2">Diferencia</th>
-                    <th className="text-right p-2">Cant. Calimaco</th>
-                    <th className="text-right p-2">Cant. Recaudador</th>
-                    <th className="text-right p-2">Dif. Cantidad</th>
+                  <tr className="border-b bg-muted/50">
+                    <th className="text-left p-2 border-r" colSpan={2}>General</th>
+                    <th className="text-center p-2 border-r bg-blue-50/50" colSpan={4}>Calimaco</th>
+                    <th className="text-center p-2 border-r bg-green-50/50" colSpan={4}>Recaudador</th>
+                    <th className="text-center p-2"></th>
+                  </tr>
+                  <tr className="border-b text-xs text-muted-foreground">
+                    <th className="text-left p-2 font-medium">Recaudador</th>
+                    <th className="text-left p-2 font-medium border-r">Fecha</th>
+                    
+                    {/* Calimaco Columns */}
+                    <th className="text-right p-2 bg-blue-50/30">Venta</th>
+                    <th className="text-right p-2 bg-blue-50/30">Cant.</th>
+                    <th className="text-right p-2 bg-blue-50/30">Conciliado</th>
+                    <th className="text-right p-2 bg-blue-50/30 border-r">No Conc.</th>
+
+                    {/* Collector Columns */}
+                    <th className="text-right p-2 bg-green-50/30">Venta</th>
+                    <th className="text-right p-2 bg-green-50/30">Cant.</th>
+                    <th className="text-right p-2 bg-green-50/30">Conciliado</th>
+                    <th className="text-right p-2 bg-green-50/30 border-r">No Conc.</th>
+
+                    <th className="text-center p-2">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {salesData.data.map((record, index) => (
-                    <tr key={index} className="border-b hover:bg-muted/50">
-                      <td className="p-2 font-medium">{record.recaudador_nombre}</td>
-                      <td className="p-2">{record.fecha_desde}</td>
-                      <td className="text-right p-2">{record.venta_calimaco}</td>
-                      <td className="text-right p-2">{record.venta_recaudador}</td>
-                      <td className={`text-right p-2 font-medium ${
-                        record.diferencia.startsWith('-') 
-                          ? 'text-red-600' 
-                          : 'text-green-600'
-                      }`}>
-                        {record.diferencia}
+                  {salesData.data
+                    .sort((a, b) => new Date(b.report_fecha).getTime() - new Date(a.report_fecha).getTime())
+                    .map((record, index) => (
+                    <tr key={index} className="border-b hover:bg-muted/50 text-xs">
+                      <td className="p-2 font-medium">{getCollectorName(record.report_collector_id)}</td>
+                      <td className="p-2 border-r">{formatDate(record.report_fecha)}</td>
+                      
+                      {/* Calimaco Data */}
+                      <td className="text-right p-2 bg-blue-50/10">{formatCurrency(record.monto_total_calimaco)}</td>
+                      <td className="text-right p-2 bg-blue-50/10">{record.aprobados_calimaco}</td>
+                      <td className="text-right p-2 bg-blue-50/10">
+                        <div className="flex flex-col">
+                          <span>{record.conciliados_calimaco}</span>
+                          <span className="text-[10px] text-muted-foreground">{formatCurrency(record.monto_conciliado_calimaco)}</span>
+                        </div>
                       </td>
-                      <td className="text-right p-2">{record.cantidad_calimaco}</td>
-                      <td className="text-right p-2">{record.cantidad_recaudador}</td>
-                      <td className={`text-right p-2 font-medium ${
-                        parseInt(record.diferencia_cantidad) < 0 
-                          ? 'text-red-600' 
-                          : parseInt(record.diferencia_cantidad) > 0 
-                          ? 'text-green-600' 
-                          : 'text-gray-600'
-                      }`}>
-                        {record.diferencia_cantidad}
+                      <td className="text-right p-2 bg-blue-50/10 border-r">
+                        <div className="flex flex-col">
+                          <span className={record.no_conciliados_calimaco > 0 ? "text-red-600 font-bold" : ""}>{record.no_conciliados_calimaco}</span>
+                          <span className="text-[10px] text-muted-foreground">{formatCurrency(record.monto_no_conciliado_calimaco)}</span>
+                        </div>
+                      </td>
+
+                      {/* Collector Data */}
+                      <td className="text-right p-2 bg-green-50/10">{formatCurrency(record.monto_total_collector)}</td>
+                      <td className="text-right p-2 bg-green-50/10">{record.aprobados_collector}</td>
+                      <td className="text-right p-2 bg-green-50/10">
+                        <div className="flex flex-col">
+                          <span>{record.conciliados_collector}</span>
+                          <span className="text-[10px] text-muted-foreground">{formatCurrency(record.monto_conciliado_collector)}</span>
+                        </div>
+                      </td>
+                      <td className="text-right p-2 bg-green-50/10 border-r">
+                        <div className="flex flex-col">
+                          <span className={record.no_conciliados_collector > 0 ? "text-red-600 font-bold" : ""}>{record.no_conciliados_collector}</span>
+                          <span className="text-[10px] text-muted-foreground">{formatCurrency(record.monto_no_conciliado_collector)}</span>
+                        </div>
+                      </td>
+
+                      <td className="text-center p-2">
+                        <Button 
+                          size="icon" 
+                          variant="ghost"
+                          className="h-8 w-8"
+                          onClick={() => handleViewDetail(record)}
+                          title="Ver Detalle"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))}
