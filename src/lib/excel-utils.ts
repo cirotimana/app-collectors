@@ -33,7 +33,7 @@ const getCollectorName = (id: number) => {
 };
 
 const formatCurrency = (amount: number) => {
-  return `S/. ${amount.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${amount.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 const formatDateToLocal = (dateStr: string) => {

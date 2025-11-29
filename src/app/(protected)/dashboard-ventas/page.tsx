@@ -324,6 +324,7 @@ export default function DashboardVentasPage() {
                     <tr className="border-b">
                       <th className="text-left p-2">Fecha</th>
                       <th className="text-left p-2">Recaudador</th>
+                      <th className="text-left p-2">Operaciones</th>
                       <th className="text-right p-2">Monto (S/.)</th>
                     </tr>
                   </thead>
@@ -332,6 +333,7 @@ export default function DashboardVentasPage() {
                       <tr key={index} className={`border-b hover:bg-muted/50 ${getRowColor(record, 'monto_total_calimaco', 'monto_total_collector')}`}>
                         <td className="p-2">{format(new Date(record.report_fecha), "dd/MM/yyyy")}</td>
                         <td className="p-2">{getCollectorName(record.report_collector_id)}</td>
+                        <td className="p-2">{record.aprobados_calimaco}</td>
                         <td className="text-right p-2 font-mono">
                           {parseFloat(record.monto_total_calimaco).toLocaleString("es-PE", { minimumFractionDigits: 2 })}
                         </td>
@@ -361,6 +363,7 @@ export default function DashboardVentasPage() {
                     <tr className="border-b">
                       <th className="text-left p-2">Fecha</th>
                       <th className="text-left p-2">Recaudador</th>
+                      <th className="text-left p-2">Operaciones</th>
                       <th className="text-right p-2">Monto (S/.)</th>
                     </tr>
                   </thead>
@@ -369,6 +372,7 @@ export default function DashboardVentasPage() {
                       <tr key={index} className={`border-b hover:bg-muted/50 ${getRowColor(record, 'monto_total_collector', 'monto_total_calimaco')}`}>
                         <td className="p-2">{format(new Date(record.report_fecha), "dd/MM/yyyy")}</td>
                         <td className="p-2">{getCollectorName(record.report_collector_id)}</td>
+                        <td className="p-2">{record.aprobados_collector}</td>
                         <td className="text-right p-2 font-mono">
                           {parseFloat(record.monto_total_collector).toLocaleString("es-PE", { minimumFractionDigits: 2 })}
                         </td>
@@ -398,6 +402,7 @@ export default function DashboardVentasPage() {
                     <tr className="border-b">
                       <th className="text-left p-2">Fecha</th>
                       <th className="text-left p-2">Recaudador</th>
+                      <th className="text-left p-2">Operaciones</th>
                       <th className="text-right p-2">Monto (S/.)</th>
                     </tr>
                   </thead>
@@ -406,6 +411,7 @@ export default function DashboardVentasPage() {
                       <tr key={index} className={`border-b hover:bg-muted/50 ${getRowColor(record, 'monto_no_conciliado_calimaco', 'monto_no_conciliado_collector')}`}>
                         <td className="p-2">{format(new Date(record.report_fecha), "dd/MM/yyyy")}</td>
                         <td className="p-2">{getCollectorName(record.report_collector_id)}</td>
+                        <td className="p-2">{record.no_conciliados_calimaco}</td>
                         <td className="text-right p-2 font-mono">
                           {parseFloat(record.monto_no_conciliado_calimaco).toLocaleString("es-PE", { minimumFractionDigits: 2 })}
                         </td>
@@ -435,6 +441,7 @@ export default function DashboardVentasPage() {
                     <tr className="border-b">
                       <th className="text-left p-2">Fecha</th>
                       <th className="text-left p-2">Recaudador</th>
+                      <th className="text-left p-2">Operaciones</th>
                       <th className="text-right p-2">Monto (S/.)</th>
                     </tr>
                   </thead>
@@ -443,6 +450,7 @@ export default function DashboardVentasPage() {
                       <tr key={index} className={`border-b hover:bg-muted/50 ${getRowColor(record, 'monto_no_conciliado_collector', 'monto_no_conciliado_calimaco')}`}>
                         <td className="p-2">{format(new Date(record.report_fecha), "dd/MM/yyyy")}</td>
                         <td className="p-2">{getCollectorName(record.report_collector_id)}</td>
+                        <td className="p-2">{record.no_conciliados_collector}</td>
                         <td className="text-right p-2 font-mono">
                           {parseFloat(record.monto_no_conciliado_collector).toLocaleString("es-PE", { minimumFractionDigits: 2 })}
                         </td>
