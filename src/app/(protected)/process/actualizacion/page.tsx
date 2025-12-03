@@ -8,6 +8,7 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { fetchWithAuth } from "@/lib/api-client"
 
 interface Collector {
   id: number
@@ -45,7 +46,7 @@ export default function ProcesosActualizacionPage() {
   const fetchCollectors = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/collectors`)
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/collectors`)
       if (!response.ok) throw new Error('Error al obtener recaudadores')
       const data = await response.json()
       setCollectors(data)
@@ -143,7 +144,7 @@ export default function ProcesosActualizacionPage() {
 
     try {
       const apiKey = process.env.NEXT_PUBLIC_API_KEY
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/digital/${endpoint}`, {
+      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/digital/${endpoint}`, {
         method: 'GET',
         headers: { 'x-api-key': apiKey || '' }
       })
