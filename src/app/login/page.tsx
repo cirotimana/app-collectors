@@ -21,6 +21,7 @@ export default function LoginPage() {
               width={200}
               height={150}
               className="rounded-lg"
+              unoptimized
             />
           </div>
           <CardTitle className="font-headline text-2xl">Bienvenido</CardTitle>
@@ -41,5 +42,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    

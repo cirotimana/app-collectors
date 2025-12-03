@@ -26,7 +26,11 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>
 
-export function AuthForm() {
+interface AuthFormProps {
+  mode?: "login" | "signup"
+}
+
+export function AuthForm({ mode = "login" }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
 
