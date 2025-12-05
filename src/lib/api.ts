@@ -1,3 +1,5 @@
+import { fetchWithAuth } from './api-client'
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3040/api'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
 
@@ -85,13 +87,13 @@ function formatDateForAPI(dateStr: string): string {
 // API de Liquidaciones
 export const liquidationsApi = {
   async getAll(): Promise<Liquidation[]> {
-    const response = await fetch(`${API_URL}/liquidations`)
+    const response = await fetchWithAuth(`${API_URL}/liquidations`)
     if (!response.ok) throw new Error('Error al obtener liquidaciones')
     return response.json()
   },
 
   async getByCollector(collector: string): Promise<Liquidation[]> {
-    const response = await fetch(`${API_URL}/liquidations/collector/${encodeURIComponent(collector)}`)
+    const response = await fetchWithAuth(`${API_URL}/liquidations/collector/${encodeURIComponent(collector)}`)
     if (!response.ok) throw new Error('Error al obtener liquidaciones por recaudador')
     return response.json()
   },
@@ -99,13 +101,13 @@ export const liquidationsApi = {
   async getByDateRange(fromDate: string, toDate: string): Promise<Liquidation[]> {
     const from = formatDateForAPI(fromDate)
     const to = formatDateForAPI(toDate)
-    const response = await fetch(`${API_URL}/liquidations/range?from=${from}&to=${to}`)
+    const response = await fetchWithAuth(`${API_URL}/liquidations/range?from=${from}&to=${to}`)
     if (!response.ok) throw new Error('Error al obtener liquidaciones por rango de fechas')
     return response.json()
   },
 
   async delete(id: number): Promise<void> {
-    const response = await fetch(`${API_URL}/liquidations/${id}`, { method: 'DELETE' })
+    const response = await fetchWithAuth(`${API_URL}/liquidations/${id}`, { method: 'DELETE' })
     if (!response.ok) throw new Error('Error al eliminar liquidacion')
   }
 }
@@ -113,13 +115,13 @@ export const liquidationsApi = {
 // API de Conciliaciones
 export const conciliationsApi = {
   async getAll(): Promise<Conciliation[]> {
-    const response = await fetch(`${API_URL}/conciliations`)
+    const response = await fetchWithAuth(`${API_URL}/conciliations`)
     if (!response.ok) throw new Error('Error al obtener conciliaciones')
     return response.json()
   },
 
   async getByCollector(collector: string): Promise<Conciliation[]> {
-    const response = await fetch(`${API_URL}/conciliations/collector/${encodeURIComponent(collector)}`)
+    const response = await fetchWithAuth(`${API_URL}/conciliations/collector/${encodeURIComponent(collector)}`)
     if (!response.ok) throw new Error('Error al obtener conciliaciones por recaudador')
     return response.json()
   },
@@ -127,13 +129,13 @@ export const conciliationsApi = {
   async getByDateRange(fromDate: string, toDate: string): Promise<Conciliation[]> {
     const from = formatDateForAPI(fromDate)
     const to = formatDateForAPI(toDate)
-    const response = await fetch(`${API_URL}/conciliations/range?from=${from}&to=${to}`)
+    const response = await fetchWithAuth(`${API_URL}/conciliations/range?from=${from}&to=${to}`)
     if (!response.ok) throw new Error('Error al obtener conciliaciones por rango de fechas')
     return response.json()
   },
 
   async delete(id: number): Promise<void> {
-    const response = await fetch(`${API_URL}/conciliations/${id}`, { method: 'DELETE' })
+    const response = await fetchWithAuth(`${API_URL}/conciliations/${id}`, { method: 'DELETE' })
     if (!response.ok) throw new Error('Error al eliminar conciliacion')
   }
 }
@@ -141,7 +143,7 @@ export const conciliationsApi = {
 // API de Discrepancias
 export const discrepanciesApi = {
   async getAll(): Promise<Discrepancy[]> {
-    const response = await fetch(`${API_URL}/reconciliation-discrepancies`)
+    const response = await fetchWithAuth(`${API_URL}/reconciliation-discrepancies`)
     if (!response.ok) throw new Error('Error al obtener discrepancias')
     return response.json()
   },
@@ -149,19 +151,19 @@ export const discrepanciesApi = {
   async getByDateRange(fromDate: string, toDate: string): Promise<Discrepancy[]> {
     const from = formatDateForAPI(fromDate)
     const to = formatDateForAPI(toDate)
-    const response = await fetch(`${API_URL}/reconciliation-discrepancies/range?from=${from}&to=${to}`)
+    const response = await fetchWithAuth(`${API_URL}/reconciliation-discrepancies/range?from=${from}&to=${to}`)
     if (!response.ok) throw new Error('Error al obtener discrepancias por rango de fechas')
     return response.json()
   },
 
   async getByStatus(status: 'new' | 'pending' | 'closed'): Promise<Discrepancy[]> {
-    const response = await fetch(`${API_URL}/reconciliation-discrepancies/status/${status}`)
+    const response = await fetchWithAuth(`${API_URL}/reconciliation-discrepancies/status/${status}`)
     if (!response.ok) throw new Error('Error al obtener discrepancias por estado')
     return response.json()
   },
 
   async updateStatus(id: number, status: 'pending' | 'closed'): Promise<void> {
-    const response = await fetch(`${API_URL}/reconciliation-discrepancies/${id}/status`, {
+    const response = await fetchWithAuth(`${API_URL}/reconciliation-discrepancies/${id}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status })
@@ -170,7 +172,7 @@ export const discrepanciesApi = {
   },
 
   async delete(id: number): Promise<void> {
-    const response = await fetch(`${API_URL}/reconciliation-discrepancies/${id}`, {
+    const response = await fetchWithAuth(`${API_URL}/reconciliation-discrepancies/${id}`, {
       method: 'DELETE'
     })
     if (!response.ok) throw new Error('Error al eliminar discrepancia')
@@ -181,14 +183,14 @@ export const discrepanciesApi = {
 export const dashboardApi = {
   async getSummary(collectorIds: string, fromDate: string, toDate: string, endpoint: 'liquidations' | 'conciliations') {
     const url = `${API_URL}/${endpoint}/summary?collectorIds=${collectorIds}&fromDate=${fromDate}&toDate=${toDate}`
-    const response = await fetch(url)
+    const response = await fetchWithAuth(url)
     if (!response.ok) throw new Error('Error al obtener resumen')
     return response.json()
   },
 
   async getStats(collectorId: number, fromDate: string, toDate: string, endpoint: 'liquidations' | 'conciliations') {
     const url = `${API_URL}/${endpoint}/stats?collectorId=${collectorId}&fromDate=${fromDate}&toDate=${toDate}`
-    const response = await fetch(url)
+    const response = await fetchWithAuth(url)
     if (!response.ok) throw new Error('Error al obtener estadisticas')
     return response.json()
   }
@@ -228,7 +230,7 @@ export const processApi = {
     const apiKey = process.env.NEXT_PUBLIC_API_KEY
     const url = `${API_BASE_URL}/digital/${endpoint}?from_date=${fromDate}&to_date=${toDate}`
     
-    const response = await fetch(url, {
+    const response = await fetchWithAuth(url, {
       method: 'GET',
       headers: { 'x-api-key': apiKey || '' },
     })
@@ -251,7 +253,7 @@ export const processApi = {
     const apiKey = process.env.NEXT_PUBLIC_API_KEY
     const url = `${API_BASE_URL}/digital/${endpoint}`
     
-    const response = await fetch(url, {
+    const response = await fetchWithAuth(url, {
       method: 'GET',
       headers: { 'x-api-key': apiKey || '' },
     })
@@ -393,7 +395,7 @@ export const conciliationReportsApi = {
       page: page.toString(),
       limit: limit.toString()
     })
-    const response = await fetch(`${API_URL}/conciliation-reports/conciliacion-completa-por-dia?${params}`)
+    const response = await fetchWithAuth(`${API_URL}/conciliation-reports/conciliacion-completa-por-dia?${params}`)
     if (!response.ok) throw new Error('Error al obtener reporte completo')
     return response.json()
   },
@@ -406,7 +408,7 @@ export const conciliationReportsApi = {
       page: page.toString(),
       limit: limit.toString()
     })
-    const response = await fetch(`${API_URL}/conciliation-reports/conciliados?${params}`)
+    const response = await fetchWithAuth(`${API_URL}/conciliation-reports/conciliados?${params}`)
     if (!response.ok) throw new Error('Error al obtener registros conciliados')
     return response.json()
   },
@@ -419,12 +421,12 @@ export const conciliationReportsApi = {
       page: page.toString(),
       limit: limit.toString()
     })
-    const response = await fetch(`${API_URL}/conciliation-reports/no-conciliados?${params}`)
+    const response = await fetchWithAuth(`${API_URL}/conciliation-reports/no-conciliados?${params}`)
     if (!response.ok) throw new Error('Error al obtener registros no conciliados')
     return response.json()
   },
 
-  async getSalesReport(collectorIds: number[], fromDate: string, toDate: string, page = 1, limit = 20): Promise<PaginatedResponse<SalesReport>> {
+  async getSalesReport(collectorIds: number[], fromDate: string, toDate: string, page = 1, limit = 20): Promise<PaginatedResponse<ConciliationReport>> {
     const params = new URLSearchParams({
       collectorIds: collectorIds.join(','),
       fromDate,
@@ -432,9 +434,41 @@ export const conciliationReportsApi = {
       page: page.toString(),
       limit: limit.toString()
     })
-    const response = await fetch(`${API_URL}/conciliation-reports/reporte-ventas-recaudadores?${params}`)
+    const response = await fetchWithAuth(`${API_URL}/conciliation-reports/reporte-ventas-recaudadores?${params}`)
     if (!response.ok) throw new Error('Error al obtener reporte de ventas')
     return response.json()
+  },
+
+  async fetchAllConciliatedRecords(collectorIds: number[], fromDate: string, toDate: string): Promise<ConciliatedRecord[]> {
+    let allRecords: ConciliatedRecord[] = []
+    let page = 1
+    let totalPages = 1
+    const limit = 1000 // Larger limit for efficiency
+
+    do {
+      const response = await this.getConciliatedRecords(collectorIds, fromDate, toDate, page, limit)
+      allRecords = [...allRecords, ...response.data]
+      totalPages = response.totalPages
+      page++
+    } while (page <= totalPages)
+
+    return allRecords
+  },
+
+  async fetchAllNonConciliatedRecords(collectorIds: number[], fromDate: string, toDate: string): Promise<NonConciliatedRecord[]> {
+    let allRecords: NonConciliatedRecord[] = []
+    let page = 1
+    let totalPages = 1
+    const limit = 1000
+
+    do {
+      const response = await this.getNonConciliatedRecords(collectorIds, fromDate, toDate, page, limit)
+      allRecords = [...allRecords, ...response.data]
+      totalPages = response.totalPages
+      page++
+    } while (page <= totalPages)
+
+    return allRecords
   }
 }
 
@@ -460,19 +494,19 @@ export const calimacoRecordsApi = {
     if (toDate) params.append('toDate', toDate)
     if (status) params.append('status', status)
     
-    const response = await fetch(`${API_URL}/calimaco-records/filter?${params}`)
+    const response = await fetchWithAuth(`${API_URL}/calimaco-records/filter?${params}`)
     if (!response.ok) throw new Error('Error al obtener registros Calimaco')
     return response.json()
   },
 
   async getById(id: number): Promise<CalimacoRecord> {
-    const response = await fetch(`${API_URL}/calimaco-records/${id}`)
+    const response = await fetchWithAuth(`${API_URL}/calimaco-records/${id}`)
     if (!response.ok) throw new Error('Error al obtener registro Calimaco')
     return response.json()
   },
 
   async update(id: number, data: Partial<CalimacoRecord>): Promise<CalimacoRecord> {
-    const response = await fetch(`${API_URL}/calimaco-records/${id}`, {
+    const response = await fetchWithAuth(`${API_URL}/calimaco-records/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -482,24 +516,24 @@ export const calimacoRecordsApi = {
   },
 
   async delete(id: number): Promise<void> {
-    const response = await fetch(`${API_URL}/calimaco-records/${id}`, { method: 'DELETE' })
+    const response = await fetchWithAuth(`${API_URL}/calimaco-records/${id}`, { method: 'DELETE' })
     if (!response.ok) throw new Error('Error al eliminar registro Calimaco')
   },
 
   async getByCollector(collectorId: number): Promise<CalimacoRecord[]> {
-    const response = await fetch(`${API_URL}/calimaco-records/by-collector/${collectorId}`)
+    const response = await fetchWithAuth(`${API_URL}/calimaco-records/by-collector/${collectorId}`)
     if (!response.ok) throw new Error('Error al obtener registros por recaudador')
     return response.json()
   },
 
   async getByStatus(status: string): Promise<CalimacoRecord[]> {
-    const response = await fetch(`${API_URL}/calimaco-records/by-status?status=${encodeURIComponent(status)}`)
+    const response = await fetchWithAuth(`${API_URL}/calimaco-records/by-status?status=${encodeURIComponent(status)}`)
     if (!response.ok) throw new Error('Error al obtener registros por estado')
     return response.json()
   },
 
   async getByCalimacoId(calimacoId: string): Promise<CalimacoRecord[]> {
-    const response = await fetch(`${API_URL}/calimaco-records/by-calimaco-id/${encodeURIComponent(calimacoId)}`)
+    const response = await fetchWithAuth(`${API_URL}/calimaco-records/by-calimaco-id/${encodeURIComponent(calimacoId)}`)
     if (!response.ok) {
       if (response.status === 404) {
         return []
@@ -523,19 +557,19 @@ export const collectorRecordsApi = {
     if (toDate) params.append('toDate', toDate)
     if (providerStatus) params.append('providerStatus', providerStatus)
     
-    const response = await fetch(`${API_URL}/collector-records/filter?${params}`)
+    const response = await fetchWithAuth(`${API_URL}/collector-records/filter?${params}`)
     if (!response.ok) throw new Error('Error al obtener registros Collector')
     return response.json()
   },
 
   async getById(id: number): Promise<CollectorRecord> {
-    const response = await fetch(`${API_URL}/collector-records/${id}`)
+    const response = await fetchWithAuth(`${API_URL}/collector-records/${id}`)
     if (!response.ok) throw new Error('Error al obtener registro Collector')
     return response.json()
   },
 
   async update(id: number, data: Partial<CollectorRecord>): Promise<CollectorRecord> {
-    const response = await fetch(`${API_URL}/collector-records/${id}`, {
+    const response = await fetchWithAuth(`${API_URL}/collector-records/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -545,24 +579,24 @@ export const collectorRecordsApi = {
   },
 
   async delete(id: number): Promise<void> {
-    const response = await fetch(`${API_URL}/collector-records/${id}`, { method: 'DELETE' })
+    const response = await fetchWithAuth(`${API_URL}/collector-records/${id}`, { method: 'DELETE' })
     if (!response.ok) throw new Error('Error al eliminar registro Collector')
   },
 
   async getByCollector(collectorId: number): Promise<CollectorRecord[]> {
-    const response = await fetch(`${API_URL}/collector-records/by-collector/${collectorId}`)
+    const response = await fetchWithAuth(`${API_URL}/collector-records/by-collector/${collectorId}`)
     if (!response.ok) throw new Error('Error al obtener registros por recaudador')
     return response.json()
   },
 
   async getByProviderStatus(providerStatus: string): Promise<CollectorRecord[]> {
-    const response = await fetch(`${API_URL}/collector-records/by-provider-status?providerStatus=${encodeURIComponent(providerStatus)}`)
+    const response = await fetchWithAuth(`${API_URL}/collector-records/by-provider-status?providerStatus=${encodeURIComponent(providerStatus)}`)
     if (!response.ok) throw new Error('Error al obtener registros por estado del proveedor')
     return response.json()
   },
 
   async getByCalimacoId(calimacoId: string): Promise<CollectorRecord[]> {
-    const response = await fetch(`${API_URL}/collector-records/by-calimaco-id/${encodeURIComponent(calimacoId)}`)
+    const response = await fetchWithAuth(`${API_URL}/collector-records/by-calimaco-id/${encodeURIComponent(calimacoId)}`)
     if (!response.ok) {
       if (response.status === 404) {
         return []
@@ -581,7 +615,7 @@ export const downloadApi = {
       const apiKey = process.env.NEXT_PUBLIC_API_KEY
       const downloadUrl = `${API_BASE_URL}/digital/download/${cleanedPath}`
       
-      const response = await fetch(downloadUrl, {
+      const response = await fetchWithAuth(downloadUrl, {
         method: 'GET',
         headers: { 'x-api-key': apiKey || '' },
         redirect: 'manual'
@@ -624,7 +658,7 @@ export const downloadApi = {
       const apiKey = process.env.NEXT_PUBLIC_API_KEY
       const downloadUrl = `${API_BASE_URL}/digital/apps/total-secure/${tipo}/processed/${fileName}`
       
-      const response = await fetch(downloadUrl, {
+      const response = await fetchWithAuth(downloadUrl, {
         method: 'GET',
         headers: { 'x-api-key': apiKey || '' },
       })
@@ -647,5 +681,162 @@ export const downloadApi = {
       console.error('Error en descarga de archivo procesado:', error)
       return false
     }
+  }
+}
+
+// tipos para roles
+export interface Role {
+  id: number
+  name: string
+  description: string
+  createdAt?: string
+  updatedAt?: string
+  deletedAt?: string | null
+}
+
+export interface UserRole {
+  id: number
+  userId: number
+  roleId: number
+  role: Role
+  createdAt?: string
+  updatedAt?: string
+  deletedAt?: string | null
+}
+
+// tipos para usuarios
+export interface User {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  username: string
+  isActive?: boolean
+  createdAt?: string
+  updatedAt?: string
+  deletedAt?: string | null
+  userRoles?: UserRole[]
+}
+
+export interface CreateUserData {
+  firstName: string
+  lastName: string
+  email: string
+  username: string
+  password: string
+  roleId: number
+}
+
+export interface UpdateUserData {
+  firstName?: string
+  lastName?: string
+  email?: string
+  username?: string
+  password?: string
+  roleId?: number
+}
+
+export interface PaginatedUsers {
+  data: User[]
+  total: number
+}
+
+export interface CreateRoleData {
+  name: string
+  description: string
+}
+
+export interface UpdateRoleData {
+  name?: string
+  description?: string
+}
+
+// api de roles
+export const rolesApi = {
+  async getAll(): Promise<Role[]> {
+    const response = await fetchWithAuth(`${API_URL}/roles`)
+    if (!response.ok) throw new Error('Error al obtener roles')
+    return response.json()
+  },
+
+  async create(data: CreateRoleData): Promise<Role> {
+    const response = await fetchWithAuth(`${API_URL}/roles`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Error al crear rol' }))
+      throw new Error(error.detail || 'Error al crear rol')
+    }
+    return response.json()
+  },
+
+  async update(id: number, data: UpdateRoleData): Promise<Role> {
+    const response = await fetchWithAuth(`${API_URL}/roles/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Error al actualizar rol' }))
+      throw new Error(error.detail || 'Error al actualizar rol')
+    }
+    return response.json()
+  },
+
+  async delete(id: number): Promise<void> {
+    const response = await fetchWithAuth(`${API_URL}/roles/${id}`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) throw new Error('Error al eliminar rol')
+  }
+}
+
+// api de usuarios
+export const usersApi = {
+  async getAll(page = 1, limit = 10): Promise<PaginatedUsers> {
+    const response = await fetchWithAuth(`${API_URL}/users?page=${page}&limit=${limit}`)
+    if (!response.ok) throw new Error('Error al obtener usuarios')
+    return response.json()
+  },
+
+  async getById(id: number): Promise<User> {
+    const response = await fetchWithAuth(`${API_URL}/users/${id}`)
+    if (!response.ok) throw new Error('Error al obtener usuario')
+    return response.json()
+  },
+
+  async create(data: CreateUserData): Promise<User> {
+    const response = await fetchWithAuth(`${API_URL}/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Error al crear usuario' }))
+      throw new Error(error.detail || 'Error al crear usuario')
+    }
+    return response.json()
+  },
+
+  async update(id: number, data: UpdateUserData): Promise<User> {
+    const response = await fetchWithAuth(`${API_URL}/users/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Error al actualizar usuario' }))
+      throw new Error(error.detail || 'Error al actualizar usuario')
+    }
+    return response.json()
+  },
+
+  async delete(id: number): Promise<void> {
+    const response = await fetchWithAuth(`${API_URL}/users/${id}`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) throw new Error('Error al eliminar usuario')
   }
 }

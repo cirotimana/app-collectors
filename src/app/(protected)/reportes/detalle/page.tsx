@@ -5,11 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ArrowLeft, ChevronLeft, ChevronRight, Search } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { useRouter, useSearchParams } from "next/navigation"
-import { conciliationReportsApi, type ConciliatedRecord, type NonConciliatedRecord, type PaginatedResponse } from "@/lib/api"
+import { conciliationReportsApi, calimacoRecordsApi, collectorRecordsApi, type ConciliatedRecord, type NonConciliatedRecord, type PaginatedResponse } from "@/lib/api"
 import { toast } from "sonner"
 
 const COLLECTORS = [
@@ -33,6 +34,15 @@ export default function ReporteDetallePage() {
   const [nonConciliatedData, setNonConciliatedData] = React.useState<PaginatedResponse<NonConciliatedRecord> | null>(null)
   const [loading, setLoading] = React.useState(false)
   const [currentPage, setCurrentPage] = React.useState(1)
+  
+  // Search Modal State
+  const [isSearchOpen, setIsSearchOpen] = React.useState(false)
+  const [searchLoading, setSearchLoading] = React.useState(false)
+  const [searchResult, setSearchResult] = React.useState<{
+    calimaco: any[]
+    collector: any[]
+  } | null>(null)
+
 
   const collectorId = parseInt(searchParams.get("collectorId") || "1")
   const fromDate = searchParams.get("fromDate") || ""
@@ -73,6 +83,87 @@ export default function ReporteDetallePage() {
       loadConciliatedRecords(page)
     } else {
       loadNonConciliatedRecords(page)
+    }
+  }
+
+  const handleSearchDetails = async (record: ConciliatedRecord | NonConciliatedRecord) => {
+    setIsSearchOpen(true)
+    setSearchLoading(true)
+    setSearchResult(null)
+
+    try {
+      const promises = []
+
+      if (activeTab === "conciliados") {
+        const conciliatedRecord = record as ConciliatedRecord
+        
+        // Calimaco by ID
+        promises.push(
+          calimacoRecordsApi.getById(conciliatedRecord.calimaco_id)
+            .then(res => ({ source: 'calimaco', data: [res] }))
+            .catch(err => {
+              console.error("Error fetching calimaco by ID", err)
+              return { source: 'calimaco', data: [] }
+            })
+        )
+
+        // Collector by ID
+        promises.push(
+          collectorRecordsApi.getById(conciliatedRecord.collector_record_id)
+            .then(res => ({ source: 'collector', data: [res] }))
+            .catch(err => {
+              console.error("Error fetching collector by ID", err)
+              return { source: 'collector', data: [] }
+            })
+        )
+
+      } else {
+        const normalizedId = record.calimaco_normalized
+
+        if (normalizedId) {
+          // Calimaco by Normalized ID
+          promises.push(
+            calimacoRecordsApi.getByCalimacoId(normalizedId)
+              .then(res => ({ source: 'calimaco', data: res }))
+              .catch(err => {
+                console.error("Error fetching calimaco by normalized ID", err)
+                return { source: 'calimaco', data: [] }
+              })
+          )
+
+          // Collector by Normalized ID
+          promises.push(
+            collectorRecordsApi.getByCalimacoId(normalizedId)
+              .then(res => ({ source: 'collector', data: res }))
+              .catch(err => {
+                console.error("Error fetching collector by normalized ID", err)
+                return { source: 'collector', data: [] }
+              })
+          )
+        }
+      }
+
+      const results = await Promise.all(promises)
+      
+      const calimacoData = results
+        .filter(r => r.source === 'calimaco')
+        .flatMap(r => r.data as any[])
+      
+      const collectorData = results
+        .filter(r => r.source === 'collector')
+        .flatMap(r => r.data as any[])
+
+      setSearchResult({
+        calimaco: calimacoData,
+        collector: collectorData
+      })
+
+    } catch (error) {
+      console.error(error)
+      toast.error("Error al buscar detalles")
+      setSearchResult({ calimaco: [], collector: [] })
+    } finally {
+      setSearchLoading(false)
     }
   }
 
@@ -158,6 +249,7 @@ export default function ReporteDetallePage() {
                       <th className="text-right p-2">Monto Collector</th>
                       <th className="text-left p-2">Fecha Calimaco</th>
                       <th className="text-left p-2">Fecha Collector</th>
+                      <th className="text-center p-2">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -173,6 +265,17 @@ export default function ReporteDetallePage() {
                         </td>
                         <td className="p-2">
                           {format(new Date(record.collector_date), "dd/MM/yyyy HH:mm")}
+                        </td>
+                        <td className="text-center p-2">
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-8 w-8"
+                            onClick={() => handleSearchDetails(record)}
+                            title="Buscar detalle"
+                          >
+                            <Search className="h-4 w-4" />
+                          </Button>
                         </td>
                       </tr>
                     ))}
@@ -232,6 +335,7 @@ export default function ReporteDetallePage() {
                       <th className="text-left p-2">Origen</th>
                       <th className="text-right p-2">Monto</th>
                       <th className="text-left p-2">Fecha</th>
+                      <th className="text-center p-2">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -244,6 +348,17 @@ export default function ReporteDetallePage() {
                         <td className="text-right p-2">{formatCurrency(record.amount)}</td>
                         <td className="p-2">
                           {format(new Date(record.record_date), "dd/MM/yyyy HH:mm")}
+                        </td>
+                        <td className="text-center p-2">
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="h-8 w-8"
+                            onClick={() => handleSearchDetails(record)}
+                            title="Buscar detalle"
+                          >
+                            <Search className="h-4 w-4" />
+                          </Button>
                         </td>
                       </tr>
                     ))}
@@ -284,6 +399,131 @@ export default function ReporteDetallePage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+        <DialogContent className="!max-w-5xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalle de Registros</DialogTitle>
+            <DialogDescription>
+              Información encontrada en Calimaco y Recaudador
+            </DialogDescription>
+          </DialogHeader>
+          
+          {searchLoading ? (
+            <div className="flex justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+          ) : searchResult ? (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-blue-600">
+                    Calimaco ({searchResult.calimaco.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {searchResult.calimaco.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b bg-muted/50">
+                            {/* <th className="text-left p-2">ID</th> */}
+                            <th className="text-left p-2">Calimaco ID</th>
+                            <th className="text-left p-2">Recaudador</th>
+                            <th className="text-left p-2">Fecha Registro</th>
+                            <th className="text-left p-2">Fecha Actualizacion</th>
+                            <th className="text-left p-2">Estado</th>
+                            <th className="text-left p-2">Usuario</th>
+                            <th className="text-right p-2">Monto</th>
+                            <th className="text-left p-2">External ID</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {searchResult.calimaco.map((item: any, idx: number) => (
+                            <tr key={idx} className="border-b hover:bg-muted/50">
+                              {/* <td className="p-2">{item.id}</td> */}
+                              <td className="p-2 font-mono">{item.calimacoId}</td>
+                              <td className="p-2">{item.collector.name}</td>
+                              <td className="p-2">
+                                {item.recordDate ? format(new Date(item.recordDate), "dd/MM/yyyy HH:mm:ss") : "-"}
+                              </td>
+                              <td className="p-2">
+                                {item.modificationDate ? format(new Date(item.modificationDate), "dd/MM/yyyy HH:mm:ss") : "-"}
+                              </td>
+                              <td className="p-2">
+                                <Badge variant={item.status === "Válido" ? "default" : "secondary"}>
+                                  {item.status}
+                                </Badge>
+                              </td>
+                              <td className="p-2">{item.userId}</td>
+                              <td className="p-2 text-right font-medium">
+                                {item.amount ? `S/ ${parseFloat(item.amount).toFixed(2)}` : "-"}
+                              </td>
+                              <td className="p-2 font-mono text-[10px]">{item.externalId}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground italic text-xs">No se encontraron registros en Calimaco</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-green-600">
+                    Recaudador ({searchResult.collector.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {searchResult.collector.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b bg-muted/50">
+                            {/* <th className="text-left p-2">ID</th> */}
+                            <th className="text-left p-2">Calimaco ID</th>
+                            <th className="text-left p-2">Recaudador</th>
+                            <th className="text-left p-2">Fecha Registro</th>
+                            <th className="text-left p-2">Cliente</th>
+                            <th className="text-left p-2">Estado</th>
+                            <th className="text-right p-2">Monto</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {searchResult.collector.map((item: any, idx: number) => (
+                            <tr key={idx} className="border-b hover:bg-muted/50">
+                              {/* <td className="p-2">{item.id}</td> */}
+                              <td className="p-2 font-mono">{item.calimacoId}</td>
+                              <td className="p-2 font-mono">{item.collector.name}</td>
+                              <td className="p-2">
+                                {item.recordDate ? format(new Date(item.recordDate), "dd/MM/yyyy HH:mm:ss") : "-"}
+                              </td>
+                              <td className="p-2">{item.clientName}</td>
+                              <td className="p-2">
+                                <Badge variant={item.providerStatus === "Autorizado" ? "default" : "secondary"}>
+                                  {item.providerStatus}
+                                </Badge>
+                              </td>
+                              <td className="p-2 text-right font-medium">
+                                {item.amount ? `S/ ${parseFloat(item.amount).toFixed(2)}` : "-"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground italic text-xs">No se encontraron registros en Collector</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

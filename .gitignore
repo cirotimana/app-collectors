@@ -40,3 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .amazonq/*
+.cursorrules
+CODING_GUIDELINES.md
