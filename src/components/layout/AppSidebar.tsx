@@ -42,8 +42,8 @@ const menuItems = [
   { icon: <PieChart />, label: "Reportes", href: "/reportes" },
   { icon: <Database />, label: "Registros", href: "/registros" },
   { icon: <BookText  />, label: "Resumen", href: "/resumen" },
-  { icon: <CloudDownload />, label: "Descargas", href: "/download" },
-  { icon: <Gpu />, label: "Digital", href: "/digital" },
+  { icon: <CloudDownload />, label: "Descargas", href: "/download", requireAdmin: true },
+  { icon: <Gpu />, label: "Digital", href: "/digital", requireDigital: true },
 ];
 
 const processItems = [
@@ -64,12 +64,18 @@ const configuracionItems = [
 export function AppSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const { canAccessConfig, canAccessLiquidaciones } = useAuthStore();
+  const { canAccessConfig, canAccessLiquidaciones, canAccessDigital } = useAuthStore();
 
   // filtrar items del menu segun permisos
   const visibleMenuItems = menuItems.filter(item => {
     if (item.requireLiquidaciones) {
       return canAccessLiquidaciones()
+    }
+    if (item.requireAdmin) {
+      return canAccessConfig()
+    }
+    if (item.requireDigital) {
+      return canAccessDigital()
     }
     return true
   })

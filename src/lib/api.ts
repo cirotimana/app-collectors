@@ -269,7 +269,9 @@ export const processApi = {
 
 // Tipos para los nuevos endpoints de BD
 export interface ConciliationReport {
-  report_fecha: string
+  fecha_desde?: string
+  fecha_hasta?: string
+  report_fecha?: string
   report_collector_id: number
   aprobados_calimaco: number
   conciliados_calimaco: number
@@ -387,6 +389,24 @@ export interface CollectorRecord {
 
 // API de Reportes de Conciliacion
 export const conciliationReportsApi = {
+  async getAccumulatedReport(collectorIds?: number[], fromDate?: string, toDate?: string): Promise<ConciliationReport[]> {
+    const params = new URLSearchParams()
+    
+    if (collectorIds && collectorIds.length > 0) {
+      params.append('collectorIds', collectorIds.join(','))
+    }
+    if (fromDate) {
+      params.append('fromDate', fromDate)
+    }
+    if (toDate) {
+      params.append('toDate', toDate)
+    }
+    
+    const response = await fetchWithAuth(`${API_URL}/conciliation-reports/conciliacion-completa-acumulado?${params}`)
+    if (!response.ok) throw new Error('Error al obtener reporte acumulado')
+    return response.json()
+  },
+
   async getCompleteReport(collectorIds: number[], fromDate: string, toDate: string, page = 1, limit = 50): Promise<PaginatedResponse<ConciliationReport>> {
     const params = new URLSearchParams({
       collectorIds: collectorIds.join(','),

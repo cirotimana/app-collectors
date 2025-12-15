@@ -3,6 +3,7 @@ export const ROLES = {
   ADMINISTRATOR: 'administrator',
   ANALISTA_TESORERIA: 'analista_tesoreria',
   ANALISTA_SOPORTE: 'analista_soporte',
+  ANALISTA: 'analista',
 } as const
 
 export type Role = typeof ROLES[keyof typeof ROLES]
@@ -30,6 +31,13 @@ export const ROLE_PERMISSIONS = {
     canAccessLiquidaciones: false,
     canAccessAll: false,
   },
+  [ROLES.ANALISTA]: {
+    canDelete: false,
+    canEdit: false,
+    canAccessConfig: false,
+    canAccessLiquidaciones: false,
+    canAccessAll: false,
+  },
 } as const
 
 // rutas protegidas y roles permitidos
@@ -38,16 +46,16 @@ export const PROTECTED_ROUTES = {
   '/configuracion/usuarios': [ROLES.ADMINISTRATOR],
   '/configuracion/roles': [ROLES.ADMINISTRATOR],
   '/dashboard': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA],
-  '/dashboard-ventas': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE],
-  '/reportes': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE],
-  '/registros': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE],
-  '/resumen': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE],
-  '/download': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE],
-  '/digital': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE],
-  '/process': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE],
-  '/process/actualizacion': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE],
-  '/historico': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE],
-  '/historico/ejecuciones': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE],
+  '/dashboard-ventas': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA],
+  '/reportes': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA],
+  '/registros': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA],
+  '/resumen': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA],
+  '/download': [ROLES.ADMINISTRATOR],
+  '/digital': [ROLES.ADMINISTRATOR, ROLES.ANALISTA],
+  '/process': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA],
+  '/process/actualizacion': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA],
+  '/historico': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA],
+  '/historico/ejecuciones': [ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA],
 } as const
 
 // verificar si un rol puede acceder a una ruta
@@ -106,6 +114,12 @@ export function canAccessLiquidaciones(userRoles: string[]): boolean {
     const permissions = ROLE_PERMISSIONS[role as Role]
     return permissions?.canAccessLiquidaciones ?? false
   })
+}
+
+// verificar si un rol puede acceder al modulo digital
+export function canAccessDigital(userRoles: string[]): boolean {
+  if (!userRoles || !Array.isArray(userRoles)) return false
+  return userRoles.includes(ROLES.ADMINISTRATOR) || userRoles.includes(ROLES.ANALISTA)
 }
 
 // verificar si tiene un rol especifico
