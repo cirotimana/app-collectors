@@ -7,13 +7,13 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, ChevronLeft, ChevronRight, Eye } from "lucide-react"
+import { CalendarIcon, Eye } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { format, subDays } from "date-fns"
+import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { DateRange } from "react-day-picker"
-import { conciliationReportsApi, type ConciliationReport, type PaginatedResponse } from "@/lib/api"
+import { conciliationReportsApi, type ConciliationReport } from "@/lib/api"
 import { toast } from "sonner"
 
 const COLLECTORS = [
@@ -35,12 +35,10 @@ export default function HistoricoEjecucionesPage() {
   const [selectedCollectors, setSelectedCollectors] = React.useState<number[]>([1, 2, 3, 4, 5, 6, 7, 8, 9])
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(() => {
     const today = new Date()
-    const threeDaysAgo = subDays(today, 0)
-    return { from: threeDaysAgo, to: today }
+    return { from: today, to: today }
   })
-  const [salesData, setSalesData] = React.useState<PaginatedResponse<ConciliationReport> | null>(null)
+  const [salesData, setSalesData] = React.useState<ConciliationReport[] | null>(null)
   const [loading, setLoading] = React.useState(false)
-  const [currentPage, setCurrentPage] = React.useState(1)
 
   React.useEffect(() => {
     handleSearch()
@@ -62,16 +60,14 @@ export default function HistoricoEjecucionesPage() {
       const fromDate = format(dateRange.from, "yyyy-MM-dd")
       const toDate = format(dateRange.to, "yyyy-MM-dd")
       
-      const data = await conciliationReportsApi.getCompleteReport(
+      const data = await conciliationReportsApi.getAccumulatedReport(
         selectedCollectors,
         fromDate,
-        toDate,
-        currentPage,
-        9
+        toDate
       )
       
       setSalesData(data)
-      toast.success(`Se encontraron ${data.total} registros`)
+      toast.success(`Se encontraron ${data.length} registros`)
     } catch (error) {
       console.error(error)
       toast.error("Error al obtener el reporte de ventas")
@@ -80,33 +76,7 @@ export default function HistoricoEjecucionesPage() {
     }
   }
 
-  const handlePageChange = async (page: number) => {
-    if (!dateRange?.from || !dateRange?.to) return
-    
-    setLoading(true)
-    try {
-      const fromDate = format(dateRange.from, "yyyy-MM-dd")
-      const toDate = format(dateRange.to, "yyyy-MM-dd")
-      
-      const data = await conciliationReportsApi.getCompleteReport(
-        selectedCollectors,
-        fromDate,
-        toDate,
-        page,
-        100
-      )
-      
-      setSalesData(data)
-      setCurrentPage(page)
-    } catch (error) {
-      console.error(error)
-      toast.error("Error al cargar la pagina")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr?: string) => {
     if (!dateStr) return "-"
     try {
       return format(new Date(dateStr), "dd/MM/yyyy")
@@ -117,9 +87,14 @@ export default function HistoricoEjecucionesPage() {
 
   const handleViewDetail = (report: ConciliationReport) => {
     try {
-      const fromDate = format(new Date(report.report_fecha), "yyyy-MM-dd")
-      const toDate = format(new Date(report.report_fecha), "yyyy-MM-dd")
+      const fromDate = report.fecha_desde ? format(new Date(report.fecha_desde), "yyyy-MM-dd") : ""
+      const toDate = report.fecha_hasta ? format(new Date(report.fecha_hasta), "yyyy-MM-dd") : ""
       const collectorId = report.report_collector_id
+      
+      if (!fromDate || !toDate) {
+        toast.error("Fecha invalida en el reporte")
+        return
+      }
       
       router.push(`/reportes/detalle?collectorId=${collectorId}&fromDate=${fromDate}&toDate=${toDate}`)
     } catch (e) {
@@ -229,12 +204,12 @@ export default function HistoricoEjecucionesPage() {
       {salesData && (
         <Card>
           <CardHeader>
-            <CardTitle>Historico de Ejecuciones por Recaudador</CardTitle>
-            <CardDescription>
-              {salesData.total} registro(s) encontrado(s) - Pagina {salesData.page} de {salesData.totalPages}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <CardTitle>Resumen Acumulado por Recaudador</CardTitle>
+          <CardDescription>
+            {salesData.length} recaudador(es) encontrado(s)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -246,7 +221,7 @@ export default function HistoricoEjecucionesPage() {
                   </tr>
                   <tr className="border-b text-xs text-muted-foreground">
                     <th className="text-left p-2 font-medium">Recaudador</th>
-                    <th className="text-left p-2 font-medium border-r">Fecha</th>
+                    <th className="text-left p-2 font-medium border-r">Rango de Fechas</th>
                     
                     {/* Calimaco Columns */}
                     <th className="text-right p-2 bg-blue-50/30">Venta</th>
@@ -264,12 +239,14 @@ export default function HistoricoEjecucionesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {salesData.data
-                    .sort((a, b) => new Date(b.report_fecha).getTime() - new Date(a.report_fecha).getTime())
+                  {salesData
+                    .sort((a, b) => a.report_collector_id - b.report_collector_id)
                     .map((record, index) => (
                     <tr key={index} className="border-b hover:bg-muted/50 text-xs">
                       <td className="p-2 font-medium">{getCollectorName(record.report_collector_id)}</td>
-                      <td className="p-2 border-r">{formatDate(record.report_fecha)}</td>
+                      <td className="p-2 border-r">
+                        {formatDate(record.fecha_desde)} - {formatDate(record.fecha_hasta)}
+                      </td>
                       
                       {/* Calimaco Data */}
                       <td className="text-right p-2 bg-blue-50/10">{formatCurrency(record.monto_total_calimaco)}</td>
@@ -320,36 +297,6 @@ export default function HistoricoEjecucionesPage() {
               </table>
             </div>
           </CardContent>
-          {salesData.totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-4 border-t">
-              <div className="text-sm text-muted-foreground">
-                Mostrando {((salesData.page - 1) * salesData.limit) + 1} a {Math.min(salesData.page * salesData.limit, salesData.total)} de {salesData.total} registros
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(salesData.page - 1)}
-                  disabled={salesData.page <= 1 || loading}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Anterior
-                </Button>
-                <span className="text-sm">
-                  Pagina {salesData.page} de {salesData.totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(salesData.page + 1)}
-                  disabled={salesData.page >= salesData.totalPages || loading}
-                >
-                  Siguiente
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
         </Card>
       )}
     </div>

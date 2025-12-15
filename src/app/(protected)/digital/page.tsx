@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Settings, Calendar as CalendarIcon, Loader2, Gpu, ArrowUpRight, AlertCircle } from "lucide-react";
 import { ConfirmationDialog } from "@/components/provider/confirmation-dialog";
+import { RoleGuard } from "@/components/auth/RoleGuard";
+import { ROLES } from "@/lib/permissions";
 
-
-export default function ProcessPage() {
+function ProcessPageContent() {
   const [tipo, setTipo] = useState("dnicorrelativos");
   const [proceso, setProceso] = useState("proceso");
 
@@ -132,5 +133,13 @@ export default function ProcessPage() {
         cancelText="Cancelar"
       />
     </div>
+  );
+}
+
+export default function ProcessPage() {
+  return (
+    <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR, ROLES.ANALISTA]} redirectTo403={true}>
+      <ProcessPageContent />
+    </RoleGuard>
   );
 }

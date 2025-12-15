@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils"
 import { DateRange } from "react-day-picker"
 import { calimacoRecordsApi, collectorRecordsApi, type CalimacoRecord, type CollectorRecord, type PaginatedResponse } from "@/lib/api"
 import { toast } from "sonner"
+import { useAuthStore } from "@/store/auth-store"
 
 const COLLECTORS = [
   { id: 1, name: "Kashio" },
@@ -52,6 +53,7 @@ export default function RegistrosPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [selectedRecord, setSelectedRecord] = React.useState<CalimacoRecord | CollectorRecord | null>(null)
   const [editForm, setEditForm] = React.useState<any>({})
+  const { canDelete } = useAuthStore()
 
   const handleView = async (id: number) => {
     try {
@@ -484,12 +486,16 @@ export default function RegistrosPage() {
                             <Button size="sm" variant="outline" onClick={() => handleView(record.id)}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleDelete(record)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {canDelete() && (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => handleDelete(record)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -569,12 +575,16 @@ export default function RegistrosPage() {
                             <Button size="sm" variant="outline" onClick={() => handleView(record.id)}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleDelete(record)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {canDelete() && (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => handleDelete(record)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { canDelete, canEdit, canAccessConfig, canAccessLiquidaciones, hasRole, hasAnyRole, type Role } from '@/lib/permissions'
+import { canDelete, canEdit, canAccessConfig, canAccessLiquidaciones, canAccessDigital, hasRole, hasAnyRole, type Role } from '@/lib/permissions'
 
 export interface User {
   id?: number
@@ -26,6 +26,7 @@ interface AuthState {
   canEdit: () => boolean
   canAccessConfig: () => boolean
   canAccessLiquidaciones: () => boolean
+  canAccessDigital: () => boolean
   hasRole: (role: Role) => boolean
   hasAnyRole: (roles: Role[]) => boolean
 }
@@ -84,6 +85,11 @@ export const useAuthStore = create<AuthState>()(
       canAccessLiquidaciones: () => {
         const { user } = get()
         return user ? canAccessLiquidaciones(user.roles) : false
+      },
+
+      canAccessDigital: () => {
+        const { user } = get()
+        return user ? canAccessDigital(user.roles) : false
       },
 
       hasRole: (role) => {
