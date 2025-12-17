@@ -25,7 +25,7 @@ const userSchema = z.object({
   lastName: z.string().min(2, "Minimo 2 caracteres"),
   email: z.string().email("Email invalido"),
   username: z.string().min(3, "Minimo 3 caracteres"),
-  password: z.string().min(6, "Minimo 6 caracteres").optional(),
+  password: z.string().min(6, "Minimo 6 caracteres").or(z.literal("")),
   roleId: z.number({ message: "Selecciona un rol" }),
 })
 

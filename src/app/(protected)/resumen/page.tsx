@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, Eye } from "lucide-react"
+import { CalendarIcon, Eye, Download } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 import { DateRange } from "react-day-picker"
 import { conciliationReportsApi, type ConciliationReport } from "@/lib/api"
 import { toast } from "sonner"
+import { generateSummaryExcelReport } from "@/lib/excel-utils"
 
 const COLLECTORS = [
   { id: 1, name: "Kashio" },
@@ -73,6 +74,26 @@ export default function HistoricoEjecucionesPage() {
       toast.error("Error al obtener el reporte de ventas")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleExport = async () => {
+    if (!salesData || salesData.length === 0) {
+      toast.error("No hay datos para exportar")
+      return
+    }
+
+    const toastId = toast.loading("Generando archivo Excel...")
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 100))
+      generateSummaryExcelReport(salesData)
+      toast.dismiss(toastId)
+      toast.success("Archivo descargado exitosamente")
+    } catch (error) {
+      console.error(error)
+      toast.dismiss(toastId)
+      toast.error("Error al exportar el reporte")
     }
   }
 
@@ -194,9 +215,20 @@ export default function HistoricoEjecucionesPage() {
             </div>
           </div>
 
-          <Button onClick={handleSearch} disabled={loading} className="w-full">
-            {loading ? "Buscando..." : "Generar Reporte"}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button onClick={handleSearch} disabled={loading} className="flex-1">
+              {loading ? "Buscando..." : "Generar Reporte"}
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={handleExport} 
+              disabled={!salesData || loading}
+              className="flex-1 sm:flex-none bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Exportar Excel
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
