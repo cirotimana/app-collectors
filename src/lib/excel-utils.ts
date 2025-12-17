@@ -76,7 +76,7 @@ export const generateExcelReport = (
     
     data.forEach(record => {
       rows.push([
-        format(new Date(record.report_fecha), "dd/MM/yyyy"),
+        record.report_fecha ? format(new Date(record.report_fecha), "dd/MM/yyyy") : "-",
         getCollectorName(record.report_collector_id),
         formatCurrency(parseFloat(record[valueField] as string))
       ]);
@@ -180,7 +180,7 @@ export const generateConciliationReportExcel = (
 
   data.forEach(record => {
     wsData.push([
-      format(new Date(record.report_fecha), "dd/MM/yyyy"),
+      record.report_fecha ? format(new Date(record.report_fecha), "dd/MM/yyyy") : "-",
       getCollectorName(record.report_collector_id),
       record.aprobados_calimaco.toString(),
       record.conciliados_calimaco.toString(),
@@ -292,3 +292,94 @@ export const generateConciliationReportExcel = (
   
   saveAs(blob, `reporte_conciliacion_completo_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`);
 };
+
+export const generateSummaryExcelReport = (data: ConciliationReport[]) => {
+  const wb = XLSX.utils.book_new();
+  
+  // Headers matching the table structure
+  const headers = [
+    "Recaudador",
+    "Fecha Desde",
+    "Fecha Hasta",
+    // Calimaco columns
+    "Venta Calimaco",
+    "Cantidad Calimaco",
+    "Conciliados Calimaco",
+    "Monto Conciliado Calimaco",
+    "No Conciliados Calimaco",
+    "Monto No Conciliado Calimaco",
+    // Recaudador columns
+    "Venta Recaudador",
+    "Cantidad Recaudador",
+    "Conciliados Recaudador",
+    "Monto Conciliado Recaudador",
+    "No Conciliados Recaudador",
+    "Monto No Conciliado Recaudador"
+  ];
+
+  const wsData: any[][] = [headers];
+
+  // Sort by collector ID (ascending)
+  const sortedData = [...data].sort((a, b) => a.report_collector_id - b.report_collector_id);
+
+  sortedData.forEach(record => {
+    const formatDateOnly = (dateStr?: string) => {
+      if (!dateStr) return "";
+      try {
+        return format(new Date(dateStr), "dd/MM/yyyy");
+      } catch (e) {
+        return "";
+      }
+    };
+
+    wsData.push([
+      getCollectorName(record.report_collector_id),
+      formatDateOnly(record.fecha_desde),
+      formatDateOnly(record.fecha_hasta),
+      // Calimaco data
+      formatCurrency(parseFloat(record.monto_total_calimaco)),
+      record.aprobados_calimaco.toString(),
+      record.conciliados_calimaco.toString(),
+      formatCurrency(parseFloat(record.monto_conciliado_calimaco)),
+      record.no_conciliados_calimaco.toString(),
+      formatCurrency(parseFloat(record.monto_no_conciliado_calimaco)),
+      // Recaudador data
+      formatCurrency(parseFloat(record.monto_total_collector)),
+      record.aprobados_collector.toString(),
+      record.conciliados_collector.toString(),
+      formatCurrency(parseFloat(record.monto_conciliado_collector)),
+      record.no_conciliados_collector.toString(),
+      formatCurrency(parseFloat(record.monto_no_conciliado_collector))
+    ]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  
+  // Set column widths
+  const wscols = [
+    { wch: 15 }, // Recaudador
+    { wch: 12 }, // Fecha Desde
+    { wch: 12 }, // Fecha Hasta
+    { wch: 18 }, // Venta Calimaco
+    { wch: 18 }, // Cantidad Calimaco
+    { wch: 20 }, // Conciliados Calimaco
+    { wch: 25 }, // Monto Conciliado Calimaco
+    { wch: 22 }, // No Conciliados Calimaco
+    { wch: 28 }, // Monto No Conciliado Calimaco
+    { wch: 18 }, // Venta Recaudador
+    { wch: 18 }, // Cantidad Recaudador
+    { wch: 20 }, // Conciliados Recaudador
+    { wch: 25 }, // Monto Conciliado Recaudador
+    { wch: 22 }, // No Conciliados Recaudador
+    { wch: 28 }  // Monto No Conciliado Recaudador
+  ];
+  ws['!cols'] = wscols;
+
+  XLSX.utils.book_append_sheet(wb, ws, "Resumen Acumulado");
+
+  const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+  
+  saveAs(blob, `resumen_acumulado_${format(new Date(), 'yyyyMMdd_HHmmss')}.xlsx`);
+};
+
