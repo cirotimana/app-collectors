@@ -36,12 +36,28 @@ export async function login(credentials: LoginCredentials): Promise<LoginRespons
     body: JSON.stringify(credentials),
   })
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Error de autenticacion' }))
-    throw new Error(error.detail || 'Error de autenticacion')
+  // Parsear la respuesta
+  let body
+  try {
+    body = await response.json()
+  } catch (e) {
+    throw new Error('Error al procesar respuesta del servidor')
   }
 
-  const data: LoginResponse = await response.json()
+  if (!response.ok) {
+    // Intentar obtener mensaje de error de la estructura estandarizada
+    const errorMsg = body.message || body.detail || 'Error de autenticacion'
+    throw new Error(errorMsg)
+  }
+
+  // Verificar flag de éxito estandarizado
+  if (body.success === false) {
+    throw new Error(body.message || 'Error de autenticacion')
+  }
+
+  // Extraer la data real del wrapper
+  // La respuesta es { success: true, data: { access_token, user: {...} } }
+  const data: LoginResponse = body.data || body // Fallback por si acaso no viene wrappeado (aunque deberia)
   
   // normalizar roles: si viene role singular, convertirlo a array roles
   if (data.user.role && !data.user.roles) {

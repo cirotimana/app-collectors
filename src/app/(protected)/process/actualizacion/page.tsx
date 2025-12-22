@@ -8,7 +8,7 @@ import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { fetchWithAuth } from "@/lib/api-client"
+import { fetchWithAuth, getWithAuth, apiCall } from "@/lib/api-client"
 
 interface Collector {
   id: number
@@ -46,9 +46,7 @@ export default function ProcesosActualizacionPage() {
   const fetchCollectors = async () => {
     try {
       setLoading(true)
-      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/collectors`)
-      if (!response.ok) throw new Error('Error al obtener recaudadores')
-      const data = await response.json()
+      const data = await getWithAuth<Collector[]>(`${process.env.NEXT_PUBLIC_API_URL}/collectors`)
       setCollectors(data)
     } catch (error) {
       console.error(error)
@@ -144,45 +142,33 @@ export default function ProcesosActualizacionPage() {
 
     try {
       const apiKey = process.env.NEXT_PUBLIC_API_KEY
-      const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/digital/${endpoint}`, {
+      
+      // apiCall ya hace el throw si algo sale mal o success false
+      const data = await apiCall<any>(`${process.env.NEXT_PUBLIC_API_BASE_URL}/digital/${endpoint}`, {
         method: 'GET',
         headers: { 'x-api-key': apiKey || '' }
       })
 
       clearInterval(intervalo)
-
-      const data = await response.json()
       
-      if (response.ok) {
-        setProcesos(prev => prev.map(p => 
-          p.id === procesoId 
-            ? { 
-                ...p, 
-                estado: "completado" as ProcesoEstado, 
-                progreso: 100, 
-                mensaje: data.message || "Completado exitosamente" 
-              }
-            : p
-        ))
-        toast.success(`${proceso.collectorName} actualizado exitosamente`)
-        // actualizar lista de recaudadores
-        await fetchCollectors()
-      } else {
-        const errorMessage = data.detail?.message || data.message || `Error ${response.status}`
-        setProcesos(prev => prev.map(p => 
-          p.id === procesoId 
-            ? { 
-                ...p, 
-                estado: "error" as ProcesoEstado, 
-                progreso: 0,
-                mensaje: errorMessage
-              }
-            : p
-        ))
-        toast.error(`Error al actualizar ${proceso.collectorName}: ${errorMessage}`)
-      }
+      setProcesos(prev => prev.map(p => 
+        p.id === procesoId 
+          ? { 
+              ...p, 
+              estado: "completado" as ProcesoEstado, 
+              progreso: 100, 
+              mensaje: data.message || "Completado exitosamente" 
+            }
+          : p
+      ))
+      toast.success(`${proceso.collectorName} actualizado exitosamente`)
+      // actualizar lista de recaudadores
+      await fetchCollectors()
+
     } catch (error: any) {
       clearInterval(intervalo)
+      
+      const errorMessage = error.message || "Error de conexion"
       
       setProcesos(prev => prev.map(p => 
         p.id === procesoId 
@@ -190,12 +176,12 @@ export default function ProcesosActualizacionPage() {
               ...p, 
               estado: "error" as ProcesoEstado, 
               progreso: 0,
-              mensaje: error.message || "Error de conexion"
+              mensaje: errorMessage
             }
           : p
       ))
       
-      toast.error(`Error de conexion al actualizar ${proceso.collectorName}`)
+      toast.error(`Error al actualizar ${proceso.collectorName}: ${errorMessage}`)
     }
   }
 
