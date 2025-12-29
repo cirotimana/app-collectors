@@ -331,7 +331,7 @@ export default function RegistrosPage() {
         {/* Filtros */}
         <Card className="mt-4">
           <CardHeader>
-            <CardTitle>Filtros de Busqueda</CardTitle>
+            <CardTitle>Filtros de Búsqueda</CardTitle>
             <CardDescription>
               Busca registros por ID, recaudador o estado
             </CardDescription>
@@ -447,7 +447,7 @@ export default function RegistrosPage() {
             <CardHeader>
               <CardTitle>Registros Calimaco</CardTitle>
               <CardDescription>
-                {calimacoData?.total || 0} registro(s) encontrado(s) - Pagina {calimacoData?.page || 1} de {calimacoData?.totalPages || 1}
+                {calimacoData?.total || 0} registro(s) encontrado(s) - Página {calimacoData?.page || 1} de {calimacoData?.totalPages || 1}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -520,7 +520,7 @@ export default function RegistrosPage() {
                     Anterior
                   </Button>
                   <span className="text-sm">
-                    Pagina {calimacoData.page} de {calimacoData.totalPages}
+                    Página {calimacoData.page} de {calimacoData.totalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -542,7 +542,7 @@ export default function RegistrosPage() {
             <CardHeader>
               <CardTitle>Registros Collector</CardTitle>
               <CardDescription>
-                {collectorData?.total || 0} registro(s) encontrado(s) - Pagina {collectorData?.page || 1} de {collectorData?.totalPages || 1}
+                {collectorData?.total || 0} registro(s) encontrado(s) - Página {collectorData?.page || 1} de {collectorData?.totalPages || 1}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -609,7 +609,7 @@ export default function RegistrosPage() {
                     Anterior
                   </Button>
                   <span className="text-sm">
-                    Pagina {collectorData.page} de {collectorData.totalPages}
+                    Página {collectorData.page} de {collectorData.totalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -730,7 +730,7 @@ export default function RegistrosPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar eliminacion</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estas seguro de que deseas eliminar este registro? Esta accion no se puede deshacer.
+              ¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

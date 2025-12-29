@@ -54,8 +54,8 @@ function ProcessPageContent() {
 
   // Generar el mensaje de confirmacion para procesos
   const getConfirmationMessage = () => {
-    const tipoTexto = tipo === "concentracionips" ? "Concentracion IPs" : "DNI Correlativos";
-    const tipoMensaje = tipo ==="concentracionips" ? "Ultimas 72 Horas " : "Ultimas 48 Horas"
+    const tipoTexto = tipo === "concentracionips" ? "Concentración IPs" : "DNI Correlativos";
+    const tipoMensaje = tipo ==="concentracionips" ? "Últimas 72 Horas " : "Últimas 48 Horas"
     
     return `Se ejecutara el proceso de ${tipoTexto} de las ${tipoMensaje}.`;
   };
@@ -64,9 +64,9 @@ function ProcessPageContent() {
     <div className="max-w-2xl mx-auto space-y-8">
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-black text-gray-900">
-          Modulo de  <span className="text-red-600">Digital</span>
+          Módulo de  <span className="text-red-600">Digital</span>
         </h1>
-        <p className="text-gray-600 mt-1">Ejecuta procesos para el area Digital</p>
+        <p className="text-gray-600 mt-1">Ejecuta procesos para el área Digital</p>
       </div>
 
       <Card className="border-red-100 shadow-lg">
@@ -76,9 +76,9 @@ function ProcessPageContent() {
               <Gpu className="w-6 h-6 text-red-600" />
             </div>
             <div>
-              <CardTitle>Gestion de procesos</CardTitle>
+              <CardTitle>Gestión de procesos</CardTitle>
               <CardDescription>
-                Ejecuta procesos DNI correlativos y Concentracios de IPs
+                Ejecuta procesos DNI correlativos y Concentración de IPs
               </CardDescription>
             </div>
           </div>

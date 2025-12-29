@@ -466,7 +466,7 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
           <DialogHeader>
             <DialogTitle>Seleccionar archivo para descargar</DialogTitle>
             <DialogDescription>
-              Este registro contiene {item.files?.length} archivos. Selecciona cual deseas descargar.
+              Este registro contiene {item.files?.length} archivos. Selecciona cuál deseas descargar.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 max-h-60 overflow-y-auto">
@@ -513,7 +513,7 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar registro</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta accion no se puede deshacer. Se eliminara permanentemente el registro y sus archivos asociados.
+                Esta acción no se puede deshacer. Se eliminará permanentemente el registro y sus archivos asociados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1398,7 +1398,7 @@ export function DataTable() {
               <IconChevronLeft className="h-4 w-4" />
             </Button>
             <div className="text-sm font-medium">
-              Pagina {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+              Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
             </div>
             <Button
               variant="outline"

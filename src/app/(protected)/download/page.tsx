@@ -54,7 +54,7 @@ function DownloadPageContent() {
       if (success) {
         toast.success("Descarga iniciada", {
           id: toastId,
-          description: "El archivo se esta descargando"
+          description: "El archivo se está descargando"
         });
       } else {
         throw new Error("Error en la descarga");
@@ -97,7 +97,7 @@ function DownloadPageContent() {
               <CloudDownload className="text-red-600" />
             </div>
             <div>
-              <CardTitle>Gestion de Descarga</CardTitle>
+              <CardTitle>Gestión de Descarga</CardTitle>
               <CardDescription>
                 Ingresa el nombre del archivo que deseas descargar
               </CardDescription>

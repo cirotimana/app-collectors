@@ -8,10 +8,10 @@ export default function HistoricoPage() {
     <div className="space-y-6">
               <div>
                 <h1 className="text-4xl font-black text-gray-900">
-                  Historico de <span className="text-red-600">Discrepancias</span>
+                  Histórico de <span className="text-red-600">Discrepancias</span>
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  Gestion completa del historial de discrepancias en conciliaciones
+                  Gestión completa del historial de discrepancias en conciliaciones
                 </p>
               </div>      
           <HistoricoDiscrepancias />

@@ -43,7 +43,7 @@ export function PieChartCard({ data }: PieChartCardProps) {
   return (
     <Card>
       <CardHeader className="text-lg font-semibold mb-2 text-gray-800">
-      <CardTitle>Distribucion por Metodo</CardTitle>
+      <CardTitle>Distribución por Método</CardTitle>
       <CardDescription>
         Monto {titulo} (%)
       </CardDescription>
@@ -109,7 +109,7 @@ export function PieChartCard({ data }: PieChartCardProps) {
 
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="text-sm text-gray-500 mt-4">
-          Distribucion porcentual — Datos segun el filtro aplicado
+          Distribución porcentual — Datos según el filtro aplicado
         </div>
       </CardFooter>
     </Card>

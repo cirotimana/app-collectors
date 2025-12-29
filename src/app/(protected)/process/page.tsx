@@ -123,7 +123,7 @@ export default function ProcessPage() {
     const fechaLimite = addDays(hoy, -diasAtras);
 
     if (isFuture(fromDate) || isFuture(toDate || fromDate)) return "No puedes seleccionar fechas futuras.";
-    if (isAfter(fromDate, toDate || fromDate)) return "El rango esta invertido.";
+    if (isAfter(fromDate, toDate || fromDate)) return "El rango está invertido.";
     if (isAfter(fromDate, fechaLimite) || isAfter(toDate || fromDate, fechaLimite)) {
       return `Para ${tipo} de ${recaudador}, solo puedes seleccionar fechas ${mensajeLimite} o anteriores.`;
     }
@@ -139,7 +139,7 @@ export default function ProcessPage() {
       return;
     }
     if (!rangoEsValido) {
-      toast.error("Rango invalido", { description: getMensajeErrorRango() });
+      toast.error("Rango inválido", { description: getMensajeErrorRango() });
       return;
     }
 
@@ -355,7 +355,7 @@ export default function ProcessPage() {
                 </div>
                 <div>
                   <CardTitle>Nuevo Proceso</CardTitle>
-                  <CardDescription>Configurar parametros</CardDescription>
+                  <CardDescription>Configurar parámetros</CardDescription>
                 </div>
               </div>
             </CardHeader>

@@ -20,8 +20,8 @@ import { Loader2 } from "lucide-react"
 
 // schema de validacion para login
 const loginSchema = z.object({
-  username: z.string().min(3, { message: "Minimo 3 caracteres" }),
-  password: z.string().min(6, { message: "Minimo 6 caracteres" }),
+  username: z.string().min(3, { message: "Mínimo 3 caracteres" }),
+  password: z.string().min(6, { message: "Mínimo 6 caracteres" }),
 })
 
 type LoginFormValues = z.infer<typeof loginSchema>

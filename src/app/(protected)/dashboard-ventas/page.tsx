@@ -166,9 +166,9 @@ export default function DashboardVentasPage() {
       {/* filtros */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtros de Busqueda</CardTitle>
+          <CardTitle>Filtros de Búsqueda</CardTitle>
           <CardDescription>
-            Selecciona los parametros para generar el dashboard
+            Selecciona los parámetros para generar el dashboard
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

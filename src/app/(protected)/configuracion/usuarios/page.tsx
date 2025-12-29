@@ -19,17 +19,27 @@ import { format } from "date-fns"
 import { RoleGuard } from "@/components/auth/RoleGuard"
 import { ROLES } from "@/lib/permissions"
 
-// esquema de validacion
-const userSchema = z.object({
-  firstName: z.string().min(2, "Minimo 2 caracteres"),
-  lastName: z.string().min(2, "Minimo 2 caracteres"),
-  email: z.string().email("Email invalido"),
-  username: z.string().min(3, "Minimo 3 caracteres"),
-  password: z.string().min(6, "Minimo 6 caracteres").or(z.literal("")),
+// esquema de validacion para crear usuario (contraseña obligatoria)
+const createUserSchema = z.object({
+  firstName: z.string().min(2, "Mínimo 2 caracteres"),
+  lastName: z.string().min(2, "Mínimo 2 caracteres"),
+  email: z.string().email("Email inválido"),
+  username: z.string().min(3, "Mínimo 3 caracteres"),
+  password: z.string().min(6, "Mínimo 6 caracteres"),
   roleId: z.number({ message: "Selecciona un rol" }),
 })
 
-type UserFormData = z.infer<typeof userSchema>
+// esquema de validacion para editar usuario (contraseña opcional)
+const editUserSchema = z.object({
+  firstName: z.string().min(2, "Mínimo 2 caracteres"),
+  lastName: z.string().min(2, "Mínimo 2 caracteres"),
+  email: z.string().email("Email inválido"),
+  username: z.string().min(3, "Mínimo 3 caracteres"),
+  password: z.string().min(6, "Mínimo 6 caracteres").or(z.literal("")),
+  roleId: z.number({ message: "Selecciona un rol" }),
+})
+
+type UserFormData = z.infer<typeof createUserSchema>
 
 function UsuariosPageContent() {
   const [users, setUsers] = React.useState<User[]>([])
@@ -42,8 +52,21 @@ function UsuariosPageContent() {
   const [selectedUser, setSelectedUser] = React.useState<User | null>(null)
   const [pagination, setPagination] = React.useState({ page: 1, total: 0, limit: 10 })
 
-  const form = useForm<UserFormData>({
-    resolver: zodResolver(userSchema),
+  // Formulario para crear usuario (contraseña obligatoria)
+  const createForm = useForm<UserFormData>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      username: "",
+      password: "",
+    },
+  })
+
+  // Formulario para editar usuario (contraseña opcional)
+  const editForm = useForm<UserFormData>({
+    resolver: zodResolver(editUserSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -87,7 +110,7 @@ function UsuariosPageContent() {
       await usersApi.create(data as CreateUserData)
       toast.success("Usuario creado exitosamente")
       setIsCreateOpen(false)
-      form.reset()
+      createForm.reset()
       loadUsers(pagination.page)
     } catch (error: any) {
       toast.error(error.message || "Error al crear usuario")
@@ -114,7 +137,7 @@ function UsuariosPageContent() {
       toast.success("Usuario actualizado exitosamente")
       setIsEditOpen(false)
       setSelectedUser(null)
-      form.reset()
+      editForm.reset()
       loadUsers(pagination.page)
     } catch (error: any) {
       toast.error(error.message || "Error al actualizar usuario")
@@ -138,7 +161,7 @@ function UsuariosPageContent() {
   const openEditDialog = (user: User) => {
     setSelectedUser(user)
     const userRoleId = user.userRoles?.[0]?.roleId
-    form.reset({
+    editForm.reset({
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
@@ -180,7 +203,7 @@ function UsuariosPageContent() {
               <CardDescription>{pagination.total} usuario(s) registrado(s)</CardDescription>
             </div>
             <Button onClick={() => {
-              form.reset({
+              createForm.reset({
                 firstName: "",
                 lastName: "",
                 email: "",
@@ -280,7 +303,7 @@ function UsuariosPageContent() {
                 )}
               </div>
 
-              {/* paginacion */}
+              {/* paginación */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
                   <p className="text-sm text-gray-600">
@@ -320,10 +343,10 @@ function UsuariosPageContent() {
             <DialogTitle>Crear Usuario</DialogTitle>
             <DialogDescription>Completa los datos del nuevo usuario</DialogDescription>
           </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleCreate)} className="space-y-4">
+          <Form {...createForm}>
+            <form onSubmit={createForm.handleSubmit(handleCreate)} className="space-y-4">
               <FormField
-                control={form.control}
+                control={createForm.control}
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
@@ -336,7 +359,7 @@ function UsuariosPageContent() {
                 )}
               />
               <FormField
-                control={form.control}
+                control={createForm.control}
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
@@ -349,7 +372,7 @@ function UsuariosPageContent() {
                 )}
               />
               <FormField
-                control={form.control}
+                control={createForm.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
@@ -362,7 +385,7 @@ function UsuariosPageContent() {
                 )}
               />
               <FormField
-                control={form.control}
+                control={createForm.control}
                 name="username"
                 render={({ field }) => (
                   <FormItem>
@@ -375,7 +398,7 @@ function UsuariosPageContent() {
                 )}
               />
               <FormField
-                control={form.control}
+                control={createForm.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
@@ -388,7 +411,7 @@ function UsuariosPageContent() {
                 )}
               />
               <FormField
-                control={form.control}
+                control={createForm.control}
                 name="roleId"
                 render={({ field }) => (
                   <FormItem>
@@ -431,10 +454,10 @@ function UsuariosPageContent() {
             <DialogTitle>Editar Usuario</DialogTitle>
             <DialogDescription>Modifica los datos del usuario (deja la contraseña vacía para no cambiarla)</DialogDescription>
           </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleEdit)} className="space-y-4">
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(handleEdit)} className="space-y-4">
               <FormField
-                control={form.control}
+                control={editForm.control}
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
@@ -447,7 +470,7 @@ function UsuariosPageContent() {
                 )}
               />
               <FormField
-                control={form.control}
+                control={editForm.control}
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
@@ -460,7 +483,7 @@ function UsuariosPageContent() {
                 )}
               />
               <FormField
-                control={form.control}
+                control={editForm.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
@@ -473,7 +496,7 @@ function UsuariosPageContent() {
                 )}
               />
               <FormField
-                control={form.control}
+                control={editForm.control}
                 name="username"
                 render={({ field }) => (
                   <FormItem>
@@ -486,7 +509,7 @@ function UsuariosPageContent() {
                 )}
               />
               <FormField
-                control={form.control}
+                control={editForm.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
@@ -499,7 +522,7 @@ function UsuariosPageContent() {
                 )}
               />
               <FormField
-                control={form.control}
+                control={editForm.control}
                 name="roleId"
                 render={({ field }) => (
                   <FormItem>
