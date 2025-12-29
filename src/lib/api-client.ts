@@ -40,7 +40,7 @@ export async function fetchWithAuth(
     headers,
   })
   
-  // si es 401, el token expiro o es invalido
+  // si es 401, el token expiró o es inválido
   if (response.status === 401) {
     logout()
     // redirigir a login

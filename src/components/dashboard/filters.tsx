@@ -91,14 +91,14 @@ export function Filters({ filters, onFiltersChange }: FiltersProps) {
           </SelectTrigger>
           <SelectContent>
             {/* <SelectItem value="venta">Venta</SelectItem> */}
-            <SelectItem value="liquidacion">Liquidacion</SelectItem>
+            <SelectItem value="liquidacion">Liquidación</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* METODO - multiple */}
       <div className="space-y-2">
-        <Label className="font-bold uppercase text-sm">METODO</Label>
+        <Label className="font-bold uppercase text-sm">MÉTODO</Label>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild >
             <Button
@@ -109,7 +109,7 @@ export function Filters({ filters, onFiltersChange }: FiltersProps) {
             >
               {selectedMetodos.length > 0
                 ? `${selectedMetodos.length} seleccionados`
-                : "Seleccionar metodo..."}
+                : "Seleccionar método..."}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -142,7 +142,7 @@ export function Filters({ filters, onFiltersChange }: FiltersProps) {
 
       {/* PERIODO */}
       <div className="space-y-2">
-        <Label className="font-bold uppercase text-sm">PERIODO</Label>
+        <Label className="font-bold uppercase text-sm">PERÍODO</Label>
         <PeriodPicker value={searchPeriod} onChange={handlePeriodChange} />
       </div>
     </div>

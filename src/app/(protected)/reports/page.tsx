@@ -16,14 +16,14 @@ export default function ReportsPage() {
           <div className="flex items-center gap-3">
             <FileText className="w-8 h-8 text-red-600" />
             <div>
-              <CardTitle>Seccion en Desarrollo</CardTitle>
-              <CardDescription>Esta funcionalidad estara disponible proximamente</CardDescription>
+              <CardTitle>Sección en Desarrollo</CardTitle>
+              <CardDescription>Esta funcionalidad estará disponible próximamente</CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-gray-600">
-            Aqui podras generar y visualizar reportes detallados de todas las operaciones del sistema.
+            Aquí podrás generar y visualizar reportes detallados de todas las operaciones del sistema.
           </p>
         </CardContent>
       </Card>

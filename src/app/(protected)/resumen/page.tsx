@@ -146,9 +146,9 @@ export default function HistoricoEjecucionesPage() {
       {/* filtros */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtros de Busqueda</CardTitle>
+          <CardTitle>Filtros de Búsqueda</CardTitle>
           <CardDescription>
-            Selecciona los parametros para generar el reporte
+            Selecciona los parámetros para generar el reporte
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

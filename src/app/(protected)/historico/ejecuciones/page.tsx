@@ -8,7 +8,7 @@ export default function DetallesPage() {
               Historico de <span className="text-red-600">Ejecuciones</span>
             </h1>
             <p className="text-gray-600 mt-1">
-              Gestion de documentos en las conciliaciones de ventas y liquidaciones - Historico
+              Gestión de documentos en las conciliaciones de ventas y liquidaciones - Histórico
             </p>
           </div>      
       <DataTable />

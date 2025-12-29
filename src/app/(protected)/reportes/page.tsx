@@ -158,9 +158,9 @@ export default function ReportesPage() {
       {/* Filtros */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtros de Busqueda</CardTitle>
+          <CardTitle>Filtros de Búsqueda</CardTitle>
           <CardDescription>
-            Selecciona los parametros para generar el reporte
+            Selecciona los parámetros para generar el reporte
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -243,7 +243,7 @@ export default function ReportesPage() {
           <CardHeader>
             <CardTitle>Reporte Detallado</CardTitle>
             <CardDescription>
-              {reports.total} registro(s) encontrado(s) - Pagina {reports.page} de {reports.totalPages}
+              {reports.total} registro(s) encontrado(s) - Página {reports.page} de {reports.totalPages}
             </CardDescription>
           </CardHeader>
           <CardContent>

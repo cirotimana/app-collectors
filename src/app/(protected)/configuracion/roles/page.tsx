@@ -19,8 +19,8 @@ import { ROLES } from "@/lib/permissions"
 
 // esquema de validacion
 const roleSchema = z.object({
-  name: z.string().min(2, "Minimo 2 caracteres"),
-  description: z.string().min(5, "Minimo 5 caracteres"),
+  name: z.string().min(2, "Mínimo 2 caracteres"),
+  description: z.string().min(5, "Mínimo 5 caracteres"),
 })
 
 type RoleFormData = z.infer<typeof roleSchema>
@@ -121,7 +121,7 @@ function RolesPageContent() {
     role.description.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  // paginacion local
+  // paginación local
   const totalPages = Math.ceil(filteredRoles.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
   const endIndex = startIndex + itemsPerPage
@@ -226,7 +226,7 @@ function RolesPageContent() {
                 )}
               </div>
 
-              {/* paginacion */}
+              {/* paginación */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
                   <p className="text-sm text-gray-600">

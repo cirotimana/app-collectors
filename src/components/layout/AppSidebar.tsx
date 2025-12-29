@@ -177,7 +177,7 @@ export function AppSidebar() {
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton className="text-sm font-semibold">
                       <History className="text-lg mr-2" />
-                      <span>Historico</span>
+                      <span>Histórico</span>
                       <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
@@ -213,7 +213,7 @@ export function AppSidebar() {
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton className="text-sm font-semibold">
                         <Settings className="text-lg mr-2" />
-                        <span>Configuracion</span>
+                        <span>Configuración</span>
                         <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
