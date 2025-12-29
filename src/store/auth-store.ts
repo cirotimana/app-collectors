@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { canDelete, canEdit, canAccessConfig, canAccessLiquidaciones, canAccessDigital, hasRole, hasAnyRole, type Role } from '@/lib/permissions'
+import { logout } from '@/lib/auth'
 
 export interface User {
   id?: number
@@ -67,6 +68,9 @@ export const useAuthStore = create<AuthState>()(
         // Detener polling antes de limpiar
         get().stopRolePolling()
         
+        // Limpiar almacenamiento local y cookies
+        logout()
+        
         set({
           user: null,
           token: null,
@@ -114,9 +118,34 @@ export const useAuthStore = create<AuthState>()(
                 description: `Tu rol ahora es: ${currentUser.role}`
               })
             }
-          } catch (error) {
-            // Silenciosamente ignorar errores de red para no molestar al usuario
-            // Solo loguear en consola para debugging
+
+          } catch (error: any) {
+            const errorMessage = error.message || '';
+            
+            // detectar si el usuario fue eliminado o desactivado (404 Not Found)
+            // el backend devuelve "Recurso no encontrado" o "Usuario no encontrado" segun las constantes de error
+            if (
+              errorMessage.includes('Recurso no encontrado') || 
+              errorMessage.includes('Usuario no encontrado') ||
+              errorMessage.includes('User not found') ||
+              errorMessage.includes('Error 404')
+            ) {
+              console.warn('Usuario no encontrado en polling (posible eliminacion/desactivacion). Cerrando sesion automaticamenete.')
+              
+              // importar toast dinamicamente
+              const { toast } = await import('sonner')
+              
+              toast.error('Sesion finalizada', {
+                description: 'Tu cuenta ha sido desactivada o eliminada. Contacta al administrador.'
+              })
+              
+              // cerrar sesion
+              get().clearAuth()
+              return
+            }
+
+            // silenciosamente ignorar otros errores de red para no molestar al usuario
+            // solo loguear en consola para debugging
             console.debug('Error checking role update:', error)
           }
         }, 5000) // Cada 5 segundos
