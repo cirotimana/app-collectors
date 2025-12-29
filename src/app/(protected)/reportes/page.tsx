@@ -103,6 +103,10 @@ export default function ReportesPage() {
   }
 
   const handleViewDetail = (report: ConciliationReport) => {
+    if (!report.report_fecha) {
+      toast.error("Fecha de reporte no disponible")
+      return
+    }
     const fromDate = format(new Date(report.report_fecha), "yyyy-MM-dd")
     const toDate = format(new Date(report.report_fecha), "yyyy-MM-dd")
     const collectorId = report.report_collector_id
@@ -280,16 +284,12 @@ export default function ReportesPage() {
                 </thead>
                 <tbody>
                   {reports.data.map((report, index) => (
-                    <tr key={index} className="border-b hover:bg-muted/50">
-                      <td className="p-2">
-                        {formatDateForDisplay(report.report_fecha)}
-                      </td>
                     <tr key={index} className="border-b hover:bg-muted/50 text-xs">
                       <td className="p-2 font-medium">
                         {getCollectorName(report.report_collector_id)}
                       </td>
                       <td className="p-2 border-r">
-                        {formatDate(report.report_fecha)}
+                        {formatDate(report.report_fecha || "")}
                       </td>
                       
                       {/* Calimaco Data */}
