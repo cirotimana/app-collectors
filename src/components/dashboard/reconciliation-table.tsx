@@ -96,7 +96,7 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
                 <tr className="border-b-2 border-border">
                   <th className="font-bold text-left p-2 text-foreground">Dia</th>
                   <th className="font-bold text-left p-2 text-foreground">Mes</th>
-                  <th className="font-bold text-left p-2 text-foreground">Metodo</th>
+                  <th className="font-bold text-left p-2 text-foreground">Método</th>
                   <th className="font-bold text-right p-2 text-foreground">Monto (S/.)</th>
                 </tr>
               </thead>
@@ -165,7 +165,7 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
                 <tr className="border-b-2 border-border">
                   <th className="font-bold text-left p-2 text-foreground">Dia</th>
                   <th className="font-bold text-left p-2 text-foreground">Mes</th>
-                  <th className="font-bold text-left p-2 text-foreground">Metodo</th>
+                  <th className="font-bold text-left p-2 text-foreground">Método</th>
                   <th className="font-bold text-right p-2 text-foreground">Monto (S/.)</th>
                   <th className="font-bold text-right p-2 text-foreground">Comision (S/.)</th>
                   <th className="font-bold text-right p-2 text-foreground">Neto (S/.)</th>

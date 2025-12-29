@@ -84,7 +84,7 @@ export function BarChartCard({ data, proceso }: BarChartCardProps) {
               content={
                 <ChartTooltipContent
                   indicator="dashed"
-                  labelFormatter={(label) => `Metodo: ${label}`}
+                  labelFormatter={(label) => `Método: ${label}`}
                 //   formatter={(value: unknown) => {
                 //   const val = Array.isArray(value) ? value[0] : value
                 //   return new Intl.NumberFormat("es-PE", {

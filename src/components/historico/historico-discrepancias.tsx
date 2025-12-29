@@ -230,7 +230,7 @@ export function HistoricoDiscrepancias() {
                 Anterior
               </Button>
               <span className="text-sm">
-                Pagina {currentPage} de {Math.ceil(discrepancies.length / itemsPerPage)}
+                Página {currentPage} de {Math.ceil(discrepancies.length / itemsPerPage)}
               </span>
               <Button
                 variant="outline"

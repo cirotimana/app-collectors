@@ -8,9 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Download, FileText, Loader2, CloudDownload, ArrowUpRight } from "lucide-react";
-import { ConfirmationDialog } from "@/components/provider/confirmation-dialog"; // Ajusta la ruta segun tu estructura
+import { ConfirmationDialog } from "@/components/provider/confirmation-dialog";
+import { RoleGuard } from "@/components/auth/RoleGuard";
+import { ROLES } from "@/lib/permissions";
 
-export default function DownloadPage() {
+function DownloadPageContent() {
   const [archivo, setArchivo] = useState("");
   const [tipo, setTipo] = useState("conciliacion");
   const [recaudador, setRecaudador] = useState("kashio");
@@ -52,7 +54,7 @@ export default function DownloadPage() {
       if (success) {
         toast.success("Descarga iniciada", {
           id: toastId,
-          description: "El archivo se esta descargando"
+          description: "El archivo se está descargando"
         });
       } else {
         throw new Error("Error en la descarga");
@@ -95,7 +97,7 @@ export default function DownloadPage() {
               <CloudDownload className="text-red-600" />
             </div>
             <div>
-              <CardTitle>Gestion de Descarga</CardTitle>
+              <CardTitle>Gestión de Descarga</CardTitle>
               <CardDescription>
                 Ingresa el nombre del archivo que deseas descargar
               </CardDescription>
@@ -199,5 +201,13 @@ export default function DownloadPage() {
         cancelText="Cancelar"
       />
     </div>
+  );
+}
+
+export default function DownloadPage() {
+  return (
+    <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR]} redirectTo403={true}>
+      <DownloadPageContent />
+    </RoleGuard>
   );
 }

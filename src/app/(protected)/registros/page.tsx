@@ -20,6 +20,7 @@ import { DateRange } from "react-day-picker"
 import { calimacoRecordsApi, collectorRecordsApi, type CalimacoRecord, type CollectorRecord, type PaginatedResponse } from "@/lib/api"
 import { formatDateTimeForDisplay } from "@/lib/date-utils"
 import { toast } from "sonner"
+import { useAuthStore } from "@/store/auth-store"
 
 const COLLECTORS = [
   { id: 1, name: "Kashio" },
@@ -53,6 +54,7 @@ export default function RegistrosPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [selectedRecord, setSelectedRecord] = React.useState<CalimacoRecord | CollectorRecord | null>(null)
   const [editForm, setEditForm] = React.useState<any>({})
+  const { canDelete } = useAuthStore()
 
   const handleView = async (id: number) => {
     try {
@@ -330,7 +332,7 @@ export default function RegistrosPage() {
         {/* Filtros */}
         <Card className="mt-4">
           <CardHeader>
-            <CardTitle>Filtros de Busqueda</CardTitle>
+            <CardTitle>Filtros de Búsqueda</CardTitle>
             <CardDescription>
               Busca registros por ID, recaudador o estado
             </CardDescription>
@@ -446,7 +448,7 @@ export default function RegistrosPage() {
             <CardHeader>
               <CardTitle>Registros Calimaco</CardTitle>
               <CardDescription>
-                {calimacoData?.total || 0} registro(s) encontrado(s) - Pagina {calimacoData?.page || 1} de {calimacoData?.totalPages || 1}
+                {calimacoData?.total || 0} registro(s) encontrado(s) - Página {calimacoData?.page || 1} de {calimacoData?.totalPages || 1}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -485,12 +487,16 @@ export default function RegistrosPage() {
                             <Button size="sm" variant="outline" onClick={() => handleView(record.id)}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleDelete(record)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {canDelete() && (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => handleDelete(record)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -515,7 +521,7 @@ export default function RegistrosPage() {
                     Anterior
                   </Button>
                   <span className="text-sm">
-                    Pagina {calimacoData.page} de {calimacoData.totalPages}
+                    Página {calimacoData.page} de {calimacoData.totalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -537,7 +543,7 @@ export default function RegistrosPage() {
             <CardHeader>
               <CardTitle>Registros Collector</CardTitle>
               <CardDescription>
-                {collectorData?.total || 0} registro(s) encontrado(s) - Pagina {collectorData?.page || 1} de {collectorData?.totalPages || 1}
+                {collectorData?.total || 0} registro(s) encontrado(s) - Página {collectorData?.page || 1} de {collectorData?.totalPages || 1}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -570,12 +576,16 @@ export default function RegistrosPage() {
                             <Button size="sm" variant="outline" onClick={() => handleView(record.id)}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleDelete(record)}>
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {canDelete() && (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => handleDelete(record)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -600,7 +610,7 @@ export default function RegistrosPage() {
                     Anterior
                   </Button>
                   <span className="text-sm">
-                    Pagina {collectorData.page} de {collectorData.totalPages}
+                    Página {collectorData.page} de {collectorData.totalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -721,7 +731,7 @@ export default function RegistrosPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar eliminacion</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Estas seguro de que deseas eliminar este registro? Esta accion no se puede deshacer.
+              ¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

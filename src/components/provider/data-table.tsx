@@ -105,6 +105,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { PeriodPicker } from "@/components/ui/period-picker"
+import { useAuthStore } from "@/store/auth-store"
 
 import {
   AlertDialog,
@@ -385,6 +386,7 @@ function DragHandle({ id }: { id: number }) {
 function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidation' | 'conciliation'; onDelete?: (id: number) => void; }) {
   const router = useRouter()
   const isMobile = useIsMobile()
+  const { canDelete } = useAuthStore()
   const [openAlert, setOpenAlert] = React.useState(false)
   const [openDetails, setOpenDetails] = React.useState(false)
   const [openDownloadDialog, setOpenDownloadDialog] = React.useState(false)
@@ -446,13 +448,15 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
             <IconDownload className="mr-2 h-4 w-4" />
             Descargar Archivo{item.files && item.files.length > 1 && `s (${item.files.length})`}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => setOpenAlert(true)}
-            className="text-red-600 focus:text-red-700"
-          >
-            <IconTrash className="mr-2 h-4 w-4" />
-            Eliminar Registro
-          </DropdownMenuItem>
+          {canDelete() && (
+            <DropdownMenuItem
+              onClick={() => setOpenAlert(true)}
+              className="text-red-600 focus:text-red-700"
+            >
+              <IconTrash className="mr-2 h-4 w-4" />
+              Eliminar Registro
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -462,7 +466,7 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
           <DialogHeader>
             <DialogTitle>Seleccionar archivo para descargar</DialogTitle>
             <DialogDescription>
-              Este registro contiene {item.files?.length} archivos. Selecciona cual deseas descargar.
+              Este registro contiene {item.files?.length} archivos. Selecciona cuál deseas descargar.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 max-h-60 overflow-y-auto">
@@ -509,7 +513,7 @@ function ActionsMenu({ item, type, onDelete }: { item: DataType; type: 'liquidat
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar registro</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta accion no se puede deshacer. Se eliminara permanentemente el registro y sus archivos asociados.
+                Esta acción no se puede deshacer. Se eliminará permanentemente el registro y sus archivos asociados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1034,6 +1038,9 @@ export function DataTable() {
     pageSize: 10,
   })
 
+  const { canAccessLiquidaciones } = useAuthStore()
+
+
   const sortableId = React.useId()
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -1273,15 +1280,27 @@ export function DataTable() {
           <SelectTrigger className="w-[180px] lg:hidden">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent>
+          {/* <SelectContent>
             <SelectItem value="conciliations">Ventas</SelectItem>
             <SelectItem value="liquidations">Liquidaciones</SelectItem>
+          </SelectContent> */}
+          <SelectContent>
+            <SelectItem value="conciliations">Ventas</SelectItem>
+            {canAccessLiquidaciones() && (
+              <SelectItem value="liquidations">Liquidaciones</SelectItem>
+            )}
           </SelectContent>
         </Select>
 
-        <TabsList className="hidden lg:flex">
+        {/* <TabsList className="hidden lg:flex">
           <TabsTrigger value="conciliations">Ventas</TabsTrigger>
           <TabsTrigger value="liquidations">Liquidaciones</TabsTrigger>
+        </TabsList> */}
+        <TabsList className="hidden lg:flex">
+          <TabsTrigger value="conciliations">Ventas</TabsTrigger>
+          {canAccessLiquidaciones() && (
+            <TabsTrigger value="liquidations">Liquidaciones</TabsTrigger>
+          )}
         </TabsList>
 
         <div className="flex items-center gap-2">
@@ -1379,7 +1398,7 @@ export function DataTable() {
               <IconChevronLeft className="h-4 w-4" />
             </Button>
             <div className="text-sm font-medium">
-              Pagina {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+              Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
             </div>
             <Button
               variant="outline"
