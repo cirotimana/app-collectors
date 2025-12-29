@@ -9,6 +9,8 @@ import { es } from "date-fns/locale"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { fetchWithAuth, getWithAuth, apiCall } from "@/lib/api-client"
+import { RoleGuard } from "@/components/auth/RoleGuard"
+import { ROLES } from "@/lib/permissions"
 
 interface Collector {
   id: number
@@ -259,7 +261,8 @@ export default function ProcesosActualizacionPage() {
   const procesosFallidos = procesos.filter(p => p.estado === "error").length
 
   return (
-    <>
+    <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA]} redirectTo403={true}>
+      <>
       <style>{`
         .scrollbar-thin::-webkit-scrollbar {
           width: 8px;
@@ -539,6 +542,7 @@ export default function ProcesosActualizacionPage() {
           </Card>
         </div>
       </div>
-    </>
+      </>
+    </RoleGuard>
   )
 }

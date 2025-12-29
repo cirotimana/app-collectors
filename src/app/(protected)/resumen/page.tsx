@@ -16,6 +16,8 @@ import { DateRange } from "react-day-picker"
 import { conciliationReportsApi, type ConciliationReport } from "@/lib/api"
 import { toast } from "sonner"
 import { generateSummaryExcelReport } from "@/lib/excel-utils"
+import { RoleGuard } from "@/components/auth/RoleGuard"
+import { ROLES } from "@/lib/permissions"
 
 const COLLECTORS = [
   { id: 1, name: "Kashio" },
@@ -133,7 +135,8 @@ export default function HistoricoEjecucionesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA]} redirectTo403={true}>
+      <div className="space-y-6">
       <div>
         <h1 className="text-4xl font-black text-gray-900">
           Resumen de <span className="text-red-600">Conciliaciones</span>
@@ -331,6 +334,7 @@ export default function HistoricoEjecucionesPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+      </div>
+    </RoleGuard>
   )
 }

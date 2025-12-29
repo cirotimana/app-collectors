@@ -1,7 +1,10 @@
 import { DataTable } from "@/components/provider/data-table";
+import { RoleGuard } from "@/components/auth/RoleGuard";
+import { ROLES } from "@/lib/permissions";
 
 export default function DetallesPage() {
   return (
+    <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA]} redirectTo403={true}>
       <div className="space-y-6">
           <div>
             <h1 className="text-4xl font-black text-gray-900">
@@ -12,6 +15,7 @@ export default function DetallesPage() {
             </p>
           </div>      
       <DataTable />
-    </div>
+      </div>
+    </RoleGuard>
   );
 }

@@ -17,6 +17,8 @@ import { conciliationReportsApi, type ConciliationReport, type PaginatedResponse
 import { formatDateForDisplay } from "@/lib/date-utils"
 import { toast } from "sonner"
 import { generateConciliationReportExcel } from "@/lib/excel-utils"
+import { RoleGuard } from "@/components/auth/RoleGuard"
+import { ROLES } from "@/lib/permissions"
 
 const COLLECTORS = [
   { id: 1, name: "Kashio" },
@@ -150,7 +152,8 @@ export default function ReportesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA]} redirectTo403={true}>
+      <div className="space-y-6">
       <div>
         <h1 className="text-4xl font-black text-gray-900">
           Modulo de <span className="text-red-600">Reportes</span>
@@ -369,6 +372,7 @@ export default function ReportesPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+      </div>
+    </RoleGuard>
   )
 }

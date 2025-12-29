@@ -21,6 +21,8 @@ import { calimacoRecordsApi, collectorRecordsApi, type CalimacoRecord, type Coll
 import { formatDateTimeForDisplay } from "@/lib/date-utils"
 import { toast } from "sonner"
 import { useAuthStore } from "@/store/auth-store"
+import { RoleGuard } from "@/components/auth/RoleGuard"
+import { ROLES } from "@/lib/permissions"
 
 const COLLECTORS = [
   { id: 1, name: "Kashio" },
@@ -313,7 +315,8 @@ export default function RegistrosPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA]} redirectTo403={true}>
+      <div className="space-y-6">
       <div>
         <h1 className="text-4xl font-black text-gray-900">
           Modulo de <span className="text-red-600">Registros</span>
@@ -740,6 +743,7 @@ export default function RegistrosPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </RoleGuard>
   )
 }

@@ -16,6 +16,8 @@ import { DateRange } from "react-day-picker"
 import { conciliationReportsApi, type ConciliationReport, type PaginatedResponse } from "@/lib/api"
 import { toast } from "sonner"
 import { generateExcelReport } from "@/lib/excel-utils"
+import { RoleGuard } from "@/components/auth/RoleGuard"
+import { ROLES } from "@/lib/permissions"
 
 const COLLECTORS = [
   { id: 1, name: "Kashio" },
@@ -153,7 +155,8 @@ export default function DashboardVentasPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA]} redirectTo403={true}>
+      <div className="space-y-6">
       <div>
         <h1 className="text-4xl font-black text-gray-900">
           Dashboard de <span className="text-red-600">Ventas</span>
@@ -668,6 +671,7 @@ export default function DashboardVentasPage() {
           </Card>
         </div>
       )}
-    </div>
+      </div>
+    </RoleGuard>
   )
 }
