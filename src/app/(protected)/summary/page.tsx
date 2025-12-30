@@ -119,7 +119,7 @@ export default function HistoricoEjecucionesPage() {
         return
       }
       
-      router.push(`/reportes/detalle?collectorId=${collectorId}&fromDate=${fromDate}&toDate=${toDate}`)
+      router.push(`/reports/details?collectorId=${collectorId}&fromDate=${fromDate}&toDate=${toDate}`)
     } catch (e) {
       toast.error("Fecha invalida en el reporte")
     }

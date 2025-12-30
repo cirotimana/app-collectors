@@ -127,7 +127,7 @@ export default function ProcesosActualizacionPage() {
       return
     }
 
-    setProcesos(prev => prev.map(p => 
+    setProcesos(prev => prev.map(p =>
       p.id === procesoId ? { ...p, estado: "ejecutando" as ProcesoEstado, progreso: 0, recuperado: false } : p
     ))
 
@@ -144,7 +144,7 @@ export default function ProcesosActualizacionPage() {
 
     try {
       const apiKey = process.env.NEXT_PUBLIC_API_KEY
-      
+
       // apiCall ya hace el throw si algo sale mal o success false
       const data = await apiCall<any>(`${process.env.NEXT_PUBLIC_API_BASE_URL}/digital/${endpoint}`, {
         method: 'GET',
@@ -152,15 +152,15 @@ export default function ProcesosActualizacionPage() {
       })
 
       clearInterval(intervalo)
-      
-      setProcesos(prev => prev.map(p => 
-        p.id === procesoId 
-          ? { 
-              ...p, 
-              estado: "completado" as ProcesoEstado, 
-              progreso: 100, 
-              mensaje: data.message || "Completado exitosamente" 
-            }
+
+      setProcesos(prev => prev.map(p =>
+        p.id === procesoId
+          ? {
+            ...p,
+            estado: "completado" as ProcesoEstado,
+            progreso: 100,
+            mensaje: data.message || "Completado exitosamente"
+          }
           : p
       ))
       toast.success(`${proceso.collectorName} actualizado exitosamente`)
@@ -169,20 +169,20 @@ export default function ProcesosActualizacionPage() {
 
     } catch (error: any) {
       clearInterval(intervalo)
-      
+
       const errorMessage = error.message || "Error de conexion"
-      
-      setProcesos(prev => prev.map(p => 
-        p.id === procesoId 
-          ? { 
-              ...p, 
-              estado: "error" as ProcesoEstado, 
-              progreso: 0,
-              mensaje: errorMessage
-            }
+
+      setProcesos(prev => prev.map(p =>
+        p.id === procesoId
+          ? {
+            ...p,
+            estado: "error" as ProcesoEstado,
+            progreso: 0,
+            mensaje: errorMessage
+          }
           : p
       ))
-      
+
       toast.error(`Error al actualizar ${proceso.collectorName}: ${errorMessage}`)
     }
   }
@@ -202,30 +202,30 @@ export default function ProcesosActualizacionPage() {
   }
 
   const marcarComoCompletado = (procesoId: string) => {
-    setProcesos(prev => prev.map(p => 
-      p.id === procesoId 
-        ? { 
-            ...p, 
-            estado: "completado" as ProcesoEstado, 
-            progreso: 100,
-            recuperado: false,
-            mensaje: "Marcado como completado manualmente" 
-          }
+    setProcesos(prev => prev.map(p =>
+      p.id === procesoId
+        ? {
+          ...p,
+          estado: "completado" as ProcesoEstado,
+          progreso: 100,
+          recuperado: false,
+          mensaje: "Marcado como completado manualmente"
+        }
         : p
     ))
     toast.success("Proceso marcado como completado")
   }
 
   const marcarComoFallido = (procesoId: string) => {
-    setProcesos(prev => prev.map(p => 
-      p.id === procesoId 
-        ? { 
-            ...p, 
-            estado: "error" as ProcesoEstado, 
-            progreso: 0,
-            recuperado: false,
-            mensaje: "Marcado como fallido manualmente" 
-          }
+    setProcesos(prev => prev.map(p =>
+      p.id === procesoId
+        ? {
+          ...p,
+          estado: "error" as ProcesoEstado,
+          progreso: 0,
+          recuperado: false,
+          mensaje: "Marcado como fallido manualmente"
+        }
         : p
     ))
     toast.error("Proceso marcado como fallido")
@@ -314,8 +314,8 @@ export default function ProcesosActualizacionPage() {
                         <div>Actualizado: {format(new Date(collector.updatedAt), "dd/MM/yyyy HH:mm", { locale: es })}</div>
                       </div>
                     </div>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => agregarProceso(collector.name)}
                     >
@@ -474,7 +474,7 @@ export default function ProcesosActualizacionPage() {
                           <>
                             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                               <div className="flex items-start gap-2">
-                                <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                                <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                                 <div className="text-xs text-amber-800">
                                   <p className="font-semibold mb-1">Proceso recuperado de sesion anterior</p>
                                   <p className="opacity-90">

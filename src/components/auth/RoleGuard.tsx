@@ -1,9 +1,7 @@
 "use client"
 
-import { useAuthStore } from '@/store/auth-store'
 import { type Role } from '@/lib/permissions'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useRoleGuard } from '@/hooks/use-role-guard'
 
 interface RoleGuardProps {
   children: React.ReactNode
@@ -22,56 +20,24 @@ export function RoleGuard({
   fallback = null,
   redirectTo403 = false,
 }: RoleGuardProps) {
-  const router = useRouter()
-  const { user, canDelete: userCanDelete, canEdit: userCanEdit, hasAnyRole } = useAuthStore()
-  const [shouldRedirect, setShouldRedirect] = useState(false)
+  
+  const { isAllowed, isLoading } = useRoleGuard({
+    allowedRoles,
+    requireDelete,
+    requireEdit,
+    redirectTo403
+  })
 
-  // Verificar permisos y determinar si debe redirigir
-  useEffect(() => {
-    if (!user && redirectTo403) {
-      setShouldRedirect(true)
-      return
-    }
-
-    if (user && allowedRoles && allowedRoles.length > 0) {
-      if (!hasAnyRole(allowedRoles) && redirectTo403) {
-        setShouldRedirect(true)
-      }
-    }
-  }, [user, allowedRoles, hasAnyRole, redirectTo403])
-
-  // Realizar la redireccion en un efecto separado
-  useEffect(() => {
-    if (shouldRedirect) {
-      router.push('/403')
-    }
-  }, [shouldRedirect, router])
-
-  // Mostrar loading mientras redirige
-  if (shouldRedirect) {
+  // mostrar loading mientras redirige o carga auth(auqnue innecesario)
+  if (isLoading && redirectTo403) {
     return <div className="flex items-center justify-center min-h-screen">Redirigiendo...</div>
   }
 
-  if (!user) {
+  // si no esta permitido y no redirigimos, mostramos fallback (o null)
+  if (!isAllowed) {
     return <>{fallback}</>
   }
 
-  // verificar roles permitidos
-  if (allowedRoles && allowedRoles.length > 0) {
-    if (!hasAnyRole(allowedRoles)) {
-      return <>{fallback}</>
-    }
-  }
-
-  // verificar permiso de eliminar
-  if (requireDelete && !userCanDelete()) {
-    return <>{fallback}</>
-  }
-
-  // verificar permiso de editar
-  if (requireEdit && !userCanEdit()) {
-    return <>{fallback}</>
-  }
-
+  // si esta permitido, mostramos el contenido
   return <>{children}</>
 }

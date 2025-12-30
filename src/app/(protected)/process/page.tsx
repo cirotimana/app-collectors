@@ -162,77 +162,77 @@ export default function ProcessPage() {
     toast.success("Proceso agregado a la cola");
   };
 
-  
+
 
   const ejecutarProceso = async (procesoId: string) => {
-  const proceso = procesos.find(p => p.id === procesoId);
-  if (!proceso) return;
+    const proceso = procesos.find(p => p.id === procesoId);
+    if (!proceso) return;
 
-  setProcesos(prev => prev.map(p => 
-    p.id === procesoId ? { ...p, estado: "ejecutando" as ProcesoEstado, progreso: 0, recuperado: false } : p
-  ));
-
-  const intervalo = setInterval(() => {
-    setProcesos(prev => prev.map(p => {
-      if (p.id === procesoId && p.estado === "ejecutando") {
-        const incremento = Math.random() * 3 + 1;
-        const nuevoProgreso = Math.min(p.progreso + incremento, 70);
-        return { ...p, progreso: nuevoProgreso };
-      }
-      return p;
-    }));
-  }, 800);
-
-  try {
-    const { processApi } = await import('@/lib/api');
-    const data = await processApi.executeProcess(
-      proceso.tipo as 'conciliacion' | 'liquidacion',
-      proceso.recaudador,
-      formatear(proceso.fromDate),
-      formatear(proceso.toDate)
-    );
-
-    clearInterval(intervalo);
-
-    setProcesos(prev => prev.map(p => 
-      p.id === procesoId 
-        ? { 
-            ...p, 
-            estado: "completado" as ProcesoEstado, 
-            progreso: 100, 
-            mensaje: data.message || "Completado exitosamente" 
-          }
-        : p
+    setProcesos(prev => prev.map(p =>
+      p.id === procesoId ? { ...p, estado: "ejecutando" as ProcesoEstado, progreso: 0, recuperado: false } : p
     ));
-    toast.success(`${proceso.recaudador} completado`, {
-      description: data.message
-    });
-  } catch (error: any) {
-    clearInterval(intervalo);
-    
-    let detailedMessage = error.message || "Error desconocido";
-    
-    setProcesos(prev => prev.map(p => 
-      p.id === procesoId 
-        ? { 
-            ...p, 
-            estado: "error" as ProcesoEstado, 
+
+    const intervalo = setInterval(() => {
+      setProcesos(prev => prev.map(p => {
+        if (p.id === procesoId && p.estado === "ejecutando") {
+          const incremento = Math.random() * 3 + 1;
+          const nuevoProgreso = Math.min(p.progreso + incremento, 70);
+          return { ...p, progreso: nuevoProgreso };
+        }
+        return p;
+      }));
+    }, 800);
+
+    try {
+      const { processApi } = await import('@/lib/api');
+      const data = await processApi.executeProcess(
+        proceso.tipo as 'conciliacion' | 'liquidacion',
+        proceso.recaudador,
+        formatear(proceso.fromDate),
+        formatear(proceso.toDate)
+      );
+
+      clearInterval(intervalo);
+
+      setProcesos(prev => prev.map(p =>
+        p.id === procesoId
+          ? {
+            ...p,
+            estado: "completado" as ProcesoEstado,
+            progreso: 100,
+            mensaje: data.message || "Completado exitosamente"
+          }
+          : p
+      ));
+      toast.success(`${proceso.recaudador} completado`, {
+        description: data.message
+      });
+    } catch (error: any) {
+      clearInterval(intervalo);
+
+      let detailedMessage = error.message || "Error desconocido";
+
+      setProcesos(prev => prev.map(p =>
+        p.id === procesoId
+          ? {
+            ...p,
+            estado: "error" as ProcesoEstado,
             progreso: 0,
             mensaje: detailedMessage
           }
-        : p
-    ));
-    
-    toast.error(`Error en ${proceso.recaudador}`, { 
-      description: (
-        <div className="whitespace-pre-line text-left">
-          {detailedMessage}
-        </div>
-      ),
-      duration: 8000
-    });
-  }
-};
+          : p
+      ));
+
+      toast.error(`Error en ${proceso.recaudador}`, {
+        description: (
+          <div className="whitespace-pre-line text-left">
+            {detailedMessage}
+          </div>
+        ),
+        duration: 8000
+      });
+    }
+  };
 
   const ejecutarTodos = () => {
     const pendientes = procesos.filter(p => p.estado === "pendiente");
@@ -249,30 +249,30 @@ export default function ProcessPage() {
   };
 
   const marcarComoCompletado = (procesoId: string) => {
-    setProcesos(prev => prev.map(p => 
-      p.id === procesoId 
-        ? { 
-            ...p, 
-            estado: "completado" as ProcesoEstado, 
-            progreso: 100,
-            recuperado: false,
-            mensaje: "Marcado como completado manualmente" 
-          }
+    setProcesos(prev => prev.map(p =>
+      p.id === procesoId
+        ? {
+          ...p,
+          estado: "completado" as ProcesoEstado,
+          progreso: 100,
+          recuperado: false,
+          mensaje: "Marcado como completado manualmente"
+        }
         : p
     ));
     toast.success("Proceso marcado como completado");
   };
 
   const marcarComoFallido = (procesoId: string) => {
-    setProcesos(prev => prev.map(p => 
-      p.id === procesoId 
-        ? { 
-            ...p, 
-            estado: "error" as ProcesoEstado, 
-            progreso: 0,
-            recuperado: false,
-            mensaje: "Marcado como fallido manualmente" 
-          }
+    setProcesos(prev => prev.map(p =>
+      p.id === procesoId
+        ? {
+          ...p,
+          estado: "error" as ProcesoEstado,
+          progreso: 0,
+          recuperado: false,
+          mensaje: "Marcado como fallido manualmente"
+        }
         : p
     ));
     toast.error("Proceso marcado como fallido");
@@ -448,7 +448,7 @@ export default function ProcessPage() {
               <Button
                 onClick={agregarProceso}
                 disabled={!fromDate || !rangoEsValido}
-                className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold"
+                className="w-full bg-linear-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold"
               >
                 <ArrowUpRight className="mr-2 h-4 w-4" />
                 Agregar a Cola
@@ -602,7 +602,7 @@ export default function ProcessPage() {
                           <>
                             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                               <div className="flex items-start gap-2">
-                                <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                                <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
                                 <div className="text-xs text-amber-800">
                                   <p className="font-semibold mb-1">Proceso recuperado de sesion anterior</p>
                                   <p className="opacity-90">
