@@ -18,8 +18,8 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   isAuthenticated: false,
-  login: async () => {},
-  logout: () => {},
+  login: async () => { },
+  logout: () => { },
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -48,11 +48,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (credentials: LoginCredentials) => {
     try {
       const response = await authLogin(credentials)
-      
+
       // guardar en zustand store
       setAuth(response.user, response.access_token)
-      
-      router.push('/dashboard-ventas')
+
+      router.push('/dashboard/sales')
     } catch (error) {
       console.error('Error en login:', error)
       throw error
@@ -66,13 +66,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        loading, 
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
         isAuthenticated: user !== null,
-        login, 
-        logout 
+        login,
+        logout
       }}
     >
       {children}

@@ -31,14 +31,14 @@ function ProcessPageContent() {
   // Funcion que se ejecuta cuando se confirma en el dialogo
   const handleConfirmProcesar = async () => {
     setShowConfirmation(false);
-    
+
     setIsLoading(true);
     const toastId = toast.loading("Ejecutando proceso, por favor espere");
 
     try {
       const { processApi } = await import('@/lib/api');
       await processApi.executeDigitalProcess(tipo as 'dnicorrelativos' | 'concentracionips');
-      
+
       toast.success("El proceso se ejecuto correctamente", {
         id: toastId
       });
@@ -55,8 +55,8 @@ function ProcessPageContent() {
   // Generar el mensaje de confirmacion para procesos
   const getConfirmationMessage = () => {
     const tipoTexto = tipo === "concentracionips" ? "Concentración IPs" : "DNI Correlativos";
-    const tipoMensaje = tipo ==="concentracionips" ? "Últimas 72 Horas " : "Últimas 48 Horas"
-    
+    const tipoMensaje = tipo === "concentracionips" ? "Últimas 72 Horas " : "Últimas 48 Horas"
+
     return `Se ejecutara el proceso de ${tipoTexto} de las ${tipoMensaje}.`;
   };
 
@@ -100,12 +100,12 @@ function ProcessPageContent() {
               </SelectContent>
             </Select>
           </div>
-          
+
           {/* Boton */}
           <Button
             onClick={handleOpenConfirmation}
-            disabled={isLoading }
-            className="w-full bg-gradient-to-r from-gray-900 to-gray-800 hover:from-red-600 hover:to-red-700 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
+            className="w-full bg-lienar-to-r from-gray-900 to-gray-800 hover:from-red-600 hover:to-red-700 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
