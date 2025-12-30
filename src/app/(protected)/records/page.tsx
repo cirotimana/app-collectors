@@ -18,8 +18,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { cn } from "@/lib/utils"
 import { DateRange } from "react-day-picker"
 import { calimacoRecordsApi, collectorRecordsApi, type CalimacoRecord, type CollectorRecord, type PaginatedResponse } from "@/lib/api"
+import { formatDateTimeForDisplay } from "@/lib/date-utils"
 import { toast } from "sonner"
 import { useAuthStore } from "@/store/auth-store"
+import { RoleGuard } from "@/components/auth/RoleGuard"
+import { ROLES } from "@/lib/permissions"
 
 const COLLECTORS = [
   { id: 1, name: "Kashio" },
@@ -312,7 +315,8 @@ export default function RegistrosPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA]} redirectTo403={true}>
+      <div className="space-y-6">
       <div>
         <h1 className="text-4xl font-black text-gray-900">
           Modulo de <span className="text-red-600">Registros</span>
@@ -473,10 +477,10 @@ export default function RegistrosPage() {
                         <td className="p-2">{getStatusBadge(record.status)}</td>
                         <td className="text-right p-2">{formatCurrency(record.amount)}</td>
                         <td className="p-2">
-                          {format(new Date(record.recordDate), "dd/MM/yyyy HH:mm")}
+                          {formatDateTimeForDisplay(record.recordDate)}
                         </td>
                         <td className="p-2">
-                          {record.modificationDate ? format(new Date(record.modificationDate), "dd/MM/yyyy HH:mm") : "-"}
+                          {record.modificationDate ? formatDateTimeForDisplay(record.modificationDate) : "-"}
                         </td>
                         <td className="p-2">
                           {record.comments && record.comments !== "nan" && record.comments !== "None" && record.comments.trim() !== "" ? record.comments : "Sin comentarios"}
@@ -568,7 +572,7 @@ export default function RegistrosPage() {
                         <td className="p-2">{getStatusBadge(record.providerStatus)}</td>
                         <td className="text-right p-2">{formatCurrency(record.amount)}</td>
                         <td className="p-2">
-                          {format(new Date(record.recordDate), "dd/MM/yyyy HH:mm")}
+                          {formatDateTimeForDisplay(record.recordDate)}
                         </td>
                         <td className="text-center p-2">
                           <div className="flex justify-center gap-1">
@@ -639,7 +643,7 @@ export default function RegistrosPage() {
               <div><strong>Calimaco ID:</strong> {(selectedRecord as any).calimacoId}</div>
               <div><strong>Recaudador:</strong> {(selectedRecord as any).collector?.name}</div>
               <div><strong>Monto:</strong> {formatCurrency((selectedRecord as any).amount)}</div>
-              <div><strong>Fecha:</strong> {format(new Date((selectedRecord as any).recordDate), "dd/MM/yyyy HH:mm")}</div>
+              <div><strong>Fecha:</strong> {formatDateTimeForDisplay((selectedRecord as any).recordDate)}</div>
               {activeTab === "calimaco" ? (
                 <>
                   <div><strong>Estado:</strong> {(selectedRecord as CalimacoRecord).status}</div>
@@ -739,6 +743,7 @@ export default function RegistrosPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </RoleGuard>
   )
 }

@@ -14,6 +14,8 @@ import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DateRange } from "react-day-picker";
+import { RoleGuard } from "@/components/auth/RoleGuard";
+import { ROLES } from "@/lib/permissions";
 
 type ProcesoEstado = "pendiente" | "ejecutando" | "completado" | "error";
 
@@ -320,7 +322,8 @@ export default function ProcessPage() {
   const procesosFallidos = procesos.filter(p => p.estado === "error").length;
 
   return (
-    <>
+    <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA]} redirectTo403={true}>
+      <>
       <style>{`
         .scrollbar-thin::-webkit-scrollbar {
           width: 8px;
@@ -667,6 +670,7 @@ export default function ProcessPage() {
           </Card>
         </div>
       </div>
-    </>
+      </>
+    </RoleGuard>
   );
 }

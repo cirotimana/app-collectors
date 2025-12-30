@@ -16,6 +16,8 @@ import { DateRange } from "react-day-picker"
 import { conciliationReportsApi, type ConciliationReport, type PaginatedResponse } from "@/lib/api"
 import { toast } from "sonner"
 import { generateExcelReport } from "@/lib/excel-utils"
+import { RoleGuard } from "@/components/auth/RoleGuard"
+import { ROLES } from "@/lib/permissions"
 
 const COLLECTORS = [
   { id: 1, name: "Kashio" },
@@ -153,7 +155,8 @@ export default function DashboardSalesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA]} redirectTo403={true}>
+      <div className="space-y-6">
       <div>
         <h1 className="text-4xl font-black text-gray-900">
           Dashboard de <span className="text-red-600">Ventas</span>
@@ -331,7 +334,7 @@ export default function DashboardSalesPage() {
                   <tbody>
                     {reportsData.data.map((record, index) => (
                       <tr key={index} className={`border-b hover:bg-muted/50 ${getRowColor(record, 'monto_total_calimaco', 'monto_total_collector')}`}>
-                        <td className="p-2">{format(new Date(record.report_fecha), "dd/MM/yyyy")}</td>
+                        <td className="p-2">{record.report_fecha ? format(new Date(record.report_fecha), "dd/MM/yyyy") : "-"}</td>
                         <td className="p-2">{getCollectorName(record.report_collector_id)}</td>
                         <td className="p-2">{record.aprobados_calimaco}</td>
                         <td className="text-right p-2 font-mono">
@@ -370,7 +373,7 @@ export default function DashboardSalesPage() {
                   <tbody>
                     {reportsData.data.map((record, index) => (
                       <tr key={index} className={`border-b hover:bg-muted/50 ${getRowColor(record, 'monto_total_collector', 'monto_total_calimaco')}`}>
-                        <td className="p-2">{format(new Date(record.report_fecha), "dd/MM/yyyy")}</td>
+                        <td className="p-2">{record.report_fecha ? format(new Date(record.report_fecha), "dd/MM/yyyy") : "-"}</td>
                         <td className="p-2">{getCollectorName(record.report_collector_id)}</td>
                         <td className="p-2">{record.aprobados_collector}</td>
                         <td className="text-right p-2 font-mono">
@@ -409,7 +412,7 @@ export default function DashboardSalesPage() {
                   <tbody>
                     {reportsData.data.map((record, index) => (
                       <tr key={index} className={`border-b hover:bg-muted/50 ${getRowColor(record, 'monto_no_conciliado_calimaco', 'monto_no_conciliado_collector')}`}>
-                        <td className="p-2">{format(new Date(record.report_fecha), "dd/MM/yyyy")}</td>
+                        <td className="p-2">{record.report_fecha ? format(new Date(record.report_fecha), "dd/MM/yyyy") : "-"}</td>
                         <td className="p-2">{getCollectorName(record.report_collector_id)}</td>
                         <td className="p-2">{record.no_conciliados_calimaco}</td>
                         <td className="text-right p-2 font-mono">
@@ -448,7 +451,7 @@ export default function DashboardSalesPage() {
                   <tbody>
                     {reportsData.data.map((record, index) => (
                       <tr key={index} className={`border-b hover:bg-muted/50 ${getRowColor(record, 'monto_no_conciliado_collector', 'monto_no_conciliado_calimaco')}`}>
-                        <td className="p-2">{format(new Date(record.report_fecha), "dd/MM/yyyy")}</td>
+                        <td className="p-2">{record.report_fecha ? format(new Date(record.report_fecha), "dd/MM/yyyy") : "-"}</td>
                         <td className="p-2">{getCollectorName(record.report_collector_id)}</td>
                         <td className="p-2">{record.no_conciliados_collector}</td>
                         <td className="text-right p-2 font-mono">
@@ -483,7 +486,7 @@ export default function DashboardSalesPage() {
                 <ResponsiveContainer width="100%" height={400}>
                   <BarChart
                     data={reportsData.data.map(record => ({
-                      fecha: format(new Date(record.report_fecha), "dd/MM"),
+                      fecha: record.report_fecha ? format(new Date(record.report_fecha), "dd/MM") : "-",
                       calimaco: parseFloat(record.monto_total_calimaco),
                       recaudador: parseFloat(record.monto_total_collector)
                     }))}
@@ -603,7 +606,7 @@ export default function DashboardSalesPage() {
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart
                   data={reportsData.data.map(record => ({
-                    fecha: format(new Date(record.report_fecha), "dd/MM"),
+                    fecha: record.report_fecha ? format(new Date(record.report_fecha), "dd/MM") : "-",
                     calimaco: parseFloat(record.porcentaje_conciliado_calimaco),
                     recaudador: parseFloat(record.porcentaje_conciliado_collector)
                   }))}
@@ -668,6 +671,7 @@ export default function DashboardSalesPage() {
           </Card>
         </div>
       )}
-    </div>
+      </div>
+    </RoleGuard>
   )
 }

@@ -39,16 +39,16 @@ import {
 const menuItems = [
   { icon: <TrendingUp />, label: "Dashboard Ventas", href: "/dashboard/sales" },
   { icon: <LayoutDashboard />, label: "Dashboard Liquidaciones", href: "/dashboard", requireLiquidaciones: true },
-  { icon: <PieChart />, label: "Reportes", href: "/reportes" },
-  { icon: <Database />, label: "Registros", href: "/registros" },
-  { icon: <BookText />, label: "Resumen", href: "/resumen" },
+  { icon: <PieChart />, label: "Reportes", href: "/reports" },
+  { icon: <Database />, label: "Registros", href: "/records" },
+  { icon: <BookText />, label: "Resumen", href: "/summary" },
   { icon: <CloudDownload />, label: "Descargas", href: "/download", requireAdmin: true },
   { icon: <Gpu />, label: "Digital", href: "/digital", requireDigital: true },
 ];
 
 const processItems = [
   { icon: <Activity />, label: "Conciliacion", href: "/process" },
-  { icon: <RefreshCw />, label: "Actualizacion", href: "/process/actualizacion" },
+  { icon: <RefreshCw />, label: "Actualizacion", href: "/process/updated" },
 ];
 
 const historicoItems = [
