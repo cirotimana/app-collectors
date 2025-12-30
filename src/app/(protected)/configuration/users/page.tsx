@@ -41,7 +41,7 @@ const editUserSchema = z.object({
 
 type UserFormData = z.infer<typeof createUserSchema>
 
-function UsuariosPageContent() {
+function UsersPageContent() {
   const [users, setUsers] = React.useState<User[]>([])
   const [roles, setRoles] = React.useState<Role[]>([])
   const [loading, setLoading] = React.useState(false)
@@ -119,7 +119,7 @@ function UsuariosPageContent() {
 
   const handleEdit = async (data: UserFormData) => {
     if (!selectedUser) return
-    
+
     try {
       const updateData: UpdateUserData = {
         firstName: data.firstName,
@@ -128,11 +128,11 @@ function UsuariosPageContent() {
         username: data.username,
         roleId: data.roleId,
       }
-      
+
       if (data.password && data.password.length > 0) {
         updateData.password = data.password
       }
-      
+
       await usersApi.update(selectedUser.id, updateData)
       toast.success("Usuario actualizado exitosamente")
       setIsEditOpen(false)
@@ -146,7 +146,7 @@ function UsuariosPageContent() {
 
   const handleDelete = async () => {
     if (!selectedUser) return
-    
+
     try {
       await usersApi.delete(selectedUser.id)
       toast.success("Usuario eliminado exitosamente")
@@ -586,7 +586,7 @@ function UsuariosPageContent() {
 export default function UsuariosPage() {
   return (
     <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR]} redirectTo403={true}>
-      <UsuariosPageContent />
+      <UsersPageContent />
     </RoleGuard>
   )
 }

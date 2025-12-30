@@ -30,7 +30,7 @@ const COLLECTORS = [
   { id: 10, name: "Prometeo" },
 ]
 
-export default function DashboardVentasPage() {
+export default function DashboardSalesPage() {
   const [selectedCollectors, setSelectedCollectors] = React.useState<number[]>([1])
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(() => {
     const today = new Date()
@@ -59,7 +59,7 @@ export default function DashboardVentasPage() {
     try {
       const fromDate = format(dateRange.from, "yyyy-MM-dd")
       const toDate = format(dateRange.to, "yyyy-MM-dd")
-      
+
       const data = await conciliationReportsApi.getCompleteReport(
         selectedCollectors,
         fromDate,
@@ -67,7 +67,7 @@ export default function DashboardVentasPage() {
         1,
         1000
       )
-      
+
       setReportsData(data)
       toast.success(`Se encontraron ${data.total} registros`)
     } catch (error) {
@@ -133,7 +133,7 @@ export default function DashboardVentasPage() {
       toast.error("No hay datos para exportar")
       return
     }
-    
+
     const currentStats = calculateStats()
     if (!currentStats) return
 
@@ -232,9 +232,9 @@ export default function DashboardVentasPage() {
             <Button onClick={handleSearch} disabled={loading} className="flex-1">
               {loading ? "Cargando..." : "Actualizar Dashboard"}
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleExport} 
+            <Button
+              variant="outline"
+              onClick={handleExport}
               disabled={!reportsData || loading}
               className="flex-1 sm:flex-none bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
             >
@@ -318,7 +318,7 @@ export default function DashboardVentasPage() {
               <CardDescription>Detalle de montos totales Calimaco</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="max-h-[380px] overflow-y-auto rounded-md border">
+              <div className="max-h-95 overflow-y-auto rounded-md border">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-background">
                     <tr className="border-b">
@@ -357,7 +357,7 @@ export default function DashboardVentasPage() {
               <CardDescription>Detalle de montos totales recaudador</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="max-h-[380px] overflow-y-auto rounded-md border">
+              <div className="max-h-95 overflow-y-auto rounded-md border">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-background">
                     <tr className="border-b">
@@ -396,7 +396,7 @@ export default function DashboardVentasPage() {
               <CardDescription>Detalle de montos no conciliados Calimaco</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="max-h-[380px] overflow-y-auto rounded-md border">
+              <div className="max-h-95 overflow-y-auto rounded-md border">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-background">
                     <tr className="border-b">
@@ -435,7 +435,7 @@ export default function DashboardVentasPage() {
               <CardDescription>Detalle de montos no conciliados recaudador</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="max-h-[380px] overflow-y-auto rounded-md border">
+              <div className="max-h-95 overflow-y-auto rounded-md border">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-background">
                     <tr className="border-b">
@@ -474,14 +474,14 @@ export default function DashboardVentasPage() {
         <div className="space-y-8">
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             {/* grafico de barras moderno */}
-            <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
+            <Card className="shadow-lg border-0 bg-linear-to-br from-white to-gray-50">
               <CardHeader className="pb-4">
                 <CardTitle className="text-xl font-bold text-gray-800">Comparativo por Fecha</CardTitle>
                 <CardDescription className="text-gray-600">Montos Calimaco vs Recaudador</CardDescription>
               </CardHeader>
               <CardContent className="pt-2">
                 <ResponsiveContainer width="100%" height={400}>
-                  <BarChart 
+                  <BarChart
                     data={reportsData.data.map(record => ({
                       fecha: format(new Date(record.report_fecha), "dd/MM"),
                       calimaco: parseFloat(record.monto_total_calimaco),
@@ -491,18 +491,18 @@ export default function DashboardVentasPage() {
                     barCategoryGap="20%"
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis 
-                      dataKey="fecha" 
+                    <XAxis
+                      dataKey="fecha"
                       tick={{ fontSize: 12, fill: '#666' }}
                       angle={-45}
                       textAnchor="end"
                       height={80}
                     />
-                    <YAxis 
+                    <YAxis
                       tick={{ fontSize: 12, fill: '#666' }}
                       tickFormatter={(value) => `S/ ${(value / 1000).toFixed(0)}k`}
                     />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
                         border: '1px solid #e2e8f0',
@@ -514,16 +514,16 @@ export default function DashboardVentasPage() {
                         name === 'calimaco' ? 'Calimaco' : 'Recaudador'
                       ]}
                     />
-                    <Bar 
-                      dataKey="calimaco" 
-                      fill="url(#calimacoGradient)" 
+                    <Bar
+                      dataKey="calimaco"
+                      fill="url(#calimacoGradient)"
                       name="calimaco"
                       radius={[4, 4, 0, 0]}
                       maxBarSize={60}
                     />
-                    <Bar 
-                      dataKey="recaudador" 
-                      fill="url(#recaudadorGradient)" 
+                    <Bar
+                      dataKey="recaudador"
+                      fill="url(#recaudadorGradient)"
                       name="recaudador"
                       radius={[4, 4, 0, 0]}
                       maxBarSize={60}
@@ -544,7 +544,7 @@ export default function DashboardVentasPage() {
             </Card>
 
             {/* grafico pie moderno */}
-            <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
+            <Card className="shadow-lg border-0 bg-linear-to-br from-white to-gray-50">
               <CardHeader className="pb-4">
                 <CardTitle className="text-xl font-bold text-gray-800">Distribucion de Montos</CardTitle>
                 <CardDescription className="text-gray-600">Total Calimaco vs Recaudador</CardDescription>
@@ -565,7 +565,7 @@ export default function DashboardVentasPage() {
                       dataKey="value"
                       label={false}
                     />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{
                         backgroundColor: '#fff',
                         border: '1px solid #e2e8f0',
@@ -594,14 +594,14 @@ export default function DashboardVentasPage() {
           </div>
 
           {/* grafico lineal moderno - ancho completo */}
-          <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
+          <Card className="shadow-lg border-0 bg-linear-to-br from-white to-gray-50">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl font-bold text-gray-800">Tendencia de Conciliacion</CardTitle>
               <CardDescription className="text-gray-600">Porcentajes de conciliacion por fecha</CardDescription>
             </CardHeader>
             <CardContent className="pt-2">
               <ResponsiveContainer width="100%" height={400}>
-                <LineChart 
+                <LineChart
                   data={reportsData.data.map(record => ({
                     fecha: format(new Date(record.report_fecha), "dd/MM"),
                     calimaco: parseFloat(record.porcentaje_conciliado_calimaco),
@@ -610,19 +610,19 @@ export default function DashboardVentasPage() {
                   margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="fecha" 
+                  <XAxis
+                    dataKey="fecha"
                     tick={{ fontSize: 12, fill: '#666' }}
                     angle={-45}
                     textAnchor="end"
                     height={80}
                   />
-                  <YAxis 
-                    domain={[0, 100]} 
+                  <YAxis
+                    domain={[0, 100]}
                     tick={{ fontSize: 12, fill: '#666' }}
                     tickFormatter={(value) => `${value}%`}
                   />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{
                       backgroundColor: '#fff',
                       border: '1px solid #e2e8f0',
@@ -634,19 +634,19 @@ export default function DashboardVentasPage() {
                       name === 'calimaco' ? 'Calimaco' : 'Recaudador'
                     ]}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="calimaco" 
-                    stroke="#dc2626" 
+                  <Line
+                    type="monotone"
+                    dataKey="calimaco"
+                    stroke="#dc2626"
                     strokeWidth={3}
                     dot={{ fill: '#dc2626', strokeWidth: 2, r: 6 }}
                     activeDot={{ r: 8, stroke: '#dc2626', strokeWidth: 2 }}
                     name="calimaco"
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="recaudador" 
-                    stroke="#16a34a" 
+                  <Line
+                    type="monotone"
+                    dataKey="recaudador"
+                    stroke="#16a34a"
                     strokeWidth={3}
                     dot={{ fill: '#16a34a', strokeWidth: 2, r: 6 }}
                     activeDot={{ r: 8, stroke: '#16a34a', strokeWidth: 2 }}
