@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     authLogout()
     clearAuth()
-    router.push('/login')
+    router.push('/auth/login')
   }
 
   return (

@@ -12,6 +12,8 @@ import { es } from "date-fns/locale"
 import { useRouter, useSearchParams } from "next/navigation"
 import { conciliationReportsApi, calimacoRecordsApi, collectorRecordsApi, type ConciliatedRecord, type NonConciliatedRecord, type PaginatedResponse } from "@/lib/api"
 import { toast } from "sonner"
+import { RoleGuard } from "@/components/auth/RoleGuard"
+import { ROLES } from "@/lib/permissions"
 
 const COLLECTORS = [
   { id: 1, name: "Kashio" },
@@ -209,7 +211,8 @@ export default function ReporteDetallePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA, ROLES.ANALISTA_SOPORTE, ROLES.ANALISTA]} redirectTo403={true}>
+      <div className="space-y-6">
       <div>
         <Button variant="outline" onClick={() => router.back()} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -524,6 +527,7 @@ export default function ReporteDetallePage() {
           ) : null}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </RoleGuard>
   )
 }

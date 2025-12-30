@@ -52,19 +52,19 @@ export const PROTECTED_ROUTES = {
     ROLES.ANALISTA_SOPORTE,
     ROLES.ANALISTA,
   ],
-  "/reportes": [
+  "/reports": [
     ROLES.ADMINISTRATOR,
     ROLES.ANALISTA_TESORERIA,
     ROLES.ANALISTA_SOPORTE,
     ROLES.ANALISTA,
   ],
-  "/registros": [
+  "/records": [
     ROLES.ADMINISTRATOR,
     ROLES.ANALISTA_TESORERIA,
     ROLES.ANALISTA_SOPORTE,
     ROLES.ANALISTA,
   ],
-  "/resumen": [
+  "/summary": [
     ROLES.ADMINISTRATOR,
     ROLES.ANALISTA_TESORERIA,
     ROLES.ANALISTA_SOPORTE,
@@ -78,7 +78,7 @@ export const PROTECTED_ROUTES = {
     ROLES.ANALISTA_SOPORTE,
     ROLES.ANALISTA,
   ],
-  "/process/actualizacion": [
+  "/process/updated": [
     ROLES.ADMINISTRATOR,
     ROLES.ANALISTA_TESORERIA,
     ROLES.ANALISTA_SOPORTE,

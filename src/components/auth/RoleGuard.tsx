@@ -1,9 +1,7 @@
 "use client"
 
-import { useAuthStore } from '@/store/auth-store'
 import { type Role } from '@/lib/permissions'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useRoleGuard } from '@/hooks/use-role-guard'
 
 interface RoleGuardProps {
   children: React.ReactNode
@@ -22,39 +20,24 @@ export function RoleGuard({
   fallback = null,
   redirectTo403 = false,
 }: RoleGuardProps) {
-  const router = useRouter()
-  const { user, canDelete: userCanDelete, canEdit: userCanEdit, hasAnyRole } = useAuthStore()
+  
+  const { isAllowed, isLoading } = useRoleGuard({
+    allowedRoles,
+    requireDelete,
+    requireEdit,
+    redirectTo403
+  })
 
-  useEffect(() => {
-    if (!user && redirectTo403) {
-      router.push('/403')
-    }
-  }, [user, redirectTo403, router])
-
-  if (!user) {
-    return fallback
+  // mostrar loading mientras redirige o carga auth(auqnue innecesario)
+  if (isLoading && redirectTo403) {
+    return <div className="flex items-center justify-center min-h-screen">Redirigiendo...</div>
   }
 
-  // verificar roles permitidos
-  if (allowedRoles && allowedRoles.length > 0) {
-    if (!hasAnyRole(allowedRoles)) {
-      if (redirectTo403) {
-        router.push('/403')
-        return null
-      }
-      return fallback
-    }
+  // si no esta permitido y no redirigimos, mostramos fallback (o null)
+  if (!isAllowed) {
+    return <>{fallback}</>
   }
 
-  // verificar permiso de eliminar
-  if (requireDelete && !userCanDelete()) {
-    return fallback
-  }
-
-  // verificar permiso de editar
-  if (requireEdit && !userCanEdit()) {
-    return fallback
-  }
-
+  // si esta permitido, mostramos el contenido
   return <>{children}</>
 }
