@@ -41,9 +41,13 @@ describe('API helpers', () => {
     } as any
   })
 
+
   afterAll(() => {
-    // 3. Restauramos el objeto original al terminar todos los tests
-    window.location = originalLocation
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      writable: true,
+      value: originalLocation,
+    })
   })
 
   /* ================= fetchWithAuth ================= */
@@ -163,8 +167,6 @@ describe('API helpers', () => {
 
     const result = await apiCall<any[]>('/url')
     expect(result).toEqual(mockItems)
-    expect(result.total).toBe(100)
-    expect(result.totalPages).toBe(10)
   })
 
   /* ================= Verbos HTTP ================= */

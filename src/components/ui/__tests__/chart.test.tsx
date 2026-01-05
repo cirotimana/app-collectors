@@ -69,11 +69,13 @@ describe("Chart Component System", () => {
     it("renderiza correctamente los valores y etiquetas", () => {
       render(
         <ChartContainer config={mockConfig}>
-          <ChartTooltipContent 
-            active={true} 
-            payload={mockPayload} 
-            label="Enero"
-          />
+            <ChartTooltipContent
+                {...({
+                active: true,
+                payload: mockPayload,
+                label: "Enero",
+                } as any)}
+            />
         </ChartContainer>
       )
 
@@ -84,12 +86,25 @@ describe("Chart Component System", () => {
     it("oculta el label cuando hideLabel es true", () => {
       render(
         <ChartContainer config={mockConfig}>
-          <ChartTooltipContent 
-            active={true} 
-            payload={mockPayload} 
-            label="Enero"
-            hideLabel
+          <ChartTooltipContent
+            {...({
+              active: true,
+              payload: mockPayload,
+              label: "Enero",
+              hideLabel: true,
+            } as any)}
           />
+        </ChartContainer>
+      )
+
+      expect(screen.queryByText("Enero")).not.toBeInTheDocument()
+    })
+
+    it("renderiza diferentes indicadores (line, dot, dashed)", () => {
+      const { container } = render(
+        <ChartContainer config={mockConfig}>
+          <ChartTooltipContent
+            active={true} ></ChartTooltipContent>
         </ChartContainer>
       )
       expect(screen.queryByText("Enero")).not.toBeInTheDocument()
@@ -98,11 +113,25 @@ describe("Chart Component System", () => {
     it("renderiza diferentes indicadores (line, dot, dashed)", () => {
       const { container } = render(
         <ChartContainer config={mockConfig}>
-          <ChartTooltipContent 
-            active={true} 
-            payload={mockPayload} 
-            indicator="dashed"
+          <ChartTooltipContent
+            {...({
+              active: true,
+              payload: mockPayload,
+              indicator: "dashed",
+            } as any)}
           />
+        </ChartContainer>
+      )
+      // Verifica que la clase del indicador esté presente
+      expect(container.querySelector(".border-dashed")).toBeInTheDocument()
+    })
+  })
+
+  describe("ChartLegendContent", () => {
+    it("renderiza la leyenda basada en la config", () => {
+      const { container } = render(
+        <ChartContainer config={mockConfig}>
+          <ChartLegendContent payload={mockPayload} />
         </ChartContainer>
       )
       // Verifica que la clase del indicador esté presente
@@ -147,7 +176,7 @@ describe("Chart Component System", () => {
 it("no renderiza tooltip si active es false", () => {
   const { container } = render(
     <ChartContainer config={mockConfig}>
-      <ChartTooltipContent active={false} payload={mockPayload} />
+      <ChartTooltipContent {...{ active: false, payload: mockPayload }} />
     </ChartContainer>
   )
 
@@ -158,7 +187,7 @@ it("no renderiza tooltip si active es false", () => {
 it("no renderiza tooltip si payload es undefined", () => {
   const { container } = render(
     <ChartContainer config={mockConfig}>
-      <ChartTooltipContent active={true} payload={undefined} />
+      <ChartTooltipContent {...{ active: true, payload: undefined }} />
     </ChartContainer>
   )
 
@@ -169,9 +198,11 @@ it("usa formatter cuando está definido", () => {
   render(
     <ChartContainer config={mockConfig}>
       <ChartTooltipContent
-        active
-        payload={mockPayload}
-        formatter={(value) => <span>Valor: {value}</span>}
+        {...{
+          active: true,
+          payload: mockPayload,
+          formatter: (value) => <span>Valor: {value}</span>,
+        }}
       />
     </ChartContainer>
   )
@@ -194,9 +225,11 @@ it("maneja múltiples payloads con indicador line", () => {
   render(
     <ChartContainer config={mockConfig}>
       <ChartTooltipContent
-        active
-        payload={multiPayload}
-        indicator="line"
+        {...{
+          active: true,
+          payload: multiPayload,
+          indicator: "line",
+        }}
       />
     </ChartContainer>
   )
@@ -217,7 +250,7 @@ it("renderiza icon cuando está definido en config", () => {
         },
       }}
     >
-      <ChartTooltipContent active payload={mockPayload} />
+      <ChartTooltipContent {...{ active: true, payload: mockPayload }} />
     </ChartContainer>
   )
 
@@ -237,7 +270,7 @@ it("oculta iconos en la leyenda cuando hideIcon es true", () => {
 it("maneja payload inválido sin romper", () => {
   render(
     <ChartContainer config={mockConfig}>
-      <ChartTooltipContent active payload={[{ value: 10 } as any]} />
+      <ChartTooltipContent {...{ active: true, payload: [{ value: 10 } as any] }} />
     </ChartContainer>
   )
 
