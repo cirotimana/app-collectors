@@ -28,7 +28,15 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
   const toDatet = toDate || today.toISOString().split("T")[0]
 
   React.useEffect(() => {
+    let isActive = true
+
     const fetchData = async () => {
+      // si no hay metodos seleccionados, limpiar datoss
+      if (!metodo || metodo.trim() === "") {
+        if (isActive) setData([])
+        return
+      }
+
       try {
         const collectorMap: Record<string, number> = {
           kashio: 1,
@@ -49,19 +57,34 @@ export function ReconciliationTable({ proceso, metodo, fromDate, toDate }: Props
           .filter((id) => id !== undefined)
           .join(",")
 
+        // doble verificacion por si el filtrado dejo vacio algo por ahi
+        if (!collectorIds) {
+          if (isActive) setData([])
+          return
+        }
+
         const endpoint =
           proceso === "liquidacion" ? "liquidations" : "conciliations"
 
         const { dashboardApi } = await import('@/lib/api')
         const json = await dashboardApi.getSummary(collectorIds, fromDatet, toDatet, endpoint as 'liquidations' | 'conciliations')
-        setData(json)
+        
+        if (isActive) {
+          setData(json)
+        }
       } catch (e) {
         console.error(e)
-        setData([])
+        if (isActive) {
+          setData([])
+        }
       }
     }
 
     fetchData()
+
+    return () => {
+      isActive = false
+    }
   }, [proceso, metodo, fromDate, toDate])
 
   // Funcion para verificar coincidencia entre dos montos
