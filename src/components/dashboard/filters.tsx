@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-import { Input } from "@/components/ui/input"
+// import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PeriodPicker } from "@/components/ui/period-picker"
@@ -53,7 +53,12 @@ export function Filters({ filters, onFiltersChange }: FiltersProps) {
     })
   }
 
-  const [searchPeriod, setSearchPeriod] = React.useState("")
+  const [searchPeriod, setSearchPeriod] = React.useState(() => {
+     if (filters.fromDate && filters.toDate) {
+       return `${filters.fromDate}-${filters.toDate}`
+     }
+     return ""
+  })
   const [open, setOpen] = React.useState(false)
   const [selectedMetodos, setSelectedMetodos] = React.useState<string[]>(
     filters.metodo ? filters.metodo.split(",") : []
