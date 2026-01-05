@@ -492,9 +492,9 @@ export default function RegistrosPage() {
                             </Button>
                             {canDelete() && (
                               <>
-                                <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
+                                {/* <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
                                   <Edit className="h-4 w-4" />
-                                </Button>
+                                </Button> */}
                                 <Button size="sm" variant="outline" onClick={() => handleDelete(record)}>
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -581,9 +581,9 @@ export default function RegistrosPage() {
                             </Button>
                             {canDelete() && (
                               <>
-                                <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
+                                {/* <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
                                   <Edit className="h-4 w-4" />
-                                </Button>
+                                </Button> */}
                                 <Button size="sm" variant="outline" onClick={() => handleDelete(record)}>
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
