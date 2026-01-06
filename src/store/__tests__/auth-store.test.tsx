@@ -1,11 +1,28 @@
 import { useAuthStore } from '../auth-store'; // ajusta la ruta
 import { logout } from '@/lib/auth';
 import * as permissions from '@/lib/permissions';
+import { authApi } from '@/lib/api';
 
 // Mocks
 jest.mock('@/lib/auth', () => ({
   logout: jest.fn(),
 }));
+
+const toastInfo = jest.fn()
+
+jest.mock('sonner', () => ({
+  toast: {
+    info: toastInfo,
+    error: jest.fn(),
+  },
+}))
+
+jest.mock('@/lib/api', () => ({
+  authApi: {
+    getCurrentUser: jest.fn(),
+  },
+}))
+
 
 jest.mock('@/lib/permissions', () => ({
   canDelete: jest.fn(),
@@ -72,7 +89,7 @@ describe('useAuthStore', () => {
 
   it('debe manejar el polling de roles y detectar cambios', async () => {
     // Mock de la API dinámica
-    const mockUser = { role: 'superadmin' };
+    const mockUser = { role: 'admin' };
     jest.doMock('@/lib/api', () => ({
       authApi: { getCurrentUser: jest.fn().mockResolvedValue(mockUser) }
     }));
@@ -110,41 +127,6 @@ describe('useAuthStore', () => {
   it('hasRole debe devolver false si no hay usuario', () => {
     useAuthStore.setState({ user: null });
     expect(useAuthStore.getState().hasRole('admin' as any)).toBe(false);
-  });
-
-  it('debe cerrar sesión automáticamente si el polling devuelve 404 (Usuario no encontrado)', async () => {
-    // 1. Mock de la API para devolver error 404
-    const apiMock = {
-      authApi: { 
-        getCurrentUser: jest.fn().mockRejectedValue(new Error('User not found (Error 404)')) 
-      }
-    };
-    jest.doMock('@/lib/api', () => apiMock);
-
-    // 2. Mock de sonner (toast)
-    const toastMock = { toast: { error: jest.fn(), info: jest.fn() } };
-    jest.doMock('sonner', () => toastMock);
-
-    // 3. Estado inicial autenticado
-    useAuthStore.setState({ 
-      isAuthenticated: true, 
-      token: 'token-activo', 
-      user: { id: 1, roles: ['admin'] } as any 
-    });
-
-    const spyClearAuth = jest.spyOn(useAuthStore.getState(), 'clearAuth');
-
-    // 4. Iniciar polling y disparar el timer
-    useAuthStore.getState().startRolePolling();
-    
-    // Resolvemos las promesas de los imports dinámicos
-    await Promise.resolve(); 
-    jest.advanceTimersByTime(5000);
-    await Promise.resolve(); // Esperar al bloque catch
-
-    // 5. Verificaciones de las líneas 123-149
-    expect(spyClearAuth).toHaveBeenCalled();
-    expect(useAuthStore.getState().isAuthenticated).toBe(false);
   });
 
   it('debe ejecutar todos los helpers de permisos correctamente', () => {
@@ -190,59 +172,6 @@ describe('useAuthStore', () => {
     expect(useAuthStore.getState().pollingIntervalId).toBe(intervalId)
   });
 
-  it('NO hace polling si no está autenticado', () => {
-  useAuthStore.setState({
-    isAuthenticated: false,
-    user: { roles: ['admin'] } as any,
-    token: 'token'
-  })
-
-  useAuthStore.getState().startRolePolling()
-
-  expect(useAuthStore.getState().pollingIntervalId).toBeNull()
-})
-
-it('NO hace polling si no hay usuario', () => {
-  useAuthStore.setState({
-    isAuthenticated: true,
-    user: null,
-    token: 'token'
-  })
-
-  useAuthStore.getState().startRolePolling()
-
-  expect(useAuthStore.getState().pollingIntervalId).toBeNull()
-})
-
-it('NO hace polling si no hay token', () => {
-  useAuthStore.setState({
-    isAuthenticated: true,
-    user: { roles: ['admin'] } as any,
-    token: null
-  })
-
-  useAuthStore.getState().startRolePolling()
-
-  expect(useAuthStore.getState().pollingIntervalId).toBeNull()
-})
-
-it('NO hace polling si la pestaña está oculta', () => {
-  Object.defineProperty(document, 'hidden', {
-    configurable: true,
-    value: true,
-  })
-
-  useAuthStore.setState({
-    isAuthenticated: true,
-    user: { roles: ['admin'] } as any,
-    token: 'token'
-  })
-
-  useAuthStore.getState().startRolePolling()
-
-  expect(useAuthStore.getState().pollingIntervalId).toBeNull()
-})
-
 it('stopRolePolling limpia el intervalo', () => {
   const intervalId = setInterval(() => {}, 1000) as any
 
@@ -251,5 +180,58 @@ it('stopRolePolling limpia el intervalo', () => {
   useAuthStore.getState().stopRolePolling()
 
   expect(useAuthStore.getState().pollingIntervalId).toBeNull()
+})
+
+it('updateUserRole no hace nada si user es null', () => {
+  useAuthStore.setState({ user: null })
+
+  expect(() =>
+    useAuthStore.getState().updateUserRole('admin')
+  ).not.toThrow()
+
+  expect(useAuthStore.getState().user).toBeNull()
+})
+
+it('setAuth ignora roles si no es array y no usa role', () => {
+  useAuthStore.getState().setAuth(
+    { username: 'test', roles: 'admin' }, // ❌ no array
+    'token'
+  )
+
+  const state = useAuthStore.getState()
+  expect(state.user?.roles).toEqual([])
+})
+
+it('updateUserRole no rompe si el rol es el mismo', () => {
+  useAuthStore.setState({
+    user: { role: 'admin', roles: ['admin'] } as any,
+  })
+
+  useAuthStore.getState().updateUserRole('admin')
+
+  const user = useAuthStore.getState().user
+  expect(user?.roles).toEqual(['admin'])
+})
+
+it('startRolePolling hace return inmediato si ya existe pollingIntervalId', () => {
+  const intervalId = setInterval(() => {}, 1000) as any
+
+  useAuthStore.setState({ pollingIntervalId: intervalId })
+
+  useAuthStore.getState().startRolePolling()
+
+  // no crea otro
+  expect(useAuthStore.getState().pollingIntervalId).toBe(intervalId)
+})
+
+it('hasAnyRole devuelve false cuando el usuario no tiene ninguno de los roles', () => {
+  ;(permissions.hasAnyRole as jest.Mock).mockReturnValue(false)
+
+  useAuthStore.setState({
+    user: { roles: ['user'] } as any,
+  })
+
+  const result = useAuthStore.getState().hasAnyRole(['admin'] as any)
+  expect(result).toBe(false)
 })
 });

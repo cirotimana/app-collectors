@@ -2,6 +2,15 @@ import { render, screen, fireEvent } from "@testing-library/react"
 import { Filters } from "../filters"
 import userEvent from "@testing-library/user-event"
 
+jest.mock("@/components/ui/period-picker", () => ({
+  PeriodPicker: ({ onChange }: any) => (
+    <input 
+      data-testid="period-picker-input" 
+      onChange={(e) => onChange(e.target.value)} 
+    />
+  ),
+}))
+
 describe("Filters", () => {
   const defaultFilters = {
     proceso: "",
@@ -69,5 +78,62 @@ describe("Filters", () => {
         metodo: "yape",
       })
     )
+  })
+
+  it("maneja el cambio de período correctamente (limpieza y parsing)", async () => {
+    const onChange = jest.fn()
+    render(<Filters filters={defaultFilters} onFiltersChange={onChange} />)
+
+    // Buscamos el PeriodPicker. Como es un componente custom, 
+    // asumimos que expone un input o el componente llama a onChange.
+    // Simulamos la llamada que haría el PeriodPicker internamente:
+    
+    const periodPicker = screen.getByTestId("period-picker-input") // Ajusta según tu componente
+
+    // Caso 1: Rango de fechas (Línea 68)
+    fireEvent.change(periodPicker, { target: { value: "2023/01/01-2023/01/31" } })
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      fromDate: "2023/01/01",
+      toDate: "2023/01/31"
+    }))
+
+    // Caso 2: Limpieza (Líneas 63-66)
+    fireEvent.change(periodPicker, { target: { value: "" } })
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      fromDate: "",
+      toDate: ""
+    }))
+  });
+
+  it("maneja el cambio de período correctamente (limpieza y parsing)", async () => {
+    const onChange = jest.fn()
+    render(<Filters filters={defaultFilters} onFiltersChange={onChange} />)
+
+    // Buscamos el PeriodPicker. Como es un componente custom, 
+    // asumimos que expone un input o el componente llama a onChange.
+    // Simulamos la llamada que haría el PeriodPicker internamente:
+    
+    const periodPicker = screen.getByTestId("period-picker-input") // Ajusta según tu componente
+
+    // Caso 1: Rango de fechas (Línea 68)
+    fireEvent.change(periodPicker, { target: { value: "2023/01/01-2023/01/31" } })
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      fromDate: "2023/01/01",
+      toDate: "2023/01/31"
+    }))
+
+    // Caso 2: Limpieza (Líneas 63-66)
+    fireEvent.change(periodPicker, { target: { value: "" } })
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      fromDate: "",
+      toDate: ""
+    }))
+  });
+
+  it("inicializa múltiples métodos desde los props", () => {
+    const multipleFilters = { ...defaultFilters, metodo: "yape,kashio" }
+    render(<Filters filters={multipleFilters} onFiltersChange={jest.fn()} />)
+
+    expect(screen.getByText("2 seleccionados")).toBeInTheDocument()
   })
 })

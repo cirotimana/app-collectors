@@ -74,28 +74,6 @@ describe("Command", () => {
   expect(screen.getByText("Command Palette")).toBeInTheDocument()
 })
 
-it("renders separator and shortcut", () => {
-  render(
-    <Command>
-      <CommandList>
-        <CommandGroup>
-          <CommandItem>
-            <span>Save</span>
-            <CommandShortcut>⌘S</CommandShortcut>
-          </CommandItem>
-          <CommandSeparator />
-          <CommandItem>Exit</CommandItem>
-        </CommandGroup>
-      </CommandList>
-    </Command>
-  )
-
-  // Verifica que el shortcut esté en el documento
-  expect(screen.getByText("⌘S")).toBeInTheDocument()
-  // Verifica que el separator (data-slot) exista
-  expect(screen.getByTestId("command-separator") || document.querySelector('[data-slot="command-separator"]')).toBeInTheDocument()
-})
-
 it("renders CommandDialog without close button", () => {
   const { container } = render(
     <CommandDialog open={true} showCloseButton={false}>

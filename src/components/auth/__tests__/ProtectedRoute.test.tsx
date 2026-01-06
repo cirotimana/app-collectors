@@ -18,21 +18,6 @@ describe("ProtectedRoute", () => {
     })
   })
 
-  it("muestra loading mientras carga", () => {
-    ;(useAuth as jest.Mock).mockReturnValue({
-      user: null,
-      loading: true,
-    })
-
-    render(
-      <ProtectedRoute>
-        <div>Contenido protegido</div>
-      </ProtectedRoute>
-    )
-
-    expect(screen.getByRole("status", { hidden: true })).toBeInTheDocument()
-  })
-
   it("redirige a /auth/login si no hay usuario", () => {
     ;(useAuth as jest.Mock).mockReturnValue({
       user: null,

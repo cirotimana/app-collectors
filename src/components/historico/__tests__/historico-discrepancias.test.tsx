@@ -1,6 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, fireEvent, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { HistoricoDiscrepancias } from "../historico-discrepancias"
+import { discrepanciesApi, liquidationsApi, conciliationsApi } from "@/lib/api"
+import { toast } from "sonner"
 
 // 🔥 MOCK APIs
 jest.mock("@/lib/api", () => ({
@@ -19,16 +21,46 @@ jest.mock("@/lib/api", () => ({
   },
 }))
 
-// 🔥 MOCK MODAL (EVITA useRouter)
-jest.mock("@/components/provider/data-table", () => ({
-  FileDetailsDialog: ({ open }: { open: boolean }) =>
-    open ? <div>MODAL_ABIERTO</div> : null,
+jest.mock("sonner", () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
 }))
 
-import {
-  discrepanciesApi,
-  liquidationsApi,
-} from "@/lib/api"
+// 🔥 MOCK COMPONENTS
+jest.mock("@/components/provider/data-table", () => ({
+  FileDetailsDialog: ({ open, item, type }: any) =>
+    open ? (
+      <div data-testid="file-details-dialog">
+        MODAL_ABIERTO - {item?.name} - {type}
+      </div>
+    ) : null,
+}))
+
+jest.mock("@/components/ui/period-picker", () => ({
+  PeriodPicker: ({ onChange }: any) => (
+    <input
+      data-testid="period-picker"
+      onChange={(e) => {
+        // Simulate date range or single date
+        const val = e.target.value
+        if (val === "CLEAR") {
+          onChange({})
+        } else if (val.includes(",")) {
+          const [from, to] = val.split(",")
+          onChange({ from: new Date(from), to: new Date(to) })
+        } else if (val.includes("ONLY_FROM")) {
+          // Simulate range selection in progress (only start date selected)
+          const dateStr = val.replace("ONLY_FROM", "").trim()
+          onChange({ from: new Date(dateStr) })
+        } else {
+          onChange({ from: new Date(val), to: new Date(val) })
+        }
+      }}
+    />
+  ),
+}))
 
 describe("HistoricoDiscrepancias", () => {
   const mockDiscrepancy = {
@@ -37,8 +69,8 @@ describe("HistoricoDiscrepancias", () => {
     methodProcess: "liquidations",
     status: "new",
     difference: 100,
-    createdAt: new Date().toISOString(),
-    updatedAT: new Date().toISOString(),
+    createdAt: "2023-01-01T10:00:00Z",
+    updatedAT: "2023-01-02T10:00:00Z",
     liquidation: {
       collector: { name: "Niubiz" },
     },
@@ -48,152 +80,273 @@ describe("HistoricoDiscrepancias", () => {
     jest.clearAllMocks()
   })
 
-  it("renderiza el historial", async () => {
-    ;(discrepanciesApi.getAll as jest.Mock).mockResolvedValue([mockDiscrepancy])
+  it("renderiza el historial y muestra datos correctamente", async () => {
+    (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([mockDiscrepancy])
 
     render(<HistoricoDiscrepancias />)
 
-    expect(
-      await screen.findByText(/Historial de Discrepancias/i)
-    ).toBeInTheDocument()
+    // Wait for loading to finish
+    await waitFor(() => screen.findByText(/Historial de Discrepancias/i))
 
-    expect(await screen.findByText("Niubiz")).toBeInTheDocument()
+    expect(screen.getByText("Niubiz")).toBeInTheDocument()
+    expect(screen.getByText("Nuevo")).toBeInTheDocument()
+    expect(screen.getByText("Liquidaciones")).toBeInTheDocument()
+    expect(screen.getByText("S/. 100")).toBeInTheDocument()
+  })
+
+  it("muestra estado de carga", async () => {
+    // Delay resolution
+    (discrepanciesApi.getAll as jest.Mock).mockImplementation(() => new Promise(resolve => setTimeout(() => resolve([]), 100)))
+
+    render(<HistoricoDiscrepancias />)
+    expect(screen.getByText("Cargando...")).toBeInTheDocument()
+
+    await waitFor(() => expect(screen.queryByText("Cargando...")).not.toBeInTheDocument())
+  })
+
+  it("muestra mensaje cuando no hay discrepancias", async () => {
+    (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([])
+    render(<HistoricoDiscrepancias />)
+    expect(await screen.findByText("No hay discrepancias")).toBeInTheDocument()
   })
 
   it("abre detalles del item", async () => {
     const user = userEvent.setup()
 
-    ;(discrepanciesApi.getAll as jest.Mock).mockResolvedValue([mockDiscrepancy])
-    ;(liquidationsApi.getAll as jest.Mock).mockResolvedValue([
-      { id: 10, name: "detalle mock" },
-    ])
+      ; (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([mockDiscrepancy])
+      ; (liquidationsApi.getAll as jest.Mock).mockResolvedValue([
+        { id: 10, name: "detalle mock" },
+      ])
 
     render(<HistoricoDiscrepancias />)
+    await screen.findByText("Niubiz")
 
-    const buttons = await screen.findAllByRole("button")
-    await user.click(buttons[0]) // 👁 ver detalles
+    const row = screen.getByRole("row", { name: /Nuevo/i })
+    const buttons = await within(row).findAllByRole("button")
+
+    // First button: Details
+    await user.click(buttons[0])
 
     await waitFor(() => {
-      expect(screen.getByText("MODAL_ABIERTO")).toBeInTheDocument()
+      expect(screen.getByTestId("file-details-dialog")).toBeInTheDocument()
+      expect(screen.getByText(/detalle mock/)).toBeInTheDocument()
     })
   })
 
-  it("cambia el estado a pending", async () => {
+  it("cambia el estado de new a pending", async () => {
     const user = userEvent.setup()
 
-    ;(discrepanciesApi.getAll as jest.Mock).mockResolvedValue([mockDiscrepancy])
-    ;(discrepanciesApi.updateStatus as jest.Mock).mockResolvedValue(undefined)
+      ; (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([mockDiscrepancy])
+      ; (discrepanciesApi.updateStatus as jest.Mock).mockResolvedValue(undefined)
 
     render(<HistoricoDiscrepancias />)
+    await screen.findByText("Niubiz")
 
-    const buttons = await screen.findAllByRole("button")
-    await user.click(buttons[1]) // ⏱
+    const row = screen.getByRole("row", { name: /Nuevo/i })
+    const buttons = await within(row).findAllByRole("button")
+
+    // Second button: Update (Clock for new)
+    await user.click(buttons[1])
 
     await waitFor(() => {
       expect(discrepanciesApi.updateStatus).toHaveBeenCalledWith(1, "pending")
+      expect(toast.success).toHaveBeenCalledWith("Estado actualizado correctamente")
+    })
+  })
+
+  it("cambia el estado de pending a closed", async () => {
+    const user = userEvent.setup()
+    const pendingDiscrepancy = { ...mockDiscrepancy, status: "pending" }
+      ; (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([pendingDiscrepancy])
+      ; (discrepanciesApi.updateStatus as jest.Mock).mockResolvedValue(undefined)
+
+    render(<HistoricoDiscrepancias />)
+    await screen.findByText("Niubiz")
+
+    const row = screen.getByRole("row", { name: /Pendiente/i })
+    const buttons = await within(row).findAllByRole("button")
+
+    // Second button: Update (Check for pending)
+    await user.click(buttons[1])
+
+    await waitFor(() => {
+      expect(discrepanciesApi.updateStatus).toHaveBeenCalledWith(1, "closed")
+    })
+  })
+
+  it("abre detalles para conciliacion", async () => {
+    const user = userEvent.setup()
+    const conciliationDiscrepancy = { ...mockDiscrepancy, methodProcess: "conciliations" }
+      ; (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([conciliationDiscrepancy])
+      ; (conciliationsApi.getAll as jest.Mock).mockResolvedValue([{ id: 10, name: "conciliation detail" }])
+
+    render(<HistoricoDiscrepancias />)
+    await screen.findByText("Niubiz")
+
+    const row = screen.getByRole("row", { name: /Nuevo/i })
+    const buttons = await within(row).findAllByRole("button")
+    await user.click(buttons[0])
+
+    await waitFor(() => {
+      expect(screen.getByTestId("file-details-dialog")).toBeInTheDocument()
+      expect(screen.getByText(/- conciliation/)).toBeInTheDocument()
     })
   })
 
   it("elimina la discrepancia", async () => {
     const user = userEvent.setup()
 
-    ;(discrepanciesApi.getAll as jest.Mock).mockResolvedValue([mockDiscrepancy])
-    ;(discrepanciesApi.delete as jest.Mock).mockResolvedValue(undefined)
+      ; (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([mockDiscrepancy])
+      ; (discrepanciesApi.delete as jest.Mock).mockResolvedValue(undefined)
 
     render(<HistoricoDiscrepancias />)
+    await screen.findByText("Niubiz")
 
-    const buttons = await screen.findAllByRole("button")
-    await user.click(buttons[2]) // 🗑
+    const row = screen.getByRole("row", { name: /Nuevo/i })
+    const buttons = await within(row).findAllByRole("button")
+
+    // Third button: Delete
+    await user.click(buttons[2])
 
     await waitFor(() => {
       expect(discrepanciesApi.delete).toHaveBeenCalledWith(1)
+      expect(toast.success).toHaveBeenCalledWith('Discrepancia eliminada correctamente')
     })
   })
-  
-  it("filtra por estado cuando cambia el filtro", async () => {
-  ;(discrepanciesApi.getByStatus as jest.Mock).mockResolvedValue([mockDiscrepancy]);
-  
-  const { rerender } = render(<HistoricoDiscrepancias />);
-  
-  // Como no pasaste el JSX de los filtros en el código, 
-  // pero el componente usa el estado, podemos simular el cambio de estado 
-  // si el componente expone los controles. 
-  // Si los controles están comentados en tu código, 
-  // asegúrate de descomentar el Select de estado para testearlo:
-  
-  // Simulando que el componente detecta el cambio de filtro (si estuviera visible)
-  // O disparando el fetch manualmente si el estado cambia.
-  // Pero para efectos de cobertura, necesitamos que entre a fetchDiscrepancies con statusFilter != "all"
-});
 
-it("filtra por rango de fechas", async () => {
-  const dateData = "2023-01-01-2023-01-31";
-  ;(discrepanciesApi.getByDateRange as jest.Mock).mockResolvedValue([mockDiscrepancy]);
+  it("maneja error al actualizar estado", async () => {
+    const user = userEvent.setup()
+      ; (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([mockDiscrepancy])
+      ; (discrepanciesApi.updateStatus as jest.Mock).mockRejectedValue(new Error("Update failed"))
 
-  // Aquí testeamos la lógica de la línea 42 (split por '-')
-  // Si tienes el PeriodPicker, busca su input y cambia el valor
-});
+    render(<HistoricoDiscrepancias />)
+    await screen.findByText("Niubiz")
 
-it("muestra error al fallar la carga de datos", async () => {
-  const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-  ;(discrepanciesApi.getAll as jest.Mock).mockRejectedValue(new Error("API Error"));
+    const row = screen.getByRole("row", { name: /Nuevo/i })
+    const buttons = await within(row).findAllByRole("button")
+    await user.click(buttons[1])
 
-  render(<HistoricoDiscrepancias />);
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Error al actualizar estado')
+    })
+  })
 
-  await waitFor(() => {
-    expect(screen.getByText(/Error al cargar discrepancias/i)).toBeInTheDocument();
+  it("maneja error al eliminar discrepancia", async () => {
+    const user = userEvent.setup()
+      ; (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([mockDiscrepancy])
+      ; (discrepanciesApi.delete as jest.Mock).mockRejectedValue(new Error("Delete failed"))
+
+    render(<HistoricoDiscrepancias />)
+    await screen.findByText("Niubiz")
+
+    const row = screen.getByRole("row", { name: /Nuevo/i })
+    const buttons = await within(row).findAllByRole("button")
+    await user.click(buttons[2])
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Error al eliminar discrepancia')
+    })
+  })
+
+  it("renderiza estado cerrado adecuadamente", async () => {
+    const closedDiscrepancy = { ...mockDiscrepancy, status: "closed" }
+      ; (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([closedDiscrepancy])
+
+    render(<HistoricoDiscrepancias />)
+    await screen.findByText("Niubiz")
+    // Should have default badge variant (or secondary depending on impl)
+    // We just check it renders without error
+    expect(screen.getByText("Cerrado")).toBeInTheDocument()
+    // Note: The badge text comes from where? map?
+    // In component: status is displayed?
+    // I need to check how status is rendered. badge variants.
+  })
+
+  it("no encuentra detalles del item (silencioso)", async () => {
+    const user = userEvent.setup()
+      ; (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([mockDiscrepancy])
+      ; (liquidationsApi.getAll as jest.Mock).mockResolvedValue([{ id: 999, name: "mismatch" }])
+
+    render(<HistoricoDiscrepancias />)
+    await screen.findByText("Niubiz")
+
+    const row = screen.getByRole("row", { name: /Nuevo/i })
+    const buttons = await within(row).findAllByRole("button")
+    await user.click(buttons[0])
+
+    // Wait to ensure NO dialog appears (and no error toast)
+    // We can't easily wait for "nothing" happening without timeout, but we can wait for api call
+    await waitFor(() => {
+      expect(liquidationsApi.getAll).toHaveBeenCalled()
+      expect(screen.queryByTestId("file-details-dialog")).not.toBeInTheDocument()
+    })
+  })
+
+  it("renderiza estado desconocido con color default", async () => {
+    const unknownDiscrepancy = { ...mockDiscrepancy, status: "unknown" }
+      ; (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([unknownDiscrepancy])
+
+    render(<HistoricoDiscrepancias />)
+    await screen.findByText("Niubiz")
+  })
+
+  it("muestra error al fallar la carga de datos", async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+    (discrepanciesApi.getAll as jest.Mock).mockRejectedValue(new Error("API Error"));
+
+    render(<HistoricoDiscrepancias />);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Error al cargar discrepancias')
+    });
+    consoleSpy.mockRestore();
   });
-  consoleSpy.mockRestore();
-});
 
-it("maneja error al cargar detalles", async () => {
-  ;(discrepanciesApi.getAll as jest.Mock).mockResolvedValue([mockDiscrepancy]);
-  ;(liquidationsApi.getAll as jest.Mock).mockRejectedValue(new Error("Detail Error"));
+  it("maneja error al cargar detalles", async () => {
+    (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([mockDiscrepancy]);
+    (liquidationsApi.getAll as jest.Mock).mockRejectedValue(new Error("Detail Error"));
 
-  render(<HistoricoDiscrepancias />);
-  
-  const user = userEvent.setup();
-  const detailBtn = await screen.findByRole("button", { name: "" }); // El ojo
-  await user.click(detailBtn);
+    render(<HistoricoDiscrepancias />);
 
-  await waitFor(() => {
-    expect(screen.getByText(/Error al cargar detalles/i)).toBeInTheDocument();
+    const user = userEvent.setup();
+    const row = await screen.findByRole("row", { name: /Nuevo/i });
+    const detailBtn = within(row).getAllByRole("button")[0];
+    await user.click(detailBtn);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Error al cargar detalles')
+    });
   });
-});
 
-it("navega por la paginación", async () => {
-  const user = userEvent.setup();
-  // Crear 15 discrepancias
-  const manyDiscrepancies = Array.from({ length: 15 }, (_, i) => ({
-    ...mockDiscrepancy,
-    id: i,
-  }));
-  ;(discrepanciesApi.getAll as jest.Mock).mockResolvedValue(manyDiscrepancies);
+  it("navega por la paginación", async () => {
+    const user = userEvent.setup();
+    const manyDiscrepancies = Array.from({ length: 15 }, (_, i) => ({
+      ...mockDiscrepancy,
+      id: i,
+    }));
+    (discrepanciesApi.getAll as jest.Mock).mockResolvedValue(manyDiscrepancies);
 
-  render(<HistoricoDiscrepancias />);
+    render(<HistoricoDiscrepancias />);
 
-  // Verificar que muestra los primeros 10
-  expect(await screen.findByText(/Mostrando 1 a 10 de 15/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Mostrando 1 a 10 de 15/i)).toBeInTheDocument();
 
-  const nextBtn = screen.getByRole("button", { name: /Siguiente/i });
-  await user.click(nextBtn);
+    const nextBtn = screen.getByRole("button", { name: /Siguiente/i });
+    await user.click(nextBtn);
 
-  // Verificar cambio de página (Línea 232+)
-  expect(screen.getByText(/Página 2 de 2/i)).toBeInTheDocument();
-  expect(screen.getByText(/Mostrando 11 a 15 de 15/i)).toBeInTheDocument();
-});
+    expect(screen.getByText(/Página 2 de 2/i)).toBeInTheDocument();
+    expect(screen.getByText(/Mostrando 11 a 15 de 15/i)).toBeInTheDocument();
 
-it("muestra mensaje cuando no hay discrepancias", async () => {
-  ;(discrepanciesApi.getAll as jest.Mock).mockResolvedValue([]);
-  render(<HistoricoDiscrepancias />);
-  expect(await screen.findByText(/No hay discrepancias/i)).toBeInTheDocument();
-});
+    const prevBtn = screen.getByRole("button", { name: /Anterior/i });
+    await user.click(prevBtn);
+    expect(screen.getByText(/Página 1 de 2/i)).toBeInTheDocument();
+  });
 
-it("muestra N/A si no hay información de liquidador", async () => {
-  const discrepancyNoInfo = { ...mockDiscrepancy, liquidation: null, conciliation: null };
-  ;(discrepanciesApi.getAll as jest.Mock).mockResolvedValue([discrepancyNoInfo]);
+  it("muestra N/A si no hay información de liquidador", async () => {
+    const discrepancyNoInfo = { ...mockDiscrepancy, liquidation: null, conciliation: null };
+    (discrepanciesApi.getAll as jest.Mock).mockResolvedValue([discrepancyNoInfo]);
 
-  render(<HistoricoDiscrepancias />);
-  expect(await screen.findByText("N/A")).toBeInTheDocument();
-});
+    render(<HistoricoDiscrepancias />);
+    expect(await screen.findByText("N/A")).toBeInTheDocument();
+  });
+
 })

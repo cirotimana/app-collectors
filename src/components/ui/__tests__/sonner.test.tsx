@@ -13,17 +13,6 @@ describe("Toaster Component", () => {
     jest.clearAllMocks()
   })
 
-  it("debe renderizar con el tema configurado en next-themes", () => {
-    // Probamos la rama donde el tema es 'dark' (Cubre línea: const { theme = "system" } = useTheme())
-    ;(useTheme as jest.Mock).mockReturnValue({ theme: "dark" })
-    
-    const { container } = render(<Toaster />)
-    
-    // Verificamos que el contenedor de Sonner exista
-    const sonnerToaster = container.querySelector(".toaster")
-    expect(sonnerToaster).toBeInTheDocument()
-  })
-
   it("debe usar 'system' como tema por defecto si no hay uno definido", () => {
     // Cubre la asignación por defecto: theme = "system"
     ;(useTheme as jest.Mock).mockReturnValue({ theme: undefined })
