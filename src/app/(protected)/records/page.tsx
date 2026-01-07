@@ -492,9 +492,9 @@ export default function RegistrosPage() {
                             </Button>
                             {canDelete() && (
                               <>
-                                <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
+                                {/* <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
                                   <Edit className="h-4 w-4" />
-                                </Button>
+                                </Button> */}
                                 <Button size="sm" variant="outline" onClick={() => handleDelete(record)}>
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -581,9 +581,9 @@ export default function RegistrosPage() {
                             </Button>
                             {canDelete() && (
                               <>
-                                <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
+                                {/* <Button size="sm" variant="outline" onClick={() => handleEdit(record.id)}>
                                   <Edit className="h-4 w-4" />
-                                </Button>
+                                </Button> */}
                                 <Button size="sm" variant="outline" onClick={() => handleDelete(record)}>
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -648,14 +648,16 @@ export default function RegistrosPage() {
                 <>
                   <div><strong>Estado:</strong> {(selectedRecord as CalimacoRecord).status}</div>
                   <div><strong>Usuario:</strong> {(selectedRecord as CalimacoRecord).userId}</div>
-                  <div><strong>External ID:</strong> {(selectedRecord as CalimacoRecord).externalId}</div>
-                  <div><strong>Comentarios:</strong> {(selectedRecord as CalimacoRecord).comments}</div>
+                  {/* <div><strong>External ID:</strong> {(selectedRecord as CalimacoRecord).externalId}</div> */}
+                  <div><strong>External ID:</strong> {["nan", "None"].includes((selectedRecord as CalimacoRecord).externalId) ? "Sin Data" : (selectedRecord as CalimacoRecord).externalId}</div>
+                  {/* <div><strong>Comentarios:</strong> {(selectedRecord as CalimacoRecord).comments}</div> */}
+                  <div><strong>Comentarios:</strong> {["nan", "None"].includes((selectedRecord as CalimacoRecord).comments) ? "Sin Comentarios" : (selectedRecord as CalimacoRecord).comments}</div>
                 </>
               ) : (
                 <>
-                  <div><strong>Cliente:</strong> {(selectedRecord as CollectorRecord).clientName}</div>
-                  <div><strong>Estado:</strong> {(selectedRecord as CollectorRecord).providerStatus}</div>
-                  <div><strong>Provider ID:</strong> {(selectedRecord as CollectorRecord).providerId}</div>
+                  <div><strong>Cliente:</strong> {["nan", "None"].includes((selectedRecord as CollectorRecord).clientName) ? "Sin Data" : (selectedRecord as CollectorRecord).clientName}</div>
+                  <div><strong>Estado:</strong> {["nan", "None"].includes((selectedRecord as CollectorRecord).providerStatus) ? "Sin Data" : (selectedRecord as CollectorRecord).providerStatus}</div>
+                  <div><strong>Provider ID:</strong> {["nan", "None"].includes((selectedRecord as CollectorRecord).providerId) ? "Sin Data" : (selectedRecord as CollectorRecord).providerId}</div>
                 </>
               )}
             </div>
