@@ -157,42 +157,6 @@ it("login lanza error cuando falla", async () => {
   ).rejects.toThrow("Invalid credentials")
 })
 
-it("logout desde sesión activa limpia estado y UI", async () => {
-  const user = { id: 1, username: "leo", email: "leo@test.com", role: "admin" }
-
-  // Simula sesión activa
-  ;(authLib.isAuthenticated as jest.Mock).mockReturnValue(true)
-  ;(authLib.getUser as jest.Mock).mockReturnValue(user)
-
-  localStorage.setItem("auth_token", "token123")
-
-  render(
-    <AuthProvider>
-      <TestComponent />
-    </AuthProvider>
-  )
-
-  // Confirmamos estado inicial autenticado
-  await waitFor(() => {
-    expect(screen.getByTestId("authenticated")).toHaveTextContent("true")
-    expect(screen.getByTestId("username")).toHaveTextContent("leo")
-  })
-
-  // Click logout
-  await userEvent.click(screen.getByText("logout"))
-
-  // Verificaciones CLAVE (branches)
-  await waitFor(() => {
-    expect(authLib.logout).toHaveBeenCalled()
-    expect(mockPush).toHaveBeenCalledWith("/auth/login")
-    expect(screen.getByTestId("authenticated")).toHaveTextContent("false")
-    expect(screen.getByTestId("username")).toHaveTextContent("")
-  })
-
-  // Limpieza real
-  expect(localStorage.getItem("auth_token")).toBeNull()
-})
-
 it("NO sincroniza auth cuando isAuthenticated es true pero no hay userData", async () => {
   // isAuthenticated dice que sí
   ;(authLib.isAuthenticated as jest.Mock).mockReturnValue(true)

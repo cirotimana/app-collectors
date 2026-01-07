@@ -27,8 +27,8 @@ describe('useDiscrepancies Hook', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    // Configuración por defecto para getAll
-    ;(discrepanciesApi.getAll as jest.Mock).mockResolvedValue(mockData)
+      // Configuración por defecto para getAll
+      ; (discrepanciesApi.getAll as jest.Mock).mockResolvedValue(mockData)
   })
 
   it('debe cargar las discrepancias al montar el hook', async () => {
@@ -57,7 +57,7 @@ describe('useDiscrepancies Hook', () => {
   })
 
   it('debe actualizar el estado y mostrar toast de éxito', async () => {
-    ;(discrepanciesApi.updateStatus as jest.Mock).mockResolvedValue({})
+    ; (discrepanciesApi.updateStatus as jest.Mock).mockResolvedValue({})
     const { result } = renderHook(() => useDiscrepancies())
 
     await waitFor(() => expect(result.current.loading).toBe(false))
@@ -72,7 +72,7 @@ describe('useDiscrepancies Hook', () => {
   })
 
   it('debe manejar errores al actualizar el estado', async () => {
-    ;(discrepanciesApi.updateStatus as jest.Mock).mockRejectedValue(new Error('API Error'))
+    ; (discrepanciesApi.updateStatus as jest.Mock).mockRejectedValue(new Error('API Error'))
     const { result } = renderHook(() => useDiscrepancies())
 
     await act(async () => {
@@ -83,7 +83,7 @@ describe('useDiscrepancies Hook', () => {
   })
 
   it('debe eliminar una discrepancia y refrescar la lista', async () => {
-    ;(discrepanciesApi.delete as jest.Mock).mockResolvedValue({})
+    ; (discrepanciesApi.delete as jest.Mock).mockResolvedValue({})
     const { result } = renderHook(() => useDiscrepancies())
 
     await waitFor(() => expect(result.current.loading).toBe(false))
@@ -98,7 +98,7 @@ describe('useDiscrepancies Hook', () => {
   })
 
   it('debe manejar errores al eliminar', async () => {
-    ;(discrepanciesApi.delete as jest.Mock).mockRejectedValue(new Error('Delete Error'))
+    ; (discrepanciesApi.delete as jest.Mock).mockRejectedValue(new Error('Delete Error'))
     const { result } = renderHook(() => useDiscrepancies())
 
     await act(async () => {
@@ -106,5 +106,37 @@ describe('useDiscrepancies Hook', () => {
     })
 
     expect(toast.error).toHaveBeenCalledWith('Error al eliminar discrepancia')
+  })
+
+  it('debe manejar error al cargar discrepancias (console.error)', async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { })
+      ; (discrepanciesApi.getAll as jest.Mock).mockRejectedValue(new Error('Fetch Error'))
+
+    const { result } = renderHook(() => useDiscrepancies())
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+
+    expect(consoleSpy).toHaveBeenCalledWith('Error fetching discrepancies:', expect.any(Error))
+    consoleSpy.mockRestore()
+  })
+
+  it('debe retornar true si hay discrepancias con status pending', async () => {
+    const pendingData = [{ id: 1, status: 'pending' }]
+      ; (discrepanciesApi.getAll as jest.Mock).mockResolvedValue(pendingData)
+
+    const { result } = renderHook(() => useDiscrepancies())
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.hasNewDiscrepancies).toBe(true)
+  })
+
+  it('debe retornar false si no hay nuevas ni pendientes', async () => {
+    const closedData = [{ id: 1, status: 'closed' }]
+      ; (discrepanciesApi.getAll as jest.Mock).mockResolvedValue(closedData)
+
+    const { result } = renderHook(() => useDiscrepancies())
+
+    await waitFor(() => expect(result.current.loading).toBe(false))
+    expect(result.current.hasNewDiscrepancies).toBe(false)
   })
 })

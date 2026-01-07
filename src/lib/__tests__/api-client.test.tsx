@@ -41,15 +41,6 @@ describe('API helpers', () => {
     } as any
   })
 
-
-  afterAll(() => {
-    Object.defineProperty(window, 'location', {
-      configurable: true,
-      writable: true,
-      value: originalLocation,
-    })
-  })
-
   /* ================= fetchWithAuth ================= */
 
   it('agrega Authorization cuando hay token', async () => {

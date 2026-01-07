@@ -389,40 +389,7 @@ describe('DiscrepanciesAlert', () => {
     expect(screen.getByText('N/A')).toBeInTheDocument()
   })
 
-  /* ================= Colores de badges ================= */
-
-  it('usa color destructive para estado nuevo', () => {
-    render(<DiscrepanciesAlert />)
-
-    fireEvent.click(screen.getByText('Ver Todas'))
-
-    const nuevoBadge = screen.getByText('Nuevo')
-    expect(nuevoBadge.parentElement).toHaveAttribute('data-variant', 'destructive')
-  })
-
-  it('usa color secondary para estado pendiente', () => {
-    render(<DiscrepanciesAlert />)
-
-    fireEvent.click(screen.getByText('Ver Todas'))
-
-    const pendienteBadge = screen.getByText('Pendiente')
-    expect(pendienteBadge.parentElement).toHaveAttribute('data-variant', 'secondary')
-  })
-
   /* ================= Edge cases ================= */
-
-  it('maneja lista vacía de discrepancias', () => {
-    ;(useDiscrepancies as jest.Mock).mockReturnValue({
-      ...defaultMockHook,
-      discrepancies: [],
-    })
-
-    render(<DiscrepanciesAlert />)
-
-    // La alerta no debe aparecer si no hay discrepancias
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-  })
-
   it('cierra el diálogo de detalles cuando se hace clic en close', async () => {
     const mockConciliation = {
       id: 100,

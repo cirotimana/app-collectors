@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react"
 import { AuthForm } from "../AuthForm"
+import { toast } from "sonner"
 
 // 🔹 mock de login
 const mockLogin = jest.fn()
@@ -24,7 +25,7 @@ jest.mock("lucide-react", () => ({
 }))
 
 describe("AuthForm", () => {
-    beforeEach(() => {
+  beforeEach(() => {
     jest.clearAllMocks()
     jest.spyOn(console, "error").mockImplementation(() => {})
   })
@@ -32,6 +33,12 @@ describe("AuthForm", () => {
   afterAll(() => {
     jest.restoreAllMocks()
   })
+
+  const fillAndSubmit = async () => {
+    fireEvent.change(screen.getByLabelText(/usuario/i), { target: { value: "testuser" } })
+    fireEvent.change(screen.getByLabelText(/contraseña/i), { target: { value: "password123" } })
+    fireEvent.click(screen.getByRole("button", { name: /iniciar sesion/i }))
+  }
 
   it("renderiza el formulario correctamente", () => {
     render(<AuthForm />)
@@ -133,5 +140,44 @@ describe("AuthForm", () => {
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalled()
     })
+  })
+
+  it("debe mostrar el mensaje de error que viene de la API (error.message)", async () => {
+    // Escenario 1: El error tiene un mensaje definido
+    const apiErrorMessage = "Credenciales inválidas"
+    mockLogin.mockRejectedValueOnce(new Error(apiErrorMessage))
+
+    render(<AuthForm />)
+    await fillAndSubmit()
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(apiErrorMessage)
+    })
+  })
+
+  it("debe mostrar el mensaje por defecto cuando el error no tiene mensaje", async () => {
+    // Escenario 2: El error no tiene propiedad .message (Línea del ||)
+    mockLogin.mockRejectedValueOnce({}) // Un objeto vacío no tiene .message
+
+    render(<AuthForm />)
+    await fillAndSubmit()
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Error en la autenticacion")
+    })
+  })
+
+  it("debe loguear el error en consola para debugging", async () => {
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {})
+    const rawError = { code: 500 }
+    mockLogin.mockRejectedValueOnce(rawError)
+
+    render(<AuthForm />)
+    await fillAndSubmit()
+
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith("Error:", rawError)
+    })
+    consoleSpy.mockRestore()
   })
 })

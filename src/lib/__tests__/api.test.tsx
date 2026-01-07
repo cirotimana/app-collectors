@@ -516,4 +516,83 @@ describe('API module', () => {
       expect(apiClient.deleteWithAuth).toHaveBeenCalledWith('http://localhost:3040/api/users/5')
     })
   })
+  
+it('toPaginatedResponse usa valores por defecto si no hay metadata', async () => {
+  const data = [{ id: 1 }]
+  ;(apiClient.getWithAuth as jest.Mock).mockResolvedValue(data)
+
+  const result = await conciliationReportsApi.getCompleteReport(
+    [1],
+    '2024-01-01',
+    '2024-01-31'
+  )
+
+  expect(result.total).toBe(0)
+  expect(result.page).toBe(1)
+  expect(result.limit).toBe(20)
+  expect(result.totalPages).toBe(0)
+})
+
+it('executeDigitalProcess lanza error si el proceso no existe', async () => {
+  await expect(
+    processApi.executeDigitalProcess('otro' as any)
+  ).rejects.toThrow('Endpoint no encontrado')
+})
+
+it('downloadProcessedFile descarga correctamente', async () => {
+  const mockBlob = new Blob(['file'])
+  ;(apiClient.fetchWithAuth as jest.Mock).mockResolvedValue({
+    ok: true,
+    blob: jest.fn().mockResolvedValue(mockBlob),
+  })
+
+  const result = await downloadApi.downloadProcessedFile(
+    'conciliaciones',
+    'file.zip'
+  )
+
+  expect(result).toBe(true)
+})
+
+it('downloadProcessedFile descarga correctamente', async () => {
+  const mockBlob = new Blob(['file'])
+  ;(apiClient.fetchWithAuth as jest.Mock).mockResolvedValue({
+    ok: true,
+    blob: jest.fn().mockResolvedValue(mockBlob),
+  })
+
+  const result = await downloadApi.downloadProcessedFile(
+    'conciliaciones',
+    'file.zip'
+  )
+
+  expect(result).toBe(true)
+})
+
+it('getByCalimacoId retorna registros si no hay error', async () => {
+  const mockData = [{ id: 1 }]
+  ;(apiClient.getWithAuth as jest.Mock).mockResolvedValue(mockData)
+
+  const result = await calimacoRecordsApi.getByCalimacoId('ABC')
+
+  expect(result).toEqual(mockData)
+})
+
+it('getByCalimacoId retorna registros si no hay error', async () => {
+  const mockData = [{ id: 1 }]
+  ;(apiClient.getWithAuth as jest.Mock).mockResolvedValue(mockData)
+
+  const result = await calimacoRecordsApi.getByCalimacoId('ABC')
+
+  expect(result).toEqual(mockData)
+})
+
+it('getByCalimacoId retorna registros si no hay error', async () => {
+  const mockData = [{ id: 1 }]
+  ;(apiClient.getWithAuth as jest.Mock).mockResolvedValue(mockData)
+
+  const result = await calimacoRecordsApi.getByCalimacoId('ABC')
+
+  expect(result).toEqual(mockData)
+})
 })
