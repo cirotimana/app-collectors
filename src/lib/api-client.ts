@@ -45,7 +45,7 @@ export async function fetchWithAuth(
     logout()
     // redirigir a login
     if (typeof window !== 'undefined') {
-      window.location.href = '/login'
+      window.location.href = '/auth/login'
     }
     throw new Error('Sesion expirada')
   }

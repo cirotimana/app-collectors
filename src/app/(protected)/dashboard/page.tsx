@@ -1,18 +1,32 @@
 "use client"
 
 import * as React from "react"
+import { format, subDays } from "date-fns"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { Filters } from "@/components/dashboard/filters"
 import { ReconciliationTable } from "@/components/dashboard/reconciliation-table"
 import { PieChartCard } from "@/components/dashboard/pie-chart-card"
 import { BarChartCard } from "@/components/dashboard/bar-chart-card"
+import { RoleGuard } from "@/components/auth/RoleGuard"
+import { ROLES } from "@/lib/permissions"
 
 export default function DashboardPage() {
-  const [filters, setFilters] = React.useState({
+  /* const [filters, setFilters] = React.useState({
     proceso: "liquidacion",
     metodo: "kashio",
     fromDate: "",
     toDate: ""
+  }) */
+
+  const [filters, setFilters] = React.useState(() => {
+     const today = new Date()
+     const lastWeek = subDays(today, 7)
+     return {
+       proceso: "liquidacion",
+       metodo: "kashio",
+       fromDate: format(lastWeek, "yyyyMMdd"),
+       toDate: format(today, "yyyyMMdd")
+     }
   })
 
   const [stats, setStats] = React.useState({
@@ -113,7 +127,7 @@ export default function DashboardPage() {
   }, [filters])
 
   return (
-    // <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
+    <RoleGuard allowedRoles={[ROLES.ADMINISTRATOR, ROLES.ANALISTA_TESORERIA]} redirectTo403={true}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -157,6 +171,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-
+    </RoleGuard>
   )
 }

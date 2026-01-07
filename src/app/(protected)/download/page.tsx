@@ -35,13 +35,13 @@ function DownloadPageContent() {
   // Funcion que se ejecuta cuando se confirma en el dialogo
   const handleConfirmDownload = async () => {
     setShowConfirmation(false);
-    
+
     setIsLoading(true);
     const toastId = toast.loading("Solicitando archivo del servidor");
 
     try {
       const { downloadApi } = await import('@/lib/api');
-      
+
       let success = false;
       if (tipo === "conciliacion") {
         success = await downloadApi.downloadProcessedFile('conciliaciones', archivo);
@@ -50,7 +50,7 @@ function DownloadPageContent() {
         const fullPath = `digital/collectors/${recaudador.toLowerCase()}/liquidations/processed/${archivo}`;
         success = await downloadApi.downloadFile(`s3://bucket/${fullPath}`);
       }
-      
+
       if (success) {
         toast.success("Descarga iniciada", {
           id: toastId,
@@ -62,8 +62,8 @@ function DownloadPageContent() {
     } catch (error: any) {
       toast.error("Error en la descarga", {
         id: toastId,
-        description: error.message === "Error 404" 
-          ? "Archivo no encontrado" 
+        description: error.message === "Error 404"
+          ? "Archivo no encontrado"
           : error.message
       });
     } finally {
@@ -74,10 +74,10 @@ function DownloadPageContent() {
   // Generar el mensaje de confirmacion para descarga
   const getConfirmationMessage = () => {
     const tipoTexto = tipo === "conciliacion" ? "conciliacion" : "liquidacion";
-    const recaudadorTexto = tipo === "liquidacion" 
-      ? ` del recaudador ${recaudador.charAt(0).toUpperCase() + recaudador.slice(1)}` 
+    const recaudadorTexto = tipo === "liquidacion"
+      ? ` del recaudador ${recaudador.charAt(0).toUpperCase() + recaudador.slice(1)}`
       : "";
-    
+
     return `Se va a descargar el archivo de ${tipoTexto}${recaudadorTexto}: ${archivo}`;
   };
 
@@ -173,7 +173,7 @@ function DownloadPageContent() {
           <Button
             onClick={handleOpenConfirmation}
             disabled={isLoading || !archivo}
-            className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-linear-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>

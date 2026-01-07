@@ -37,28 +37,28 @@ import {
 } from "@/components/ui/avatar";
 
 const menuItems = [
-  { icon: <TrendingUp />, label: "Dashboard Ventas", href: "/dashboard-ventas" },
-  { icon: <LayoutDashboard  />, label: "Dashboard Liquidaciones", href: "/dashboard", requireLiquidaciones: true },
-  { icon: <PieChart />, label: "Reportes", href: "/reportes" },
-  { icon: <Database />, label: "Registros", href: "/registros" },
-  { icon: <BookText  />, label: "Resumen", href: "/resumen" },
+  { icon: <TrendingUp />, label: "Dashboard Ventas", href: "/dashboard/sales" },
+  { icon: <LayoutDashboard />, label: "Dashboard Liquidaciones", href: "/dashboard", requireLiquidaciones: true },
+  { icon: <PieChart />, label: "Reportes", href: "/reports" },
+  { icon: <Database />, label: "Registros", href: "/records" },
+  { icon: <BookText />, label: "Resumen", href: "/summary" },
   { icon: <CloudDownload />, label: "Descargas", href: "/download", requireAdmin: true },
   { icon: <Gpu />, label: "Digital", href: "/digital", requireDigital: true },
 ];
 
 const processItems = [
   { icon: <Activity />, label: "Conciliacion", href: "/process" },
-  { icon: <RefreshCw />, label: "Actualizacion", href: "/process/actualizacion" },
+  { icon: <RefreshCw />, label: "Actualizacion", href: "/process/updated" },
 ];
 
 const historicoItems = [
-  { icon: <History />, label: "Discrepancias", href: "/historico" },
-  { icon: <BarChart3 />, label: "Ejecuciones", href: "/historico/ejecuciones" },
+  { icon: <History />, label: "Discrepancias", href: "/history" },
+  { icon: <BarChart3 />, label: "Ejecuciones", href: "/history/executions" },
 ];
 
 const configuracionItems = [
-  { icon: <Users />, label: "Usuarios", href: "/configuracion/usuarios" },
-  { icon: <Shield />, label: "Roles", href: "/configuracion/roles" },
+  { icon: <Users />, label: "Usuarios", href: "/configuration/users" },
+  { icon: <Shield />, label: "Roles", href: "/configuration/roles" },
 ];
 
 export function AppSidebar() {
@@ -108,7 +108,7 @@ export function AppSidebar() {
             <p className="text-xs text-gray-600">
               Plataforma de Tesoreria
             </p>
-          </div>  
+          </div>
         </div>
       </SidebarHeader>
 
@@ -125,7 +125,7 @@ export function AppSidebar() {
                     className={cn(
                       "text-sm font-semibold",
                       pathname === item.href &&
-                        "bg-red-600 text-white hover:bg-red-700"
+                      "bg-red-600 text-white hover:bg-red-700"
                     )}
                   >
                     <Link href={item.href}>
@@ -135,7 +135,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              
+
               {/* Submenu Procesos */}
               <Collapsible>
                 <SidebarMenuItem>
@@ -156,7 +156,7 @@ export function AppSidebar() {
                             className={cn(
                               "text-sm",
                               pathname === item.href &&
-                                "bg-red-600 text-white hover:bg-red-700"
+                              "bg-red-600 text-white hover:bg-red-700"
                             )}
                           >
                             <Link href={item.href}>
@@ -191,7 +191,7 @@ export function AppSidebar() {
                             className={cn(
                               "text-sm",
                               pathname === item.href &&
-                                "bg-red-600 text-white hover:bg-red-700"
+                              "bg-red-600 text-white hover:bg-red-700"
                             )}
                           >
                             <Link href={item.href}>
@@ -227,7 +227,7 @@ export function AppSidebar() {
                               className={cn(
                                 "text-sm",
                                 pathname === item.href &&
-                                  "bg-red-600 text-white hover:bg-red-700"
+                                "bg-red-600 text-white hover:bg-red-700"
                               )}
                             >
                               <Link href={item.href}>

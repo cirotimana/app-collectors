@@ -567,6 +567,24 @@ export const collectorRecordsApi = {
   }
 }
 
+// Tipo para respuesta de /api/auth/me
+export interface CurrentUser {
+  id: number
+  username: string
+  firstName: string
+  lastName: string
+  email: string
+  role: string
+  isActive: boolean
+}
+
+// API de Autenticacion
+export const authApi = {
+  async getCurrentUser(): Promise<CurrentUser> {
+    return getWithAuth<CurrentUser>(`${API_URL}/auth/me`)
+  }
+}
+
 // API de Descargas
 export const downloadApi = {
   async downloadFile(filePath: string): Promise<boolean> {

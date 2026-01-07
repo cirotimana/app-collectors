@@ -54,7 +54,7 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
 
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? formatPeriodDisplay(value) : "Seleccionar fecha o rango"}
+          {value ? formatPeriodDisplay(value) : <span>Seleccionar fechas</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
@@ -63,7 +63,6 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
           selected={range}
           onSelect={handleSelect}
           locale={es}
-          initialFocus
           numberOfMonths={1}
         />
       </PopoverContent>
@@ -71,16 +70,29 @@ export function PeriodPicker({ value, onChange }: PeriodPickerProps) {
   )
 }
 
+// function formatPeriodDisplay(value: string): string {
+//   if (!value) return ""
+//   if (value.includes("-")) {
+//     const [from, to] = value.split("-")
+//     return `${formatDisplayDate(from)} → ${formatDisplayDate(to)}`
+//   }
+//   return formatDisplayDate(value)
+// }
+
+// function formatDisplayDate(value: string): string {
+//   if (value.length !== 8) return value
+//   return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`
+// }
 function formatPeriodDisplay(value: string): string {
   if (!value) return ""
   if (value.includes("-")) {
     const [from, to] = value.split("-")
-    return `${formatDisplayDate(from)} → ${formatDisplayDate(to)}`
+    return `${formatDisplayDate(from)} - ${formatDisplayDate(to)}`
   }
   return formatDisplayDate(value)
 }
 
 function formatDisplayDate(value: string): string {
   if (value.length !== 8) return value
-  return `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}`
+  return `${value.slice(6, 8)}/${value.slice(4, 6)}/${value.slice(0, 4)}`
 }
