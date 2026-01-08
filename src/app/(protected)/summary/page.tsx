@@ -36,6 +36,7 @@ const COLLECTORS = [
 export default function HistoricoEjecucionesPage() {
   const router = useRouter()
   const [selectedCollectors, setSelectedCollectors] = React.useState<number[]>([1, 2, 3, 4, 5, 6, 7, 8, 9])
+  const [selectedCollectorValue, setSelectedCollectorValue] = React.useState<string>("all")
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(() => {
     const today = new Date()
     return { from: today, to: today }
@@ -80,22 +81,50 @@ export default function HistoricoEjecucionesPage() {
   }
 
   const handleExport = async () => {
-    if (!salesData || salesData.length === 0) {
-      toast.error("No hay datos para exportar")
+    if (!dateRange?.from || !dateRange?.to) {
+      toast.error("Selecciona un rango de fechas")
       return
     }
 
-    const toastId = toast.loading("Generando archivo Excel...")
+    if (selectedCollectors.length === 0) {
+      toast.error("Selecciona al menos un recaudador")
+      return
+    }
+
+    const toastId = toast.loading("Actualizando datos...")
+    setLoading(true)
 
     try {
+      const fromDate = format(dateRange.from, "yyyy-MM-dd")
+      const toDate = format(dateRange.to, "yyyy-MM-dd")
+      
+      // actualizar datos con el rango de fechas actual
+      const data = await conciliationReportsApi.getAccumulatedReport(
+        selectedCollectors,
+        fromDate,
+        toDate
+      )
+      
+      setSalesData(data)
+
+      if (!data || data.length === 0) {
+        toast.dismiss(toastId)
+        toast.error("No hay datos para exportar")
+        setLoading(false)
+        return
+      }
+
+      toast.loading("Generando archivo Excel...", { id: toastId })
       await new Promise(resolve => setTimeout(resolve, 100))
-      generateSummaryExcelReport(salesData)
+      generateSummaryExcelReport(data)
       toast.dismiss(toastId)
       toast.success("Archivo descargado exitosamente")
     } catch (error) {
       console.error(error)
       toast.dismiss(toastId)
       toast.error("Error al exportar el reporte")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -159,8 +188,9 @@ export default function HistoricoEjecucionesPage() {
             <div className="space-y-2">
               <Label>Recaudadores</Label>
               <Select
-                value="all"
+                value={selectedCollectorValue}
                 onValueChange={(value) => {
+                  setSelectedCollectorValue(value)
                   if (value === "all") {
                     setSelectedCollectors([1, 2, 3, 4, 5, 6, 7, 8, 9])
                   } else {
@@ -225,7 +255,7 @@ export default function HistoricoEjecucionesPage() {
             <Button 
               variant="outline" 
               onClick={handleExport} 
-              disabled={!salesData || loading}
+              disabled={!dateRange?.from || !dateRange?.to || loading}
               className="flex-1 sm:flex-none bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
             >
               <Download className="mr-2 h-4 w-4" />
