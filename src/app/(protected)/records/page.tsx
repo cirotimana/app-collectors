@@ -405,29 +405,28 @@ export default function RegistrosPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Estado</Label>
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos los estados" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    {activeTab === "calimaco" ? (
-                      <>
+                {activeTab === "calimaco" ? (
+                  <>
+                    <Label>Estado</Label>
+                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todos los estados" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
                         <SelectItem value="Válido">Válido</SelectItem>
                         <SelectItem value="Denegado">Denegado</SelectItem>
                         <SelectItem value="Nuevo">Nuevo</SelectItem>
                         <SelectItem value="CANCELLED">CANCELLED</SelectItem>
                         <SelectItem value="Límites excedidos">Límites excedidos</SelectItem>
-                      </>
-                    ) : (
-                      <>
-                        <SelectItem value="approved">Aprobados</SelectItem>
-                        <SelectItem value="others">Otros</SelectItem>
-                      </>
-                    )}
-                  </SelectContent>
-                </Select>
+                      </SelectContent>
+                    </Select>
+                  </>
+                ) : (
+                  <div className="invisible">
+                    <Label>&nbsp;</Label>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
