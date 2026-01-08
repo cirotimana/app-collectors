@@ -118,18 +118,44 @@ export default function ReportesPage() {
   }
 
   const handleExport = async () => {
-    if (!reports || !reports.data.length) {
-      toast.error("No hay datos para exportar")
+    if (!dateRange?.from || !dateRange?.to) {
+      toast.error("Selecciona un rango de fechas")
       return
     }
 
-    const toastId = toast.loading("Obteniendo datos completos...")
+    if (selectedCollectors.length === 0) {
+      toast.error("Selecciona al menos un recaudador")
+      return
+    }
+
+    const toastId = toast.loading("Actualizando datos...")
+    setLoading(true)
 
     try {
-      const fromDate = format(dateRange!.from!, "yyyy-MM-dd")
-      const toDate = format(dateRange!.to!, "yyyy-MM-dd")
+      const fromDate = format(dateRange.from, "yyyy-MM-dd")
+      const toDate = format(dateRange.to, "yyyy-MM-dd")
 
-      // Fetch all detailed records
+      // actualizar datos con el rango de fechas actual
+      const data = await conciliationReportsApi.getCompleteReport(
+        selectedCollectors,
+        fromDate,
+        toDate,
+        1,
+        50
+      )
+      
+      setReports(data)
+
+      if (!data || !data.data.length) {
+        toast.dismiss(toastId)
+        toast.error("No hay datos para exportar")
+        setLoading(false)
+        return
+      }
+
+      toast.loading("Obteniendo datos completos...", { id: toastId })
+
+      // fetch all detailed records
       const [conciliated, nonConciliated] = await Promise.all([
         conciliationReportsApi.fetchAllConciliatedRecords(selectedCollectors, fromDate, toDate),
         conciliationReportsApi.fetchAllNonConciliatedRecords(selectedCollectors, fromDate, toDate)
@@ -140,7 +166,7 @@ export default function ReportesPage() {
       // small delay to allow toast to update
       await new Promise(resolve => setTimeout(resolve, 100))
       
-      generateConciliationReportExcel(reports.data, conciliated, nonConciliated)
+      generateConciliationReportExcel(data.data, conciliated, nonConciliated)
       
       toast.dismiss(toastId)
       toast.success("Reporte descargado con exito")
@@ -148,6 +174,8 @@ export default function ReportesPage() {
       console.error(error)
       toast.dismiss(toastId)
       toast.error("Error al exportar el reporte")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -235,7 +263,7 @@ export default function ReportesPage() {
             <Button 
               variant="outline" 
               onClick={handleExport} 
-              disabled={!reports || loading}
+              disabled={!dateRange?.from || !dateRange?.to || loading}
               className="flex-1 sm:flex-none bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
             >
               <Download className="mr-2 h-4 w-4" />
