@@ -9,6 +9,7 @@ import { es } from "date-fns/locale"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { fetchWithAuth, getWithAuth, apiCall } from "@/lib/api-client"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { RoleGuard } from "@/components/auth/RoleGuard"
 import { ROLES } from "@/lib/permissions"
 
@@ -44,6 +45,10 @@ export default function ProcesosActualizacionPage() {
   const [loading, setLoading] = React.useState(false)
   const [procesos, setProcesos] = React.useState<ProcesoActualizacion[]>([])
   const [isInitialized, setIsInitialized] = React.useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
+  const [deleteProcesoId, setDeleteProcesoId] = React.useState<string | null>(null)
+  const [clearDialogOpen, setClearDialogOpen] = React.useState(false)
+  const [clearAllDialogOpen, setClearAllDialogOpen] = React.useState(false)
 
   const fetchCollectors = async () => {
     try {
@@ -193,12 +198,30 @@ export default function ProcesosActualizacionPage() {
   }
 
   const eliminarProceso = (id: string) => {
-    setProcesos(prev => prev.filter(p => p.id !== id))
+    const proceso = procesos.find(p => p.id === id)
+    if (!proceso) return
+    
+    setDeleteProcesoId(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmarEliminarProceso = () => {
+    if (deleteProcesoId) {
+      setProcesos(prev => prev.filter(p => p.id !== deleteProcesoId))
+      toast.success("Proceso eliminado de la cola")
+    }
+    setDeleteDialogOpen(false)
+    setDeleteProcesoId(null)
   }
 
   const limpiarCompletados = () => {
+    setClearDialogOpen(true)
+  }
+
+  const confirmarLimpiarCompletados = () => {
     setProcesos(prev => prev.filter(p => p.estado !== "completado" && p.estado !== "error"))
     toast.success("Procesos completados y fallidos eliminados")
+    setClearDialogOpen(false)
   }
 
   const marcarComoCompletado = (procesoId: string) => {
@@ -232,9 +255,14 @@ export default function ProcesosActualizacionPage() {
   }
 
   const limpiarTodo = () => {
+    setClearAllDialogOpen(true)
+  }
+
+  const confirmarLimpiarTodo = () => {
     setProcesos([])
     localStorage.removeItem('procesos-actualizacion')
     toast.success("Todos los procesos eliminados")
+    setClearAllDialogOpen(false)
   }
 
   const getEstadoColor = (estado: ProcesoEstado) => {
@@ -542,6 +570,89 @@ export default function ProcesosActualizacionPage() {
           </Card>
         </div>
       </div>
+
+      {/* dialogo confirmar eliminar proceso */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteProcesoId && procesos.find(p => p.id === deleteProcesoId)?.estado === "ejecutando"
+                ? "¿Eliminar proceso en ejecucion?"
+                : "¿Eliminar proceso de la cola?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteProcesoId && procesos.find(p => p.id === deleteProcesoId)?.estado === "ejecutando" ? (
+                <>
+                  El proceso se esta ejecutando actualmente. Si lo eliminas de la cola, no se anulara el proceso en el servidor.
+                  <br />
+                  <strong>¿Estas seguro de eliminarlo de la cola?</strong>
+                </>
+              ) : (
+                "¿Estas seguro de que deseas eliminar este proceso de la cola? Esta accion no se puede deshacer."
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarEliminarProceso}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* dialogo confirmar limpiar completados */}
+      <AlertDialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Limpiar procesos completados y fallidos?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminaran todos los procesos con estado "completado" o "error" de la cola.
+              <br />
+              <strong>¿Estas seguro de continuar?</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarLimpiarCompletados}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Limpiar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* dialogo confirmar limpiar todo */}
+      <AlertDialog open={clearAllDialogOpen} onOpenChange={setClearAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Limpiar todos los procesos?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminaran <strong>todos</strong> los procesos de la cola, incluyendo los que estan ejecutandose.
+              <br />
+              <br />
+              <strong className="text-red-600">Advertencia:</strong> Si hay procesos ejecutandose, eliminarlos de la cola no anulara el proceso en el servidor.
+              <br />
+              <br />
+              <strong>¿Estas seguro de continuar?</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmarLimpiarTodo}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Limpiar Todo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </>
     </RoleGuard>
   )
