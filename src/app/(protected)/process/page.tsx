@@ -80,6 +80,19 @@ export default function ProcessPage() {
     }
   }, [procesos, isInitialized]);
 
+  // resetear recaudador cuando cambia el tipo si no es valido para el nuevo tipo
+  useEffect(() => {
+    const recaudadoresConciliacion = ["kashio", "monnet", "kushki", "niubiz", "yape", "nuvei", "pagoefectivo", "safetypay", "tupay"];
+    const recaudadoresLiquidacion = ["kashio", "tupay", "pagoefectivo"];
+
+    const recaudadoresValidos = tipo === "conciliacion" ? recaudadoresConciliacion : recaudadoresLiquidacion;
+
+    if (!recaudadoresValidos.includes(recaudador)) {
+      setRecaudador("kashio");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tipo]);
+
   // Endpoints ahora estn centralizados en /lib/api.ts
 
   const fromDate = range?.from;
@@ -145,6 +158,17 @@ export default function ProcessPage() {
       toast.error("Selecciona un rango de fechas");
       return;
     }
+
+    // validar que haya un recaudador seleccionado y valido
+    const recaudadoresConciliacion = ["kashio", "monnet", "kushki", "niubiz", "yape", "nuvei", "pagoefectivo", "safetypay", "tupay"];
+    const recaudadoresLiquidacion = ["kashio", "tupay", "pagoefectivo"];
+    const recaudadoresValidos = tipo === "conciliacion" ? recaudadoresConciliacion : recaudadoresLiquidacion;
+
+    if (!recaudador || !recaudadoresValidos.includes(recaudador)) {
+      toast.error("Selecciona un recaudador valido");
+      return;
+    }
+
     if (!rangoEsValido) {
       toast.error("Rango inválido", { description: getMensajeErrorRango() });
       return;
