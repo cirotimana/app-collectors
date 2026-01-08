@@ -153,6 +153,10 @@ export default function ProcessPage() {
 
   const formatear = (d: Date) => format(d, "ddMMyyyy");
 
+  const capitalize = (str: string) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+
   const agregarProceso = () => {
     if (!fromDate) {
       toast.error("Selecciona un rango de fechas");
@@ -233,7 +237,7 @@ export default function ProcessPage() {
           }
           : p
       ));
-      toast.success(`${proceso.recaudador} completado`, {
+      toast.success(`${capitalize(proceso.recaudador)} completado`, {
         description: data.message
       });
     } catch (error: any) {
@@ -252,7 +256,7 @@ export default function ProcessPage() {
           : p
       ));
 
-      toast.error(`Error en ${proceso.recaudador}`, {
+      toast.error(`Error en ${capitalize(proceso.recaudador)}`, {
         description: (
           <div className="whitespace-pre-line text-left">
             {detailedMessage}
