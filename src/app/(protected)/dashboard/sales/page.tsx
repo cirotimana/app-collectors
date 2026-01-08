@@ -131,26 +131,74 @@ export default function DashboardSalesPage() {
   const stats = calculateStats()
 
   const handleExport = async () => {
-    if (!reportsData || !reportsData.data.length) {
-      toast.error("No hay datos para exportar")
+    if (!dateRange?.from || !dateRange?.to) {
+      toast.error("Selecciona un rango de fechas")
       return
     }
 
-    const currentStats = calculateStats()
-    if (!currentStats) return
+    if (selectedCollectors.length === 0) {
+      toast.error("Selecciona al menos un recaudador")
+      return
+    }
 
-    const toastId = toast.loading("Procesando reporte...")
+    const toastId = toast.loading("Actualizando datos y procesando reporte...")
+    setLoading(true)
 
     try {
+      // actualizar datos con el rango de fechas actual
+      const fromDate = format(dateRange.from, "yyyy-MM-dd")
+      const toDate = format(dateRange.to, "yyyy-MM-dd")
+
+      const data = await conciliationReportsApi.getCompleteReport(
+        selectedCollectors,
+        fromDate,
+        toDate,
+        1,
+        1000
+      )
+
+      setReportsData(data)
+
+      if (!data || !data.data.length) {
+        toast.dismiss(toastId)
+        toast.error("No hay datos para exportar")
+        setLoading(false)
+        return
+      }
+
+      // calcular estadisticas con los datos actualizados
+      const totalCalimacoAmount = data.data.reduce((sum, record) => sum + parseFloat(record.monto_total_calimaco), 0)
+      const totalCollectorAmount = data.data.reduce((sum, record) => sum + parseFloat(record.monto_total_collector), 0)
+      const totalConciliatedCalimaco = data.data.reduce((sum, record) => sum + parseFloat(record.monto_conciliado_calimaco), 0)
+      const totalConciliatedCollector = data.data.reduce((sum, record) => sum + parseFloat(record.monto_conciliado_collector), 0)
+      const totalNoConciliatedCalimaco = data.data.reduce((sum, record) => sum + parseFloat(record.monto_no_conciliado_calimaco), 0)
+      const totalNoConciliatedCollector = data.data.reduce((sum, record) => sum + parseFloat(record.monto_no_conciliado_collector), 0)
+      const avgConciliationCalimaco = data.data.reduce((sum, record) => sum + parseFloat(record.porcentaje_conciliado_calimaco), 0) / data.data.length
+      const avgConciliationCollector = data.data.reduce((sum, record) => sum + parseFloat(record.porcentaje_conciliado_collector), 0) / data.data.length
+
+      const currentStats = {
+        totalCalimacoAmount,
+        totalCollectorAmount,
+        totalConciliatedCalimaco,
+        totalConciliatedCollector,
+        totalNoConciliatedCalimaco,
+        totalNoConciliatedCollector,
+        avgConciliationCalimaco,
+        avgConciliationCollector,
+        difference: totalCollectorAmount - totalCalimacoAmount
+      }
+
       // small delay to allow toast to show
       await new Promise(resolve => setTimeout(resolve, 100))
-      generateExcelReport(currentStats, reportsData)
+      generateExcelReport(currentStats, data)
       toast.dismiss(toastId)
       toast.success("Reporte descargado con exito")
     } catch (error) {
       console.error(error)
       toast.dismiss(toastId)
       toast.error("Error al exportar el reporte")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -238,7 +286,7 @@ export default function DashboardSalesPage() {
             <Button
               variant="outline"
               onClick={handleExport}
-              disabled={!reportsData || loading}
+              disabled={!dateRange?.from || !dateRange?.to || !reportsData || loading}
               className="flex-1 sm:flex-none bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
             >
               <Download className="mr-2 h-4 w-4" />
